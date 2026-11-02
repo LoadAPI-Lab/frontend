@@ -1,0 +1,70 @@
+app:
+    - changed-files:
+          - any-glob-to-any-file:
+                ['src/app/**', 'src/main.tsx', 'src/config.ts', 'src/routes/__root.tsx']
+
+auth:
+    - changed-files:
+          - any-glob-to-any-file:
+                ['src/features/auth/**', 'src/routes/login.tsx', 'src/routes/_app.tsx']
+
+collections:
+    - changed-files:
+          - any-glob-to-any-file: 'src/features/collections/**'
+
+stress-tests:
+    - changed-files:
+          - any-glob-to-any-file: ['src/features/stress-tests/**', 'src/routes/_app/tests*']
+
+scenarios:
+    - changed-files:
+          - any-glob-to-any-file: ['src/features/scenarios/**', 'src/routes/_app/scenarios*']
+
+history:
+    - changed-files:
+          - any-glob-to-any-file: ['src/features/history/**', 'src/routes/_app/history*']
+
+ui:
+    - changed-files:
+          - any-glob-to-any-file: 'src/components/ui/**'
+
+shared:
+    - changed-files:
+          - any-glob-to-any-file:
+                ['src/components/shared/**', 'src/components/layout/**', 'src/lib/**']
+
+api:
+    - changed-files:
+          - any-glob-to-any-file: ['src/api/**', 'openapi/**', 'orval.config.ts', 'src/mocks/**']
+
+i18n:
+    - changed-files:
+          - any-glob-to-any-file: 'src/locales/**'
+
+test:
+    - changed-files:
+          - any-glob-to-any-file:
+                [
+                    '**/*.test.ts',
+                    '**/*.test.tsx',
+                    '**/*.stories.tsx',
+                    'src/test/**',
+                    'vitest.config.ts',
+                    '.storybook/**',
+                ]
+
+e2e:
+    - changed-files:
+          - any-glob-to-any-file: ['e2e/**', 'playwright.config.ts']
+
+deps:
+    - changed-files:
+          - any-glob-to-any-file: ['package.json', 'pnpm-lock.yaml']
+
+devops:
+    - changed-files:
+          - any-glob-to-any-file: ['.github/**', 'Dockerfile', '.dockerignore', 'docker/**']
+
+docs:
+    - changed-files:
+          - any-glob-to-any-file: ['**/*.md', '.claude/**']
