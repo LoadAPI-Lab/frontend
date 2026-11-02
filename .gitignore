@@ -147,3 +147,18 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# frontend
+!.env.mock
+!.env.noauth
+src/routeTree.gen.ts
+storybook-static/
+playwright-report/
+test-results/
+/blob-report/
+/playwright/.cache/
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
