@@ -1,1 +1,66 @@
-# frontend
+# LoadAPI frontend (routelab)
+
+Web app for LoadAPI: design, test and load-test web APIs. React SPA (no SSR), talks to the
+[backend](https://github.com/LoadAPI-Lab/backend) `core` service on the same origin under `/api`.
+
+Status: in development. v1 scope: OAuth login, collections, **Single** stress tests with live metrics, scenarios, history.
+Desktop only (≥ 1280px). English only, with every string translatable.
+
+## Stack
+
+React 19 · Vite 8 · TypeScript · TanStack Router + Query · Base UI · Tailwind CSS 4 · i18next ·
+Zod · orval · Vitest · Testing Library · MSW · Playwright · Storybook · oxlint + oxfmt · pnpm
+
+## First-time setup (only once, by whoever creates the lockfile)
+
+```bash
+corepack enable            # or: npm i -g pnpm@11
+sh scripts/install-deps.sh # resolves latest versions, writes pnpm-lock.yaml
+pnpm format && pnpm lint && pnpm typecheck && pnpm test
+git add -A && git commit -m "chore: scaffold frontend"
+```
+
+After that everyone runs `pnpm install`.
+
+## Develop
+
+```bash
+pnpm dev:mock   # no backend needed: MSW mocks the API         → http://localhost:5173
+pnpm dev        # proxies /api to core on http://localhost:3001 (override with API_PROXY_TARGET)
+pnpm dev:noauth # same, but skips login while core has no auth endpoints (dev server only)
+pnpm storybook  # component workshop                            → http://localhost:6006
+```
+
+To run against a local backend: start it from the backend repo (`infra/README.md`), set core's
+`FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` to `http://localhost:5173`, then `pnpm dev`.
+
+## Scripts
+
+| Script                                         | What it does                                          |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `pnpm build` / `pnpm build:mock`               | type check + production build (real API / MSW mocks)  |
+| `pnpm lint` · `pnpm format` · `pnpm typecheck` | oxlint · oxfmt · tsc                                  |
+| `pnpm test` · `pnpm test:w` · `pnpm test:c`    | unit + component tests (once / watch / coverage)      |
+| `pnpm test:storybook`                          | stories as browser tests with a11y checks             |
+| `pnpm test:e2e`                                | Playwright against a mocked build                     |
+| `pnpm api:generate`                            | regenerate the API client from `openapi/openapi.json` |
+
+## Docker
+
+Images are published to `ghcr.io/loadapi-lab/frontend` (`dev`, `main`, `latest`, `sha-…`, semver tags).
+
+```bash
+# mocked, no backend
+docker run --rm -p 5080:8080 -e API_MOCKING=true ghcr.io/loadapi-lab/frontend:dev
+
+# against core running on your machine
+docker run --rm -p 5080:8080 -e API_UPSTREAM=http://host.docker.internal:3000 ghcr.io/loadapi-lab/frontend:dev
+```
+
+Behind the shared reverse proxy, leave `API_UPSTREAM` empty: the proxy routes `/api` to core.
+Runtime variables: `API_UPSTREAM`, `API_MOCKING`, `FEATURE_BATCH`, `FEATURE_ROUND_ROBIN`.
+
+## Project layout and conventions
+
+See `.claude/skills/*/SKILL.md` (also read by Claude Code):
+`frontend-conventions`, `ui-components`, `api-and-live-data`, `testing`. Contributing rules: [CONTRIBUTING.md](./CONTRIBUTING.md).
