@@ -26,6 +26,10 @@ addEventListener('activate', function (event) {
 });
 
 addEventListener('message', function (event) {
+    if (!event.origin || event.origin !== self.location.origin) {
+        return;
+    }
+
     const clientId = Reflect.get(event.source || {}, 'id');
 
     if (!clientId || !self.clients) {
