@@ -1,5 +1,7 @@
 # ---- build ----
-FROM node:24-alpine AS build
+# The output is static files, so build once on the runner's native platform
+# (no emulation) and reuse it for every target platform.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 RUN npm install -g pnpm@11
 
