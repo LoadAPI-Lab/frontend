@@ -1,0 +1,37 @@
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      target-branch: dev
+      schedule: { interval: weekly, day: monday }
+      open-pull-requests-limit: 5
+      commit-message: { prefix: 'chore', include: scope }
+      groups:
+          react: { patterns: ['react', 'react-dom', '@types/react*'] }
+          tanstack: { patterns: ['@tanstack/*'] }
+          storybook: { patterns: ['storybook', '@storybook/*'] }
+          testing:
+              { patterns: ['vitest', '@vitest/*', '@testing-library/*', '@playwright/*', 'msw'] }
+          tooling:
+              {
+                  patterns:
+                      [
+                          'oxlint*',
+                          'oxfmt',
+                          'typescript',
+                          'vite',
+                          '@vitejs/*',
+                          'tailwindcss',
+                          '@tailwindcss/*',
+                      ],
+              }
+    - package-ecosystem: github-actions
+      directory: /
+      target-branch: dev
+      schedule: { interval: weekly }
+      commit-message: { prefix: 'chore', include: scope }
+    - package-ecosystem: docker
+      directory: /
+      target-branch: dev
+      schedule: { interval: weekly }
+      commit-message: { prefix: 'chore', include: scope }

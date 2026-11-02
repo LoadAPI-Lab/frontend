@@ -1,0 +1,48 @@
+name: Labeler
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.number }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    label:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Ensure labels exist
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  labels=(
+                  "app:e99695:Providers, router, config, global styles"
+                  "auth:f2c4c0:Login, session, route guards"
+                  "collections:c5bff5:Collections sidebar and OpenAPI import"
+                  "stress-tests:6c5ce7:Stress test pages and live metrics"
+                  "scenarios:c5bff5:Scenario builder"
+                  "history:c5bff5:Runs history"
+                  "ui:f9a825:Tier 1 primitives (components/ui)"
+                  "shared:fad8c7:Tier 2 blocks and layout"
+                  "api:0e8a16:API client, generated code, live stream"
+                  "i18n:bfd4f2:Translations"
+                  "test:ff69b4:Unit, component and Storybook tests"
+                  "e2e:d876e3:Playwright tests"
+                  "deps:0366d6:Dependencies"
+                  "devops:006b75:CI/CD and Docker"
+                  "docs:0075ca:Documentation"
+                  )
+                  for label in "${labels[@]}"; do
+                    IFS=":" read -r name color desc <<< "$label"
+                    gh label create "$name" --color "$color" --description "$desc" --repo ${{ github.repository }} || true
+                  done
+
+            - name: Run labeler
+              uses: actions/labeler@v7
+              with:
+                  sync-labels: true
