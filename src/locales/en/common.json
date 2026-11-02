@@ -1,0 +1,49 @@
+{
+    "app": {
+        "name": "routelab",
+        "loading": "Loading…",
+        "errorTitle": "Something went wrong",
+        "errorBody": "Try again. If it keeps happening, share the request ID with the team.",
+        "retry": "Try again",
+        "notFoundTitle": "Page not found",
+        "backHome": "Back to stress tests",
+        "comingSoon": "Coming soon"
+    },
+    "nav": {
+        "main": "Main",
+        "stressTests": "Stress tests",
+        "scenarios": "Scenarios",
+        "history": "History",
+        "account": "Account"
+    },
+    "auth": {
+        "title": "Sign in to routelab",
+        "subtitle": "Design, test and load-test your APIs.",
+        "continueWithGoogle": "Continue with Google",
+        "continueWithGithub": "Continue with GitHub"
+    },
+    "desktopOnly": {
+        "title": "Desktop only",
+        "body": "routelab needs a screen at least 1280px wide. Widen the window or switch to a desktop."
+    },
+    "collections": {
+        "title": "Collections",
+        "empty": "No collections yet",
+        "import": "Import OpenAPI / Swagger"
+    },
+    "stressTests": {
+        "title": "Stress tests",
+        "modes": {
+            "single": "Single",
+            "batch": "Batch",
+            "roundRobin": "Round-robin"
+        },
+        "pickRoute": "Pick a route from the collections to start a test."
+    },
+    "scenarios": {
+        "title": "Scenarios"
+    },
+    "history": {
+        "title": "History"
+    }
+}

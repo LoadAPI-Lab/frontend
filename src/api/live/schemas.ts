@@ -1,0 +1,45 @@
+import { z } from 'zod';
+
+// Shapes published by the Go worker (backend apps/worker/internal/executor/load).
+// Core relays them; switch to generated types once core documents the SSE route.
+
+export const percentilesSchema = z.object({
+    p50Ms: z.number(),
+    p95Ms: z.number(),
+    p99Ms: z.number(),
+});
+
+export const networkErrorSchema = z.enum([
+    'timeout',
+    'connection_refused',
+    'connection_reset',
+    'dns',
+    'other',
+]);
+
+export const routeSnapshotSchema = z.object({
+    method: z.string(),
+    url: z.string(),
+    successCount: z.number().int(),
+    errorCount: z.number().int(),
+    lateCount: z.number().int(),
+    responseTime: percentilesSchema.optional(),
+    serviceTime: percentilesSchema.optional(),
+    statusCodes: z.record(z.string(), z.number().int()).optional(),
+    errors: z.partialRecord(networkErrorSchema, z.number().int()).optional(),
+});
+
+/** One per second per test. Counts and percentiles cover that second only. */
+export const snapshotSchema = z.object({
+    testId: z.string(),
+    timestamp: z.string(),
+    elapsedSeconds: z.number().int(),
+    targetRps: z.number(),
+    actualRps: z.number(),
+    targets: z.array(routeSnapshotSchema),
+});
+
+export type Percentiles = z.infer<typeof percentilesSchema>;
+export type NetworkError = z.infer<typeof networkErrorSchema>;
+export type RouteSnapshot = z.infer<typeof routeSnapshotSchema>;
+export type Snapshot = z.infer<typeof snapshotSchema>;
