@@ -29,6 +29,7 @@ export default defineConfig({
         include: [
             '@base-ui/react/field',
             '@base-ui/react/input',
+            '@base-ui/react/menu',
             '@base-ui/react/number-field',
             '@base-ui/react/select',
             '@base-ui/react/tabs',
@@ -42,6 +43,7 @@ export default defineConfig({
             'i18next',
             'react-i18next',
             'zod',
+            '@tanstack/react-router',
         ],
     },
     server: {

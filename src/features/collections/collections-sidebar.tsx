@@ -1,27 +1,44 @@
-import { Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { Sidebar } from '@/components/layout/sidebar';
+import { useSidebarCollapsed } from '@/components/layout/use-sidebar-collapsed';
+import { IconButton } from '@/components/ui/icon-button';
+import { PlusIcon, UploadIcon } from '@/components/ui/icons';
+import { Tooltip } from '@/components/ui/tooltip';
 
-// TODO(collections): tree from the collections API, OpenAPI import dialog.
+// TODO(FE-08): tree of the user's saved docs. TODO(FE-09): both import buttons open the paste dialog.
 export function CollectionsSidebar() {
     const { t } = useTranslation();
+    const [collapsed, setCollapsed] = useSidebarCollapsed();
+
     return (
-        <div className="flex h-full flex-col p-3">
-            <h2 className="text-fg-muted px-2 pb-3 text-xs font-semibold tracking-wider uppercase">
-                {t('collections.title')}
-            </h2>
-            <p className="text-fg-muted flex-1 px-2 text-sm">{t('collections.empty')}</p>
-            <Button
-                variant="ghost"
-                className="border-border mt-3 w-full border border-dashed"
-            >
-                <Upload
-                    aria-hidden
-                    className="size-4"
-                />
-                {t('collections.import')}
-            </Button>
-        </div>
+        <Sidebar
+            title={t('collections.title')}
+            collapsed={collapsed}
+            onCollapsedChange={setCollapsed}
+            actions={
+                <Tooltip.Root>
+                    <Tooltip.Trigger
+                        render={
+                            <IconButton aria-label={t('collections.importShort')}>
+                                <PlusIcon />
+                            </IconButton>
+                        }
+                    />
+                    <Tooltip.Content>{t('collections.importShort')}</Tooltip.Content>
+                </Tooltip.Root>
+            }
+            footer={
+                <button
+                    type="button"
+                    className="border-border-dashed text-fg-muted hover:text-fg hover:border-fg-disabled focus-visible:ring-accent/40 flex h-9 w-full items-center justify-center gap-1.75 rounded-lg border border-dashed text-base transition-colors outline-none focus-visible:ring-2"
+                >
+                    <UploadIcon />
+                    {t('collections.import')}
+                </button>
+            }
+        >
+            <p className="text-fg-muted px-2 py-1 text-base">{t('collections.empty')}</p>
+        </Sidebar>
     );
 }

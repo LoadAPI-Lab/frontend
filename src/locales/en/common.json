@@ -7,7 +7,8 @@
         "retry": "Try again",
         "notFoundTitle": "Page not found",
         "backHome": "Back to stress tests",
-        "comingSoon": "Coming soon"
+        "comingSoon": "Coming soon",
+        "notFoundBody": "The page you opened doesn't exist or was moved."
     },
     "nav": {
         "main": "Main",
@@ -29,7 +30,8 @@
     "collections": {
         "title": "Collections",
         "empty": "No collections yet",
-        "import": "Import OpenAPI / Swagger"
+        "import": "Import OpenAPI / Swagger",
+        "importShort": "Import OpenAPI doc"
     },
     "stressTests": {
         "title": "Stress tests",
@@ -45,5 +47,13 @@
     },
     "history": {
         "title": "History"
+    },
+    "account": {
+        "menuLabel": ", account menu for {{name}}",
+        "signOut": "Sign out"
+    },
+    "sidebar": {
+        "collapse": "Collapse sidebar",
+        "expand": "Expand sidebar"
     }
 }

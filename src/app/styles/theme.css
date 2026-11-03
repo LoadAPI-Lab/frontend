@@ -18,7 +18,9 @@
     /* borders */
     --color-border: #1f1f1f; /* color/grey/12: card borders */
     --color-border-strong: #262626; /* color/grey/15: inputs, buttons, tabs */
-    --color-border-subtle: #1d1d1d; /* color/grey/11 */
+    --color-border-subtle: #1d1d1d; /* color/grey/11: top bar bottom border */
+    --color-divider: #1a1a1a; /* color/grey/10: sidebar borders */
+    --color-border-dashed: #2a2a2a; /* color/grey/16: dashed import button */
 
     /* text, strongest to faintest */
     --color-fg: #f4f3ee; /* color/grey/95: primary text and numbers */
@@ -67,6 +69,7 @@
     --radius-xs: 3px; /* dots, small marks */
     --radius-sm: 5px; /* mono badges */
     --radius-md: 6px; /* small buttons, chips, logo */
+    --radius-item: 7px; /* avatar, sidebar rows */
     --radius-lg: 8px; /* inputs, config fields, tabs, Stop test */
     --radius-editor: 9px; /* body editor */
     --radius-card: 12px; /* cards */

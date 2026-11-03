@@ -1,17 +1,29 @@
 import type { ReactNode } from 'react';
 
+import { cn } from '@/lib/cn';
+
 export interface PageHeaderProps {
     title: ReactNode;
     description?: ReactNode;
     actions?: ReactNode;
+    /** Keep the heading for screen readers but hide it visually (the Tests page has no visible title in Figma). */
+    visuallyHidden?: boolean;
 }
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export function PageHeader({
+    title,
+    description,
+    actions,
+    visuallyHidden = false,
+}: PageHeaderProps) {
+    if (visuallyHidden) {
+        return <h1 className="sr-only">{title}</h1>;
+    }
     return (
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className={cn('flex items-start justify-between gap-4')}>
             <div>
-                <h1 className="text-xl font-semibold">{title}</h1>
-                {description ? <p className="text-fg-muted mt-1 text-sm">{description}</p> : null}
+                <h1 className="text-fg text-xl font-semibold tracking-tight">{title}</h1>
+                {description ? <p className="text-fg-muted mt-1 text-base">{description}</p> : null}
             </div>
             {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </div>

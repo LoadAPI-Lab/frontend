@@ -1,26 +1,29 @@
 import type { ReactNode } from 'react';
 
+import { Tooltip } from '@/components/ui/tooltip';
+
 import { TopBar } from './top-bar';
 
 export interface AppShellProps {
+    /** Usually a <Sidebar>. */
     sidebar?: ReactNode;
     topBarActions?: ReactNode;
     children: ReactNode;
 }
 
-/** Layout only: slots in, no data. The authed route fills the slots with feature components. */
+/** Layout only: slots in, no data. The signed-in route fills the slots with feature components. */
 export function AppShell({ sidebar, topBarActions, children }: AppShellProps) {
     return (
-        <div className="flex h-dvh flex-col">
-            <TopBar actions={topBarActions} />
-            <div className="flex min-h-0 flex-1">
-                {sidebar ? (
-                    <aside className="border-border w-72 shrink-0 overflow-y-auto border-r">
-                        {sidebar}
-                    </aside>
-                ) : null}
-                <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
+        <Tooltip.Provider delay={400}>
+            <div className="flex h-dvh flex-col">
+                <TopBar actions={topBarActions} />
+                <div className="flex min-h-0 flex-1">
+                    {sidebar}
+                    <main className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto px-5.5 pt-4 pb-5">
+                        {children}
+                    </main>
+                </div>
             </div>
-        </div>
+        </Tooltip.Provider>
     );
 }

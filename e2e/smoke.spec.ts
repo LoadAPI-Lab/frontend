@@ -19,6 +19,27 @@ test('navigates between top-level pages', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Scenarios', level: 1 })).toBeVisible();
 });
 
+test('sidebar collapse is remembered after a reload', async ({ page }) => {
+    await page.goto('/tests');
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+});
+
+test('signing out from the account menu lands on login', async ({ page }) => {
+    await page.goto('/tests');
+    await page.getByRole('button', { name: /account menu for/i }).click();
+    await page.getByRole('menuitem', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(/\/login/);
+});
+
+test('unknown pages show the not-found screen', async ({ page }) => {
+    await page.goto('/does-not-exist');
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+    await page.getByRole('link', { name: 'Back to stress tests' }).click();
+    await expect(page).toHaveURL(/\/tests$/);
+});
+
 test('login page offers both OAuth providers', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();

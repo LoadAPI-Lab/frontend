@@ -1,31 +1,32 @@
 import { Link } from '@tanstack/react-router';
-import { Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const navLinkClass =
-    'rounded-lg px-3 py-1.5 text-sm text-fg-muted transition-colors hover:text-fg data-[status=active]:bg-surface-2 data-[status=active]:text-fg';
+import { LogoMark } from '@/components/ui/icons';
+
+// Figma node 5:308: 56px bar, logo + "routelab", nav pills, account on the right.
+const navLink =
+    'text-md flex h-8.5 items-center rounded-lg border border-transparent px-3.5 font-medium text-fg-muted transition-colors outline-none ' +
+    'hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 ' +
+    'data-[status=active]:border-border-strong data-[status=active]:bg-surface-raised data-[status=active]:font-semibold data-[status=active]:text-fg';
 
 export interface TopBarProps {
-    /** right-hand slot: workers chip, account menu */
+    /** Right-hand slot, e.g. the account menu. */
     actions?: ReactNode;
 }
 
 export function TopBar({ actions }: TopBarProps) {
     const { t } = useTranslation();
     return (
-        <header className="border-border flex h-14 items-center gap-6 border-b px-4">
+        <header className="border-border-subtle flex h-14 shrink-0 items-center gap-6.5 border-b px-5">
             <Link
                 to="/"
-                className="flex items-center gap-2 font-semibold"
+                className="focus-visible:ring-accent/40 flex items-center gap-2.25 rounded-md outline-none focus-visible:ring-2"
             >
-                <span className="bg-accent text-accent-fg flex size-7 items-center justify-center rounded-lg">
-                    <Zap
-                        aria-hidden
-                        className="size-4"
-                    />
+                <span className="bg-accent text-accent-fg flex size-6 items-center justify-center rounded-md">
+                    <LogoMark />
                 </span>
-                {t('app.name')}
+                <span className="text-fg text-lg font-bold tracking-tight">{t('app.name')}</span>
             </Link>
             <nav
                 aria-label={t('nav.main')}
@@ -33,19 +34,19 @@ export function TopBar({ actions }: TopBarProps) {
             >
                 <Link
                     to="/tests"
-                    className={navLinkClass}
+                    className={navLink}
                 >
                     {t('nav.stressTests')}
                 </Link>
                 <Link
                     to="/scenarios"
-                    className={navLinkClass}
+                    className={navLink}
                 >
                     {t('nav.scenarios')}
                 </Link>
                 <Link
                     to="/history"
-                    className={navLinkClass}
+                    className={navLink}
                 >
                     {t('nav.history')}
                 </Link>
