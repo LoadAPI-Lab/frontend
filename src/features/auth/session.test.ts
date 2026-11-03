@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,18 +9,11 @@ afterEach(() => {
     vi.resetModules();
 });
 
-async function loadSessionQuery() {
+// Import fresh each time: `config.authBypass` is read when the module loads.
+async function fetchSession() {
     const { sessionQuery } = await import('./session');
-    const queryFn = sessionQuery.queryFn;
-    if (typeof queryFn !== 'function') {
-        throw new TypeError('sessionQuery has no queryFn');
-    }
-    return queryFn;
+    return new QueryClient().fetchQuery(sessionQuery);
 }
-
-const context = { signal: new AbortController().signal } as Parameters<
-    Awaited<ReturnType<typeof loadSessionQuery>>
->[0];
 
 describe('sessionQuery', () => {
     it('asks core for the signed-in user', async () => {
@@ -28,14 +22,11 @@ describe('sessionQuery', () => {
                 HttpResponse.json({ id: 'u1', name: 'Ada Lovelace', email: 'ada@example.com' }),
             ),
         );
-        const queryFn = await loadSessionQuery();
-        await expect(queryFn(context)).resolves.toMatchObject({ id: 'u1' });
+        await expect(fetchSession()).resolves.toMatchObject({ id: 'u1' });
     });
 
     it('returns the local dev user when the dev-only bypass is on', async () => {
         vi.stubEnv('VITE_AUTH_BYPASS', 'true');
-        vi.resetModules();
-        const queryFn = await loadSessionQuery();
-        await expect(queryFn(context)).resolves.toMatchObject({ id: 'dev-user' });
+        await expect(fetchSession()).resolves.toMatchObject({ id: 'dev-user' });
     });
 });

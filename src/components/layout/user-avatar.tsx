@@ -4,6 +4,8 @@ export interface UserAvatarProps {
     name: string;
     imageUrl?: string | null;
     className?: string;
+    /** Hide the initials from assistive tech. Turn off when the avatar is a control's visible label. */
+    decorative?: boolean;
 }
 
 const initials = (name: string) =>
@@ -14,8 +16,8 @@ const initials = (name: string) =>
         .map((part) => part.charAt(0).toUpperCase())
         .join('');
 
-/** Figma node 5:357: 30px, 7px radius, lime initials on lime 15%. Decorative: name the surrounding control instead. */
-export function UserAvatar({ name, imageUrl, className }: UserAvatarProps) {
+/** Figma node 5:357: 30px, 7px radius, lime initials on lime 15%. */
+export function UserAvatar({ name, imageUrl, className, decorative = true }: UserAvatarProps) {
     if (imageUrl) {
         return (
             <img
@@ -27,7 +29,7 @@ export function UserAvatar({ name, imageUrl, className }: UserAvatarProps) {
     }
     return (
         <span
-            aria-hidden
+            aria-hidden={decorative || undefined}
             className={cn(
                 'bg-accent/15 text-accent text-sm flex size-7.5 items-center justify-center rounded-item font-bold',
                 className,

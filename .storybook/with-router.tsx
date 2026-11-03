@@ -13,7 +13,8 @@ import { useState } from 'react';
  * `parameters: { route: '/history' }` (default `/tests`).
  */
 export const withRouter: Decorator = (Story, context) => {
-    const initial = (context.parameters.route as string | undefined) ?? '/tests';
+    const { route } = context.parameters;
+    const initial = typeof route === 'string' ? route : '/tests';
     return <StoryRouter initial={initial}>{() => <Story />}</StoryRouter>;
 };
 

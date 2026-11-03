@@ -28,7 +28,7 @@ test('sidebar collapse is remembered after a reload', async ({ page }) => {
 
 test('signing out from the account menu lands on login', async ({ page }) => {
     await page.goto('/tests');
-    await page.getByRole('button', { name: /Account menu for/ }).click();
+    await page.getByRole('button', { name: /account menu for/i }).click();
     await page.getByRole('menuitem', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/login/);
 });

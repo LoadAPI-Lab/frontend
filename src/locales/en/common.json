@@ -49,7 +49,7 @@
         "title": "History"
     },
     "account": {
-        "menuLabel": "Account menu for {{name}}",
+        "menuLabel": ", account menu for {{name}}",
         "signOut": "Sign out"
     },
     "sidebar": {

@@ -16,14 +16,14 @@ export function AccountMenu({ user, onSignOut, signingOut = false }: AccountMenu
     const { t } = useTranslation();
     return (
         <Menu.Root>
-            <Menu.Trigger
-                aria-label={t('account.menuLabel', { name: user.name })}
-                className="rounded-item focus-visible:ring-accent/40 outline-none focus-visible:ring-2"
-            >
+            {/* The visible initials stay in the accessible name ("MK, account menu for …") so voice-control users can say what they see. */}
+            <Menu.Trigger className="rounded-item focus-visible:ring-accent/40 outline-none focus-visible:ring-2">
                 <UserAvatar
                     name={user.name}
                     imageUrl={user.avatarUrl}
+                    decorative={false}
                 />
+                <span className="sr-only">{t('account.menuLabel', { name: user.name })}</span>
             </Menu.Trigger>
             <Menu.Popup>
                 <div className="px-2 pt-1.5 pb-2">
