@@ -7,11 +7,11 @@ description: How to build UI in the LoadAPI frontend, covering the three compone
 
 ## Three tiers
 
-| Tier                  | Folder                  | Knows about                                                                         | May import                      | Examples                                                                                                                                                          |
-| --------------------- | ----------------------- | ----------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Primitives         | `components/ui`         | nothing domain-specific                                                             | Base UI, `lib/cn`               | Button, IconButton, Input, NumberField, Select, Tabs, SegmentedControl, Badge, Chip, Card, Dialog, Popover, Tooltip, Menu, Toast, Progress, Skeleton, Collapsible |
-| 2. Shared blocks      | `components/shared`     | LoadAPI concepts (HTTP methods, percentiles, status codes) but **no data fetching** | tier 1, `lib`                   | MethodBadge, StatCard, LatencyPill, StatusDonut, LiveLatencyChart, JsonBodyEditor, PlaceholderChips, KeyValueEditor, TreeView, EmptyState, ErrorState             |
-| 3. Feature components | `features/*/components` | one feature's data and actions                                                      | tiers 1–2, feature hooks, `api` | CollectionsSidebar, TestConfigBar, EndpointHeader, LiveMetricsRow, RequestEditorPanel, RecentRunsCard, RunsTable                                                  |
+| Tier                  | Folder                  | Knows about                                                                         | May import                      | Examples                                                                                                                                                                               |
+| --------------------- | ----------------------- | ----------------------------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Primitives         | `components/ui`         | nothing domain-specific                                                             | Base UI, `lib/cn`               | Built: Button, IconButton, Field, Input, Textarea, NumberField, Select, SegmentedControl, Tabs, Tooltip, Badge, Chip, Card. Next: Dialog, Menu, Toast, Progress, Skeleton, Collapsible |
+| 2. Shared blocks      | `components/shared`     | LoadAPI concepts (HTTP methods, percentiles, status codes) but **no data fetching** | tier 1, `lib`                   | MethodBadge, StatCard, LatencyPill, StatusDonut, LiveLatencyChart, JsonBodyEditor, PlaceholderChips, KeyValueEditor, TreeView, EmptyState, ErrorState                                  |
+| 3. Feature components | `features/*/components` | one feature's data and actions                                                      | tiers 1–2, feature hooks, `api` | CollectionsSidebar, TestConfigBar, EndpointHeader, LiveMetricsRow, RequestEditorPanel, RecentRunsCard, RunsTable                                                                       |
 
 Layout pieces (AppShell, TopBar, PageHeader) live in `components/layout`; they are tier 2 that take slots (`children`, `actions`) rather than data.
 
@@ -76,6 +76,9 @@ export const Tabs = { Root: BaseTabs.Root, List: BaseTabs.List, Tab, Panel: Base
 
 - Style Base UI state with its data attributes (`data-[selected]`, `data-[open]`, `data-[disabled]`), not extra React state.
 - Variants with `cva`; always accept and merge `className` last.
+- `cn()` uses a `tailwind-merge` configured with our custom sizes and radii (`src/lib/cn.ts`). When you add a font-size or radius token to `theme.css`, add its name there too, or `cn` drops it next to a colour class.
+- Form controls go inside `Field.Root` (label, description, error wiring). Config-bar fields use `NumberField.Group` + `NumberField.InlineLabel` (label inside the box, as in Figma).
+- `SegmentedControl` is a single-select ToggleGroup that never allows an empty selection; use Tabs when the choice swaps a panel of content.
 - Forward refs implicitly (React 19 `ref` prop); never drop props.
 
 ## Storybook
@@ -103,7 +106,7 @@ Tokens live in `src/app/styles/theme.css` as Tailwind 4 `@theme` variables, take
 | `info` / `warning` / `danger`         | `#86a8f5` / `#e0b54a` / `#f07b6b` | GET, p95, 4xx / PATCH / DELETE, errors, 5xx, Stop                                    |
 
 Tinted states use opacity on the token: `bg-accent/15` (badge), `bg-accent/4` (highlighted editor line), `bg-danger/10 border-danger/35` (Stop test).
-Type scale (`text-*`, px): 2xs 9.5 · xs 10 · sm 10.5 · base 11.5 · md 12.5 · lg 14 · xl 17 · 2xl 21 (stat values). Uppercase section labels: `text-xs font-semibold uppercase tracking-label`.
+Type scale (`text-*`, px): 2xs 9.5 · xs 10 · sm 10.5 · label 11 · base 11.5 · control 12 · md 12.5 · lg 14 · xl 17 · 2xl 21 (stat values). Uppercase section labels: `text-xs font-semibold uppercase tracking-label`.
 Radii (`rounded-*`): xs 3 · sm 5 · md 6 · lg 8 · editor 9 · card 12.
 Fonts: Inter (UI) and JetBrains Mono (paths, numbers, code, badges); `font-mono tabular-nums` on every metric. Self-hosted via Fontsource.
 PUT has no colour in the design yet (placeholder). HTTP method colours live only in `src/lib/http-method.ts`.
