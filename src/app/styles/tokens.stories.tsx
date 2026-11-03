@@ -22,7 +22,9 @@ const colorGroups = [
         tokens: [
             ['border', 'cards'],
             ['border-strong', 'inputs, buttons, tabs'],
-            ['border-subtle', 'dividers'],
+            ['border-subtle', 'top bar border'],
+            ['divider', 'sidebar borders'],
+            ['border-dashed', 'dashed import button'],
         ],
     },
     {
@@ -77,6 +79,7 @@ const radii = [
     ['xs', '3px'],
     ['sm', '5px'],
     ['md', '6px'],
+    ['item', '7px'],
     ['lg', '8px'],
     ['editor', '9px'],
     ['card', '12px'],

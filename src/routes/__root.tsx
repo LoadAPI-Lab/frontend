@@ -3,7 +3,9 @@ import type { ErrorComponentProps } from '@tanstack/react-router';
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
+import { ApiError } from '@/api/fetcher';
 import { DesktopOnlyNotice } from '@/components/layout/desktop-only-notice';
+import { StatusScreen } from '@/components/layout/status-screen';
 import { Button, buttonVariants } from '@/components/ui/button';
 
 export interface RouterContext {
@@ -25,28 +27,32 @@ function RootLayout() {
     );
 }
 
-function RootError({ reset }: ErrorComponentProps) {
+function RootError({ error, reset }: ErrorComponentProps) {
     const { t } = useTranslation();
     return (
-        <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
-            <h1 className="text-lg font-semibold">{t('app.errorTitle')}</h1>
-            <p className="text-fg-muted max-w-md text-sm">{t('app.errorBody')}</p>
-            <Button onClick={reset}>{t('app.retry')}</Button>
-        </main>
+        <StatusScreen
+            title={t('app.errorTitle')}
+            body={t('app.errorBody')}
+            requestId={error instanceof ApiError ? error.requestId : null}
+            action={<Button onClick={reset}>{t('app.retry')}</Button>}
+        />
     );
 }
 
 function NotFound() {
     const { t } = useTranslation();
     return (
-        <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6">
-            <h1 className="text-lg font-semibold">{t('app.notFoundTitle')}</h1>
-            <Link
-                to="/tests"
-                className={buttonVariants()}
-            >
-                {t('app.backHome')}
-            </Link>
-        </main>
+        <StatusScreen
+            title={t('app.notFoundTitle')}
+            body={t('app.notFoundBody')}
+            action={
+                <Link
+                    to="/tests"
+                    className={buttonVariants()}
+                >
+                    {t('app.backHome')}
+                </Link>
+            }
+        />
     );
 }

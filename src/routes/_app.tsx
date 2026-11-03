@@ -1,9 +1,9 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 
 import { ApiError } from '@/api/fetcher';
+import { AccountMenu } from '@/components/layout/account-menu';
 import { AppShell } from '@/components/layout/app-shell';
-import { UserAvatar } from '@/components/layout/user-avatar';
-import { sessionQuery } from '@/features/auth';
+import { sessionQuery, useSignOut } from '@/features/auth';
 import { CollectionsSidebar } from '@/features/collections';
 
 // Pathless layout for every signed-in page: auth guard + shell.
@@ -21,13 +21,15 @@ export const Route = createFileRoute('/_app')({
     },
     component: function AppLayout() {
         const { session } = Route.useRouteContext();
+        const signOut = useSignOut();
         return (
             <AppShell
                 sidebar={<CollectionsSidebar />}
                 topBarActions={
-                    <UserAvatar
-                        name={session.name}
-                        imageUrl={session.avatarUrl}
+                    <AccountMenu
+                        user={session}
+                        onSignOut={() => signOut.mutate()}
+                        signingOut={signOut.isPending}
                     />
                 }
             >

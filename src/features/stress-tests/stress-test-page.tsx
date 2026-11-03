@@ -20,7 +20,10 @@ export function StressTestPage() {
     const { t } = useTranslation();
     return (
         <>
-            <PageHeader title={t('stressTests.title')} />
+            <PageHeader
+                title={t('stressTests.title')}
+                visuallyHidden
+            />
             <Tabs.Root defaultValue="single">
                 <Tabs.List aria-label={t('stressTests.title')}>
                     {modes
