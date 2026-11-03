@@ -31,24 +31,17 @@ export function QueryBoundary({
             {({ reset }) => (
                 <ErrorBoundary
                     onReset={reset}
-                    fallback={(error, retry) => (
-                        <ErrorState
-                            size={size}
-                            message={error instanceof ApiError ? error.message : undefined}
-                            requestId={error instanceof ApiError ? error.requestId : null}
-                            onRetry={retry}
-                        />
-                    )}
+                    size={size}
                 >
                     <Suspense
                         fallback={
-                            <div
-                                role="status"
+                            <output
                                 aria-label={loadingLabel}
                                 aria-busy
+                                className="block"
                             >
                                 {loading ?? <DefaultLoading />}
-                            </div>
+                            </output>
                         }
                     >
                         {children}
@@ -69,10 +62,29 @@ function DefaultLoading() {
     );
 }
 
+function QueryErrorFallback({
+    error,
+    onRetry,
+    size,
+}: {
+    error: unknown;
+    onRetry: () => void;
+    size: QueryBoundaryProps['size'];
+}) {
+    return (
+        <ErrorState
+            size={size}
+            message={error instanceof ApiError ? error.message : undefined}
+            requestId={error instanceof ApiError ? error.requestId : null}
+            onRetry={onRetry}
+        />
+    );
+}
+
 interface ErrorBoundaryProps {
     children: ReactNode;
     onReset: () => void;
-    fallback: (error: unknown, retry: () => void) => ReactNode;
+    size: QueryBoundaryProps['size'];
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, { error: unknown }> {
@@ -92,8 +104,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, { error: unknown }> {
     };
 
     override render() {
-        return this.state.error === null
-            ? this.props.children
-            : this.props.fallback(this.state.error, this.retry);
+        return this.state.error === null ? (
+            this.props.children
+        ) : (
+            <QueryErrorFallback
+                error={this.state.error}
+                onRetry={this.retry}
+                size={this.props.size}
+            />
+        );
     }
 }

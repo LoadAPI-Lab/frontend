@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { apiFetch } from '@/api/fetcher';
+import { ApiError, apiFetch } from '@/api/fetcher';
 import { toastManager } from '@/components/ui/toast';
 import { server } from '@/mocks/server';
 
@@ -24,9 +24,12 @@ describe('query client', () => {
         await expect(
             client
                 .getMutationCache()
-                .build(client, { mutationFn: () => apiFetch('/v1/test-runs', { method: 'POST' }) })
-                .execute(undefined),
-        ).rejects.toThrow();
+                .build(client, {
+                    mutationFn: (body: string) =>
+                        apiFetch('/v1/test-runs', { method: 'POST', body }),
+                })
+                .execute('{}'),
+        ).rejects.toBeInstanceOf(ApiError);
         expect(add).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'error',
@@ -45,11 +48,12 @@ describe('query client', () => {
             client
                 .getMutationCache()
                 .build(client, {
-                    mutationFn: () => apiFetch('/v1/auth/sign-out', { method: 'POST' }),
+                    mutationFn: (body: string) =>
+                        apiFetch('/v1/auth/sign-out', { method: 'POST', body }),
                     meta: { toastOnError: false },
                 })
-                .execute(undefined),
-        ).rejects.toThrow();
+                .execute('{}'),
+        ).rejects.toBeInstanceOf(ApiError);
         expect(add).not.toHaveBeenCalled();
     });
 });
