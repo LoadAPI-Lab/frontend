@@ -31,7 +31,8 @@
         "title": "Collections",
         "empty": "No collections yet",
         "import": "Import OpenAPI / Swagger",
-        "importShort": "Import OpenAPI doc"
+        "importShort": "Import OpenAPI doc",
+        "emptyBody": "Import an OpenAPI doc to see its endpoints here."
     },
     "stressTests": {
         "title": "Stress tests",
@@ -55,5 +56,14 @@
     "sidebar": {
         "collapse": "Collapse sidebar",
         "expand": "Expand sidebar"
+    },
+    "errors": {
+        "loadTitle": "Couldn't load this",
+        "retry": "Try again",
+        "requestId": "Request ID: {{id}}",
+        "actionFailed": "That didn't work"
+    },
+    "toast": {
+        "dismiss": "Dismiss notification"
     }
 }

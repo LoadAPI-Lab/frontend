@@ -51,6 +51,7 @@ Same flow as the backend dev's reference app (deView-inc/frontend `features/auth
 
 - Use generated hooks (`useGetX`, `usePostX`). Wrap them in a feature hook only to add `select` mapping or invalidation.
 - Mutations invalidate by generated query-key helpers, never by string literals.
+- Errors: the `MutationCache` in `src/app/query-client.ts` toasts every failed mutation with core's message; opt out per mutation with `meta: { toastOnError: false }`. Queries surface errors through `QueryBoundary`.
 - Defaults in `src/app/query-client.ts`: `staleTime: 30s`, `retry: 1` (no retry on 4xx), `refetchOnWindowFocus: false` while a test is running.
 - Loading and error UI goes through shared `<QueryBoundary>` / skeleton components, not ad-hoc spinners.
 
