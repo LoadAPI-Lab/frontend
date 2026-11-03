@@ -33,6 +33,7 @@ export default defineConfig({
             '@base-ui/react/number-field',
             '@base-ui/react/select',
             '@base-ui/react/tabs',
+            '@base-ui/react/toast',
             '@base-ui/react/toggle',
             '@base-ui/react/toggle-group',
             '@base-ui/react/tooltip',
@@ -44,6 +45,7 @@ export default defineConfig({
             'react-i18next',
             'zod',
             '@tanstack/react-router',
+            '@tanstack/react-query',
         ],
     },
     server: {

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { useSidebarCollapsed } from '@/components/layout/use-sidebar-collapsed';
+import { EmptyState } from '@/components/shared/empty-state';
 import { IconButton } from '@/components/ui/icon-button';
 import { PlusIcon, UploadIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -38,7 +39,12 @@ export function CollectionsSidebar() {
                 </button>
             }
         >
-            <p className="text-fg-muted px-2 py-1 text-base">{t('collections.empty')}</p>
+            <EmptyState
+                size="compact"
+                icon={<UploadIcon />}
+                title={t('collections.empty')}
+                description={t('collections.emptyBody')}
+            />
         </Sidebar>
     );
 }

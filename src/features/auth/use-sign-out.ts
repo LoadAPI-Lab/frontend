@@ -12,6 +12,8 @@ export function useSignOut() {
     const navigate = useNavigate();
     return useMutation({
         mutationFn: () => apiFetch('/v1/auth/sign-out', { method: 'POST' }),
+        // leaving anyway, so no error toast
+        meta: { toastOnError: false },
         onSettled: async () => {
             queryClient.clear();
             await navigate({ to: '/login' });
