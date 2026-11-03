@@ -28,23 +28,24 @@ pnpm api:generate   # orval: spec → src/api/generated (Query hooks, Zod schema
 `src/api/fetcher.ts`:
 
 - Base path `config.API_BASE` (default `/api`, same origin behind the proxy; Vite proxies it in dev).
-- `credentials: 'same-origin'` (cookies are first-party; no CORS in any environment).
+- `credentials: 'include'` so the httpOnly refresh cookie travels; the access token goes in `Authorization: Bearer <token>`.
 - Sends `x-request-id` when we have one and puts the response `x-request-id` on errors to match backend logs.
-- Throws a typed `ApiError { status, message, requestId, body }`. Never resolves `undefined` on failure.
-- On 401: one silent refresh attempt (`POST /auth/refresh`), retry once, otherwise clear the session query and navigate to `/login?redirect=…`. Keep this logic only here.
+- Throws a typed `ApiError { status, message, requestId, body }`; `body.code` is core's stable error code (e.g. `TEST_RUN.CAPACITY_EXCEEDED`).
+- On 401: one shared in-flight `POST /v1/auth/refresh`, retry the request once, otherwise clear the session and go to `/login?redirect=…`. Keep this logic only here.
 
-## Auth (Google / GitHub OAuth)
+## Auth (Google / GitHub OAuth, backend users drop)
 
-Core does the OAuth dance; the browser never sees provider tokens or JWTs.
+Same flow as the backend dev's reference app (deView-inc/frontend `features/auth`):
 
-1. Login page shows "Continue with Google" / "Continue with GitHub" as plain links to `/api/v1/auth/google` and `/api/v1/auth/github` (full-page navigation, not fetch). Pass `?redirect=<path>` so core can return the user to where they were.
-2. Core handles the callback, sets signed httpOnly access/refresh cookies, and redirects to `FRONTEND_URL` + redirect path.
-3. The app reads the session with `GET /v1/auth/me` (query key `['session']`). `_app.tsx` `beforeLoad` calls `queryClient.ensureQueryData(sessionQuery)` and redirects to `/login` on 401.
-4. Logout: `POST /v1/auth/logout`, then `queryClient.clear()` and go to `/login`.
-5. Never store tokens in `localStorage`, `sessionStorage` or JS memory.
-6. CSRF: cookies are `SameSite=Lax` and requests are same-origin. Agree with backend on a header check (e.g. require `x-requested-with` or a CSRF token on mutating requests); the fetcher adds it.
-
-Endpoint names above are proposals until core implements auth; use the generated names once they exist.
+1. Login buttons come from `GET /v1/oauth/providers`; each is a full-page link to `/api/v1/oauth/{provider}`. Save the intended path in `sessionStorage` first.
+2. Core handles the provider callback and redirects to our `/auth/callback` with `provider`, a one-time `token` and `success` (or `success=false&message=…`). Confirm the exact path and params with the backend.
+3. The callback route calls `POST /v1/oauth/exchange { provider, token }` → `{ access }`. Never exchange the same token twice (React StrictMode runs effects twice).
+4. The access token lives **in memory only** (`src/features/auth/token-store.ts`); the refresh token is an httpOnly cookie set by core. On app start, call `POST /v1/auth/refresh` to restore the session after a reload.
+5. Current user: `GET /v1/users/me` (query key `['session']`). `_app.tsx` `beforeLoad` ensures it and redirects to `/login` on 401.
+6. Logout: `POST /v1/auth/sign-out`, clear the token and `queryClient.clear()`, go to `/login`.
+7. Later (P2): connected accounts via `GET /v1/oauth/providers/connected`, `POST /v1/oauth/{provider}/connect`, `DELETE /v1/oauth/{provider}/disconnect`.
+8. Never put tokens in `localStorage`, `sessionStorage`, URLs or logs.
+9. Until core ships auth, `pnpm dev:noauth` skips all of this (dev server only).
 
 ## TanStack Query rules
 
@@ -55,7 +56,7 @@ Endpoint names above are proposals until core implements auth; use the generated
 
 ## Test runs API (core, backend `dev` #12, `apps/core/src/test-runs`)
 
-All under `/v1/test-runs` (browser: `/api/v1/test-runs`). No auth guard yet (`ApiBaseController(..., hasJWTGuard)` is a stub).
+All under `/v1/test-runs` (browser: `/api/v1/test-runs`). No auth guard yet; after the users drop, runs belong to a user (list filtered, stop owner-only) and responses include `config`.
 
 | Call                            | Request                                                                                 | Response                                                                              |
 | ------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -93,15 +94,15 @@ Placeholders resolved by the worker: `{{$uuid}}`, `{{$randomInt}}`, `{{$randomEm
 
 ## Live metrics (SSE)
 
-`GET /api/v1/test-runs/:id/metrics` with `new EventSource(url, { withCredentials: true })`. Named events, so use `addEventListener`, not `onmessage`:
+`GET /api/v1/test-runs/:id/metrics`. `EventSource` cannot send the Bearer header, so read it with `fetch` (same fetcher headers, `Accept: text/event-stream`) and parse with `eventsource-parser`. Events are named:
 
 - `status`: `{ status, reason? }`. Always sent FIRST with the current status. For a finished run it is the only event and the stream ends.
 - `snapshot`: the worker's per-second `Snapshot` (`testId, timestamp, elapsedSeconds, targetRps, actualRps, targets[]`), validated with `snapshotSchema`.
-- The stream completes after a final `status` event. Close the `EventSource` then, or it auto-reconnects and receives the final status again.
+- The stream completes after a final `status` event. Stop reading then; do not reconnect after a final status.
 
 Rules:
 
-- `src/api/live/snapshot-stream.ts` owns the `EventSource`; `useLiveTest(runId)` reads a per-run store via `useSyncExternalStore` and returns `{ status, reason, snapshots, totals, latest }`.
+- `src/api/live/snapshot-stream.ts` owns the stream (fetch + parser, abort on unmount, refresh once on 401 then reconnect); `useLiveTest(runId)` reads a per-run store via `useSyncExternalStore` and returns `{ status, reason, snapshots, totals, latest }`.
 - Snapshots are per-second windows: sum counts client-side; never average percentiles. Overall percentiles come from `GET /v1/test-runs/:id` `result` after the run.
 - **No replay:** core buffers only from when you connect, so a reload mid-run starts with an empty chart. Show what you have plus totals; ask backend for a snapshots-so-far endpoint (plan risk).
 - Keep at most `durationSeconds + 5` points. Close on unmount.

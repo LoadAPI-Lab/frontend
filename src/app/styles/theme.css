@@ -52,7 +52,9 @@
     --text-2xs: 0.59375rem; /* 9.5 */
     --text-xs: 0.625rem; /* 10 */
     --text-sm: 0.65625rem; /* 10.5 */
+    --text-label: 0.6875rem; /* 11: field labels, chips, status words */
     --text-base: 0.71875rem; /* 11.5 */
+    --text-control: 0.75rem; /* 12: segmented items, button labels */
     --text-md: 0.78125rem; /* 12.5 */
     --text-lg: 0.875rem; /* 14 */
     --text-xl: 1.0625rem; /* 17 */
