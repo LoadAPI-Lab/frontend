@@ -22,6 +22,28 @@ export default defineConfig({
     resolve: {
         alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
+    // Pre-bundle deps that are only discovered while tests or pages load. Without this, Vite
+    // re-optimizes mid-run and reloads, which breaks the Storybook browser tests (and slows dev).
+    // Add each new Base UI part here when a component starts using it.
+    optimizeDeps: {
+        include: [
+            '@base-ui/react/field',
+            '@base-ui/react/input',
+            '@base-ui/react/number-field',
+            '@base-ui/react/select',
+            '@base-ui/react/tabs',
+            '@base-ui/react/toggle',
+            '@base-ui/react/toggle-group',
+            '@base-ui/react/tooltip',
+            'class-variance-authority',
+            'clsx',
+            'tailwind-merge',
+            'lucide-react',
+            'i18next',
+            'react-i18next',
+            'zod',
+        ],
+    },
     server: {
         port: 5173,
         strictPort: true,

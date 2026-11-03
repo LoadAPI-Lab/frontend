@@ -77,6 +77,7 @@ export const Tabs = { Root: BaseTabs.Root, List: BaseTabs.List, Tab, Panel: Base
 - Style Base UI state with its data attributes (`data-[selected]`, `data-[open]`, `data-[disabled]`), not extra React state.
 - Variants with `cva`; always accept and merge `className` last.
 - `cn()` uses a `tailwind-merge` configured with our custom sizes and radii (`src/lib/cn.ts`). When you add a font-size or radius token to `theme.css`, add its name there too, or `cn` drops it next to a colour class.
+- Using a new Base UI part (e.g. `@base-ui/react/dialog`)? Add it to `optimizeDeps.include` in `vite.config.ts`, or the Storybook browser tests reload mid-run and fail to import.
 - Form controls go inside `Field.Root` (label, description, error wiring). Config-bar fields use `NumberField.Group` + `NumberField.InlineLabel` (label inside the box, as in Figma).
 - `SegmentedControl` is a single-select ToggleGroup that never allows an empty selection; use Tabs when the choice swaps a panel of content.
 - Forward refs implicitly (React 19 `ref` prop); never drop props.

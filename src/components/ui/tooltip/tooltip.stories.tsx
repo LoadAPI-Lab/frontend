@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PanelLeftClose } from 'lucide-react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { IconButton } from '@/components/ui/icon-button';
 
@@ -38,6 +38,9 @@ export const OnIconButton: Story = {
         );
         const body = within(canvasElement.ownerDocument.body);
         // the button has no text of its own, so this finds the tooltip popup
-        await expect(await body.findByText('Collapse sidebar')).toBeVisible();
+        const popup = await body.findByText('Collapse sidebar');
+        await expect(popup).toHaveAttribute('data-open');
+        // it fades in from opacity 0, so wait for the transition to finish
+        await waitFor(() => expect(popup).toBeVisible());
     },
 };
