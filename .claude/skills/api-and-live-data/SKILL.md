@@ -1,6 +1,6 @@
 ---
 name: api-and-live-data
-description: How the LoadAPI frontend talks to the backend, covering same-origin /api proxying, Google/GitHub OAuth sessions, the orval-generated client from core's OpenAPI, TanStack Query patterns, the live test snapshot stream (SSE), worker data contracts and MSW mocks. Use when calling any endpoint, touching login or route guards, adding a query or mutation, showing live test metrics, or mocking API responses.
+description: How the LoadAPI frontend talks to the backend, covering same-origin proxying of core's /v1 paths, cookie-based Google/GitHub OAuth sessions, the orval-generated client from core's OpenAPI, TanStack Query patterns, the live test snapshot stream (SSE), worker data contracts and MSW mocks. Use when calling any endpoint, touching login or route guards, adding a query or mutation, showing live test metrics, or mocking API responses.
 ---
 
 # API and live data
@@ -10,7 +10,7 @@ description: How the LoadAPI frontend talks to the backend, covering same-origin
 The backend `core` app (NestJS + nestjs-zod) publishes an OpenAPI document via Swagger:
 
 - JSON: `http://localhost:3001/docs/json` locally (bootstrap default path `docs`; the backend README says `/api/v1/docs`, so confirm before relying on it)
-- API routes are URI-versioned: `/v1/...`. In the browser everything goes through the same-origin proxy: `/api/v1/...`
+- API routes are URI-versioned: `/v1/...`. The browser calls the **same paths on its own origin** (`/v1/...`); the dev server or reverse proxy forwards `/v1/*` to core unchanged. No `/api` prefix: core scopes its auth cookies to `/v1/auth` (refresh) and `/v1/oauth` (OAuth state), so a prefixed path would never carry them.
 
 We **generate** the client; we never hand-write request types that exist in the spec.
 
@@ -27,25 +27,23 @@ pnpm api:generate   # orval: spec → src/api/generated (Query hooks, Zod schema
 
 `src/api/fetcher.ts`:
 
-- Base path `config.API_BASE` (default `/api`, same origin behind the proxy; Vite proxies it in dev).
-- `credentials: 'include'` so the httpOnly refresh cookie travels; the access token goes in `Authorization: Bearer <token>`.
-- Sends `x-request-id` when we have one and puts the response `x-request-id` on errors to match backend logs.
-- Throws a typed `ApiError { status, message, requestId, body }`; `body.code` is core's stable error code (e.g. `TEST_RUN.CAPACITY_EXCEEDED`).
-- On 401: one shared in-flight `POST /v1/auth/refresh`, retry the request once, otherwise clear the session and go to `/login?redirect=…`. Keep this logic only here.
+- Base path `config.apiBase` (default empty = same origin). Paths are core's own: `apiFetch('/v1/users/me')`.
+- `credentials: 'same-origin'`: the session is two httpOnly cookies set by core. No tokens in JS, no `Authorization` header.
+- Puts the response `x-request-id` on errors to match backend logs. Throws a typed `ApiError { status, message, requestId, body }`; `errorCode(error)` reads core's stable `body.code` (e.g. `TEST_RUN.CAPACITY_EXCEEDED`).
+- On 401: one shared in-flight `POST /v1/auth/refresh` (`refreshSession()`), retry the request once, otherwise throw the 401. Never for `/v1/auth/*` or `/v1/oauth/*`. Keep this logic only here.
+- A 401 that survives the refresh reaches the `QueryCache` / `MutationCache` in `src/app/query-client.ts`: it drops the `['session']` query and calls `router.invalidate()`, so `_app`'s guard sends the user to `/login?redirect=<page>`. No toast for it.
 
-## Auth (Google / GitHub OAuth, backend users drop)
+## Auth (Google / GitHub OAuth, cookie session; core `apps/core/src/auth`)
 
-Same flow as the backend dev's reference app (deView-inc/frontend `features/auth`):
-
-1. Login buttons come from `GET /v1/oauth/providers`; each is a full-page link to `/api/v1/oauth/{provider}`. Save the intended path in `sessionStorage` first.
-2. Core handles the provider callback and redirects to our `/auth/callback` with `provider`, a one-time `token` and `success` (or `success=false&message=…`). Confirm the exact path and params with the backend.
-3. The callback route calls `POST /v1/oauth/exchange { provider, token }` → `{ access }`. Never exchange the same token twice (React StrictMode runs effects twice).
-4. The access token lives **in memory only** (`src/features/auth/token-store.ts`); the refresh token is an httpOnly cookie set by core. On app start, call `POST /v1/auth/refresh` to restore the session after a reload.
-5. Current user: `GET /v1/users/me` (query key `['session']`). `_app.tsx` `beforeLoad` ensures it and redirects to `/login` on 401.
-6. Logout: `POST /v1/auth/sign-out`, clear the token and `queryClient.clear()`, go to `/login`.
-7. Later (P2): connected accounts via `GET /v1/oauth/providers/connected`, `POST /v1/oauth/{provider}/connect`, `DELETE /v1/oauth/{provider}/disconnect`.
-8. Never put tokens in `localStorage`, `sessionStorage`, URLs or logs.
-9. Until core ships auth, `pnpm dev:noauth` skips all of this (dev server only).
+1. `/login` lists `GET /v1/oauth/providers` → `[{ id, name }]` (only providers configured on core). Each is a full-page link to `/v1/oauth/{id}`. On click, the page to return to is saved in `sessionStorage` (`post-login-redirect.ts`): core's flow takes no redirect parameter.
+2. Core does the provider round-trip, sets `access_token` (path `/`) and `refresh_token` (path `/v1/auth`) cookies and redirects to our **`/oauth/callback`**, or to `/oauth/callback?error=<code>` (`OAUTH.PROVIDER_DENIED`, `OAUTH.STATE_MISMATCH`, `OAUTH.EMAIL_NOT_VERIFIED`, …).
+3. `routes/oauth/callback.tsx` renders nothing: on `error` it redirects to `/login?error=<code>` (message via `oauthErrorKey`), otherwise it drops the cached session and redirects to the saved path. The target's guard loads the user.
+4. Current user: `GET /v1/users/me` → `{ id, email, name, avatarUrl?, createdAt }` (query key `['session']`). `_app.tsx` `beforeLoad` ensures it and redirects to `/login?redirect=…` on 401. After a reload with only the refresh cookie left, the fetcher refreshes transparently.
+5. Logout: `POST /v1/auth/logout` (204, clears both cookies), then `queryClient.clear()` and go to `/login`.
+6. CSRF: core's `OriginGuard` rejects non-GET requests whose `Origin` is not in `CORS_ALLOWED_ORIGINS` (403 `AUTH.ORIGIN_NOT_ALLOWED`). Local dev needs `http://localhost:5173` there.
+7. Mock mode: MSW can't answer page navigations, so provider links go straight to `/oauth/callback`.
+8. Later (P2): connected accounts, once core adds them.
+9. Never read, store or log cookies or tokens in JS.
 
 ## TanStack Query rules
 
@@ -57,7 +55,7 @@ Same flow as the backend dev's reference app (deView-inc/frontend `features/auth
 
 ## Test runs API (core, backend `dev` #12, `apps/core/src/test-runs`)
 
-All under `/v1/test-runs` (browser: `/api/v1/test-runs`). No auth guard yet; after the users drop, runs belong to a user (list filtered, stop owner-only) and responses include `config`.
+All under `/v1/test-runs` (same path in the browser). No auth guard yet; after the users drop, runs belong to a user (list filtered, stop owner-only) and responses include `config`.
 
 | Call                            | Request                                                                                 | Response                                                                              |
 | ------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -95,7 +93,7 @@ Placeholders resolved by the worker: `{{$uuid}}`, `{{$randomInt}}`, `{{$randomEm
 
 ## Live metrics (SSE)
 
-`GET /api/v1/test-runs/:id/metrics`. `EventSource` cannot send the Bearer header, so read it with `fetch` (same fetcher headers, `Accept: text/event-stream`) and parse with `eventsource-parser`. Events are named:
+`GET /v1/test-runs/:id/metrics`. Auth is the same-origin cookie, so a native `EventSource` works (`withCredentials` not needed on the same origin). Listen with `addEventListener('status' | 'snapshot', …)`. Events are named:
 
 - `status`: `{ status, reason? }`. Always sent FIRST with the current status. For a finished run it is the only event and the stream ends.
 - `snapshot`: the worker's per-second `Snapshot` (`testId, timestamp, elapsedSeconds, targetRps, actualRps, targets[]`), validated with `snapshotSchema`.
@@ -103,7 +101,7 @@ Placeholders resolved by the worker: `{{$uuid}}`, `{{$randomInt}}`, `{{$randomEm
 
 Rules:
 
-- `src/api/live/snapshot-stream.ts` owns the stream (fetch + parser, abort on unmount, refresh once on 401 then reconnect); `useLiveTest(runId)` reads a per-run store via `useSyncExternalStore` and returns `{ status, reason, snapshots, totals, latest }`.
+- `src/api/live/snapshot-stream.ts` owns the stream (`EventSource`, close on unmount; `EventSource` can't see status codes, so on `error` before any event, call `refreshSession()` once and reconnect, else treat the session as expired); `useLiveTest(runId)` reads a per-run store via `useSyncExternalStore` and returns `{ status, reason, snapshots, totals, latest }`.
 - Snapshots are per-second windows: sum counts client-side; never average percentiles. Overall percentiles come from `GET /v1/test-runs/:id` `result` after the run.
 - **No replay:** core buffers only from when you connect, so a reload mid-run starts with an empty chart. Show what you have plus totals; ask backend for a snapshots-so-far endpoint (plan risk).
 - Keep at most `durationSeconds + 5` points. Close on unmount.
@@ -113,6 +111,6 @@ Rules:
 ## Mocks (MSW)
 
 - `src/mocks/handlers.ts` combines orval-generated handlers with hand-written ones.
-- `src/mocks/live.ts` fakes `/api/v1/test-runs/:id/metrics` with MSW 3's `sse()` handler: a `status` RUNNING event, then a plausible `snapshot` every second ramping `actualRps` over `rampUpSeconds`, then a final `status` COMPLETED; `GET /v1/test-runs/:id` then returns a matching `result`.
+- `src/mocks/live.ts` fakes `/v1/test-runs/:id/metrics` with MSW 3's `sse()` handler: a `status` RUNNING event, then a plausible `snapshot` every second ramping `actualRps` over `rampUpSeconds`, then a final `status` COMPLETED; `GET /v1/test-runs/:id` then returns a matching `result`.
 - Mock mode (`pnpm dev:mock`, or `API_MOCKING=true` in the container) starts the MSW service worker before rendering. Tests use the same handlers through `msw/node`.
 - When the real backend and a mock disagree, the backend wins: update the snapshot spec and regenerate.

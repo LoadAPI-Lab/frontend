@@ -14,10 +14,10 @@ set -eu
     printf '};\n'
 } > /tmp/env.js
 
-# 2. optional /api proxy
+# 2. optional /v1 proxy to core
 if [ -n "${API_UPSTREAM:-}" ]; then
     envsubst '${API_UPSTREAM} ${NGINX_RESOLVER}' < /etc/nginx/snippets/api.conf.template > /tmp/nginx-api.conf
-    echo "loadapi: proxying /api -> ${API_UPSTREAM}"
+    echo "loadapi: proxying /v1 -> ${API_UPSTREAM}"
 else
     : > /tmp/nginx-api.conf
 fi

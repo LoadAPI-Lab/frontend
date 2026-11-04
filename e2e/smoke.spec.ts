@@ -46,6 +46,21 @@ test('login page offers both OAuth providers', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'Continue with GitHub' })).toBeVisible();
 });
 
+test('signing in returns to the page the user asked for', async ({ page }) => {
+    // with mocking on, the provider link goes straight to /oauth/callback
+    await page.goto('/login?redirect=%2Fhistory');
+    await page.getByRole('link', { name: 'Continue with GitHub' }).click();
+    await expect(page).toHaveURL(/\/history$/);
+    await expect(page.getByRole('heading', { name: 'History', level: 1 })).toBeVisible();
+});
+
+test('a failed sign-in comes back to login with the reason', async ({ page }) => {
+    await page.goto('/oauth/callback?error=OAUTH.PROVIDER_DENIED');
+    await expect(page).toHaveURL(/\/login\?/);
+    await expect(page.getByRole('alert')).toHaveText('Sign-in was cancelled at the provider.');
+    await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
+});
+
 test('shows the desktop-only notice on small screens', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/login');

@@ -20,8 +20,19 @@
     "auth": {
         "title": "Sign in to routelab",
         "subtitle": "Design, test and load-test your APIs.",
-        "continueWithGoogle": "Continue with Google",
-        "continueWithGithub": "Continue with GitHub"
+        "continueWith": "Continue with {{provider}}",
+        "loadingProviders": "Loading sign-in options",
+        "providersFailed": "Couldn't load sign-in options",
+        "noProviders": "No sign-in options are set up yet.",
+        "errors": {
+            "providerUnavailable": "That sign-in option isn't available. Pick another one.",
+            "stateMismatch": "The sign-in took too long or was started in another tab. Try again.",
+            "denied": "Sign-in was cancelled at the provider.",
+            "profileInvalid": "The provider didn't share your name and email. Allow access, then try again.",
+            "emailNotVerified": "Your account has no verified email. Verify it with the provider, then try again.",
+            "sessionInvalid": "Your session has expired. Sign in again.",
+            "failed": "Sign-in failed. Try again."
+        }
     },
     "desktopOnly": {
         "title": "Desktop only",

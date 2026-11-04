@@ -21,8 +21,8 @@ COPY --chmod=0755 docker/entrypoint.sh /docker-entrypoint.d/40-loadapi.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Runtime config (all optional):
-#   API_UPSTREAM     e.g. http://core:3000 -> this container proxies /api itself.
-#                    Leave empty when a shared reverse proxy already routes /api to core.
+#   API_UPSTREAM     e.g. http://core:3000 -> this container proxies /v1 itself.
+#                    Leave empty when a shared reverse proxy already routes /v1 to core.
 #   API_MOCKING      true -> run on MSW mocks, no backend needed
 #   FEATURE_BATCH, FEATURE_ROUND_ROBIN
 ENV API_UPSTREAM="" \

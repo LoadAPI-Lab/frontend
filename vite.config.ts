@@ -6,8 +6,10 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Core runs on :3001 locally. In every environment the browser calls /api on its own origin;
-// here the dev server forwards it, in production the reverse proxy does.
+// Core runs on :3001 locally. In every environment the browser calls core's own paths (/v1/...)
+// on its own origin; here the dev server forwards them, in production the reverse proxy does.
+// No /api prefix on purpose: core scopes its auth cookies to /v1/auth and /v1/oauth, so the
+// browser must see the same paths or it never sends the refresh and OAuth state cookies.
 const apiTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:3001';
 
 export default defineConfig({
@@ -52,10 +54,9 @@ export default defineConfig({
         port: 5173,
         strictPort: true,
         proxy: {
-            '/api': {
+            '/v1': {
                 target: apiTarget,
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, ''),
             },
         },
     },

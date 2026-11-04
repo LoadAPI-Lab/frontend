@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { cn } from '@/lib/cn';
 
 export interface UserAvatarProps {
@@ -18,11 +20,17 @@ const initials = (name: string) =>
 
 /** Figma node 5:357: 30px, 7px radius, lime initials on lime 15%. */
 export function UserAvatar({ name, imageUrl, className, decorative = true }: UserAvatarProps) {
-    if (imageUrl) {
+    // the URL that failed to load, so a new URL gets a fresh try
+    const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+    if (imageUrl && imageUrl !== failedUrl) {
         return (
             <img
                 src={imageUrl}
                 alt=""
+                // Google's avatar host answers 403 to requests with a third-party referrer
+                referrerPolicy="no-referrer"
+                onError={() => setFailedUrl(imageUrl)}
                 className={cn('size-7.5 rounded-item object-cover', className)}
             />
         );

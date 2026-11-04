@@ -1,8 +1,8 @@
 # Only rendered when API_UPSTREAM is set (local / standalone runs).
-location /api/ {
+# Same paths as core (no /api prefix): core scopes its auth cookies to /v1/auth and /v1/oauth.
+location /v1/ {
     resolver ${NGINX_RESOLVER} valid=30s ipv6=off;
     set $api_upstream ${API_UPSTREAM};
-    rewrite ^/api/(.*)$ /$1 break;
     proxy_pass $api_upstream;
 
     proxy_http_version 1.1;

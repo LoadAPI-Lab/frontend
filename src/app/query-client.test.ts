@@ -13,7 +13,7 @@ describe('query client', () => {
     it('toasts core’s message when a mutation fails', async () => {
         const add = vi.spyOn(toastManager, 'add');
         server.use(
-            http.post('*/api/v1/test-runs', () =>
+            http.post('*/v1/test-runs', () =>
                 HttpResponse.json(
                     { message: 'Too many test runs are in progress, try again later' },
                     { status: 503 },
@@ -40,20 +40,60 @@ describe('query client', () => {
 
     it('stays quiet for mutations that opt out', async () => {
         const add = vi.spyOn(toastManager, 'add');
-        server.use(
-            http.post('*/api/v1/auth/sign-out', () => new HttpResponse(null, { status: 500 })),
-        );
+        server.use(http.post('*/v1/auth/logout', () => new HttpResponse(null, { status: 500 })));
         const client = createQueryClient();
         await expect(
             client
                 .getMutationCache()
                 .build(client, {
                     mutationFn: (body: string) =>
-                        apiFetch('/v1/auth/sign-out', { method: 'POST', body }),
+                        apiFetch('/v1/auth/logout', { method: 'POST', body }),
                     meta: { toastOnError: false },
                 })
                 .execute('{}'),
         ).rejects.toBeInstanceOf(ApiError);
         expect(add).not.toHaveBeenCalled();
+    });
+
+    it('expires the session instead of toasting when a request is still 401', async () => {
+        const add = vi.spyOn(toastManager, 'add');
+        const onSessionExpired = vi.fn<() => void>();
+        server.use(
+            http.post('*/v1/collections', () =>
+                HttpResponse.json({ code: 'AUTH.UNAUTHENTICATED' }, { status: 401 }),
+            ),
+            http.post('*/v1/auth/refresh', () => new HttpResponse(null, { status: 401 })),
+        );
+        const client = createQueryClient({ onSessionExpired });
+        client.setQueryData(['session'], { id: 'u1' });
+        await expect(
+            client
+                .getMutationCache()
+                .build(client, {
+                    mutationFn: (body: string) =>
+                        apiFetch('/v1/collections', { method: 'POST', body }),
+                })
+                .execute('{}'),
+        ).rejects.toBeInstanceOf(ApiError);
+        expect(onSessionExpired).toHaveBeenCalledOnce();
+        expect(client.getQueryData(['session'])).toBeUndefined();
+        expect(add).not.toHaveBeenCalled();
+    });
+
+    it('leaves the session query’s own 401 to the route guard', async () => {
+        const onSessionExpired = vi.fn<() => void>();
+        server.use(
+            http.get('*/v1/users/me', () => new HttpResponse(null, { status: 401 })),
+            http.post('*/v1/auth/refresh', () => new HttpResponse(null, { status: 401 })),
+        );
+        const client = createQueryClient({ onSessionExpired });
+        await expect(
+            client.fetchQuery({
+                queryKey: ['session'],
+                queryFn: () => apiFetch('/v1/users/me'),
+                retry: false,
+            }),
+        ).rejects.toBeInstanceOf(ApiError);
+        expect(onSessionExpired).not.toHaveBeenCalled();
     });
 });

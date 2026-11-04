@@ -33,26 +33,56 @@ function messageFrom(body: unknown, fallback: string): string {
     return fallback || 'Request failed';
 }
 
-/**
- * The single place that talks HTTP to core. Paths are relative to core, e.g. `/v1/auth/me`;
- * the browser always calls the same origin (`/api/...`), which the dev server or reverse proxy forwards.
- */
-export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
+// Auth endpoints never trigger a refresh: they are the refresh, or they run without a session.
+const NO_REFRESH_PREFIXES = ['/v1/auth/', '/v1/oauth/'];
+
+function buildRequest(path: string, init: RequestInit): [URL, RequestInit] {
     const headers = new Headers(init.headers);
     headers.set('accept', 'application/json');
-    // lets core tell our XHR calls from cross-site form posts (CSRF check, agree with backend)
+    // lets core tell our XHR calls from cross-site form posts
     headers.set('x-requested-with', 'XMLHttpRequest');
     if (init.body && !(init.body instanceof FormData) && !headers.has('content-type')) {
         headers.set('content-type', 'application/json');
     }
-
     // absolute URL on the current origin (also what Node's fetch needs in tests)
     const url = new URL(`${config.apiBase}${path}`, window.location.origin);
-    const response = await fetch(url, {
-        ...init,
-        headers,
-        credentials: 'same-origin',
-    });
+    // the session lives in httpOnly cookies set by core, so same-origin credentials is all we need
+    return [url, { ...init, headers, credentials: 'same-origin' }];
+}
+
+let refreshing: Promise<boolean> | null = null;
+
+/**
+ * One shared `POST /v1/auth/refresh` for every request that hit a 401 at the same time.
+ * Core rotates both cookies on success (204) and clears them on failure.
+ */
+export function refreshSession(): Promise<boolean> {
+    refreshing ??= fetch(...buildRequest('/v1/auth/refresh', { method: 'POST' }))
+        .then(
+            (response) => response.ok,
+            () => false,
+        )
+        .finally(() => {
+            refreshing = null;
+        });
+    return refreshing;
+}
+
+/**
+ * The single place that talks HTTP to core. Paths are core's own, e.g. `/v1/users/me`;
+ * the browser calls them on the same origin, which the dev server or reverse proxy forwards.
+ * A 401 refreshes the session once and retries; if that fails the 401 is thrown.
+ */
+export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
+    let response = await fetch(...buildRequest(path, init));
+
+    if (
+        response.status === 401 &&
+        !NO_REFRESH_PREFIXES.some((prefix) => path.startsWith(prefix)) &&
+        (await refreshSession())
+    ) {
+        response = await fetch(...buildRequest(path, init));
+    }
 
     const body = await parseBody(response);
     if (!response.ok) {
@@ -63,9 +93,26 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
             body,
         );
     }
-    // the fetch boundary: callers validate with Zod or generated types
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- callers validate with zod or generated types
     return body as T;
+}
+
+/** Core's stable error code (e.g. `AUTH.UNAUTHENTICATED`), when the body has one. */
+export function errorCode(error: unknown): string | undefined {
+    if (
+        error instanceof ApiError &&
+        error.body &&
+        typeof error.body === 'object' &&
+        'code' in error.body &&
+        typeof error.body.code === 'string'
+    ) {
+        return error.body.code;
+    }
+    return undefined;
+}
+
+export function isUnauthorized(error: unknown): error is ApiError {
+    return error instanceof ApiError && error.status === 401;
 }
 
 /** orval mutator (see orval.config.ts). */

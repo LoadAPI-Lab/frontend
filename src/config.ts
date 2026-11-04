@@ -7,7 +7,8 @@ declare global {
 }
 
 const schema = z.object({
-    API_BASE: z.string().min(1).default('/api'),
+    // empty = same origin: the browser calls core's own paths (`/v1/...`) on this host
+    API_BASE: z.string().default(''),
     API_MOCKING: z.stringbool().default(false),
     FEATURE_BATCH: z.stringbool().default(false),
     FEATURE_ROUND_ROBIN: z.stringbool().default(false),
@@ -27,12 +28,6 @@ const env = schema.parse(raw);
 export const config = {
     apiBase: env.API_BASE.replace(/\/$/, ''),
     apiMocking: env.API_MOCKING,
-    /**
-     * Dev-only: skip login while core has no auth endpoints (`pnpm dev:noauth`).
-     * Build-time only and gated on `import.meta.env.DEV`, so it can never be switched on
-     * in a production build or through the container's runtime config. Remove once BE-02 lands.
-     */
-    authBypass: import.meta.env.DEV && import.meta.env.VITE_AUTH_BYPASS === 'true',
     features: {
         batch: env.FEATURE_BATCH,
         roundRobin: env.FEATURE_ROUND_ROBIN,

@@ -4,9 +4,18 @@ import { z } from 'zod';
 import { LoginPage } from '@/features/auth';
 
 export const Route = createFileRoute('/login')({
-    validateSearch: z.object({ redirect: z.string().optional() }),
+    validateSearch: z.object({
+        redirect: z.string().optional(),
+        // a failed sign-in, forwarded by /oauth/callback
+        error: z.string().optional(),
+    }),
     component: function LoginRoute() {
-        const { redirect } = Route.useSearch();
-        return <LoginPage redirect={redirect} />;
+        const { redirect, error } = Route.useSearch();
+        return (
+            <LoginPage
+                redirect={redirect}
+                error={error}
+            />
+        );
     },
 });

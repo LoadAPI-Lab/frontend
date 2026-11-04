@@ -1,6 +1,6 @@
 # LoadAPI frontend
 
-React SPA for LoadAPI (routelab). Backend: LoadAPI-Lab/backend (NestJS core + Go worker); the browser calls core on the same origin under `/api`.
+React SPA for LoadAPI (routelab). Backend: LoadAPI-Lab/backend (NestJS core + Go worker); the browser calls core's `/v1/*` paths on the same origin (proxied unchanged), with cookie-based OAuth sessions.
 
 Read the project skills before working: `.claude/skills/frontend-conventions`, `ui-components`, `api-and-live-data`, `testing`.
 
