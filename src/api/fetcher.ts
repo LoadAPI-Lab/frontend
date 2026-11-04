@@ -33,29 +33,21 @@ function messageFrom(body: unknown, fallback: string): string {
     return fallback || 'Request failed';
 }
 
-// Auth endpoints never trigger a refresh: they are the refresh, or they run without a session.
 const NO_REFRESH_PREFIXES = ['/v1/auth/', '/v1/oauth/'];
 
 function buildRequest(path: string, init: RequestInit): [URL, RequestInit] {
     const headers = new Headers(init.headers);
     headers.set('accept', 'application/json');
-    // lets core tell our XHR calls from cross-site form posts
     headers.set('x-requested-with', 'XMLHttpRequest');
     if (init.body && !(init.body instanceof FormData) && !headers.has('content-type')) {
         headers.set('content-type', 'application/json');
     }
-    // absolute URL on the current origin (also what Node's fetch needs in tests)
     const url = new URL(`${config.apiBase}${path}`, window.location.origin);
-    // the session lives in httpOnly cookies set by core, so same-origin credentials is all we need
     return [url, { ...init, headers, credentials: 'same-origin' }];
 }
 
 let refreshing: Promise<boolean> | null = null;
 
-/**
- * One shared `POST /v1/auth/refresh` for every request that hit a 401 at the same time.
- * Core rotates both cookies on success (204) and clears them on failure.
- */
 export function refreshSession(): Promise<boolean> {
     refreshing ??= fetch(...buildRequest('/v1/auth/refresh', { method: 'POST' }))
         .then(
@@ -68,11 +60,6 @@ export function refreshSession(): Promise<boolean> {
     return refreshing;
 }
 
-/**
- * The single place that talks HTTP to core. Paths are core's own, e.g. `/v1/users/me`;
- * the browser calls them on the same origin, which the dev server or reverse proxy forwards.
- * A 401 refreshes the session once and retries; if that fails the 401 is thrown.
- */
 export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
     let response = await fetch(...buildRequest(path, init));
 
@@ -93,11 +80,10 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
             body,
         );
     }
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- callers validate with zod or generated types
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return body as T;
 }
 
-/** Core's stable error code (e.g. `AUTH.UNAUTHENTICATED`), when the body has one. */
 export function errorCode(error: unknown): string | undefined {
     if (
         error instanceof ApiError &&
@@ -115,7 +101,6 @@ export function isUnauthorized(error: unknown): error is ApiError {
     return error instanceof ApiError && error.status === 401;
 }
 
-/** orval mutator (see orval.config.ts). */
 export function orvalFetch<T>(url: string, init?: RequestInit): Promise<T> {
     return apiFetch<T>(url, init);
 }

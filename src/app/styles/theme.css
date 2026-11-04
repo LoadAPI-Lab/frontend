@@ -1,44 +1,35 @@
 @import 'tailwindcss';
 
-/*
- * Design tokens from Figma variables: "LoadAPI (Copy)", frame TESTS PAGE - Single (node 5:293).
- * Figma variable names are noted per token. Change values here, never in components.
- */
 @theme {
-    /* surfaces */
-    --color-bg: #0e0e0e; /* color/grey/5: page background */
-    --color-surface-1: #141414; /* color/grey/8 2: cards (stat, request, latency, status, recent runs) */
-    --color-surface-input: #151515; /* color/grey/8: inputs, config fields, small sidebar buttons */
-    --color-surface-raised: #171717; /* color/grey/9: active top-bar tab */
-    --color-surface-selected: #1a1a1a; /* color/grey/10: selected sidebar route */
-    --color-surface-code: #121212; /* color/grey/7: request body editor */
-    --color-surface-2: #1f1f1f; /* color/grey/12: method chips, tabs, badges */
-    --color-track: #232323; /* color/grey/14: progress track, editor border */
+    --color-bg: #0e0e0e;
+    --color-surface-1: #141414;
+    --color-surface-input: #151515;
+    --color-surface-raised: #171717;
+    --color-surface-selected: #1a1a1a;
+    --color-surface-code: #121212;
+    --color-surface-2: #1f1f1f;
+    --color-track: #232323;
 
-    /* borders */
-    --color-border: #1f1f1f; /* color/grey/12: card borders */
-    --color-border-strong: #262626; /* color/grey/15: inputs, buttons, tabs */
-    --color-border-subtle: #1d1d1d; /* color/grey/11: top bar bottom border */
-    --color-divider: #1a1a1a; /* color/grey/10: sidebar borders */
-    --color-border-dashed: #2a2a2a; /* color/grey/16: dashed import button */
+    --color-border: #1f1f1f;
+    --color-border-strong: #262626;
+    --color-border-subtle: #1d1d1d;
+    --color-divider: #1a1a1a;
+    --color-border-dashed: #2a2a2a;
 
-    /* text, strongest to faintest */
-    --color-fg: #f4f3ee; /* color/grey/95: primary text and numbers */
-    --color-fg-secondary: #a6a5a0; /* color/grey/64: route paths */
-    --color-fg-muted: #8a8a86; /* color/grey/53: nav, folders, timer */
-    --color-fg-subtle: #6b6b67; /* color/grey/41: labels, units, captions (3.4:1 on cards: large or non-essential text only) */
-    --color-fg-faint: #55554f; /* color/grey/32: counts */
-    --color-fg-disabled: #3d3d3a; /* color/grey/23: line numbers, inactive dots */
-    --color-fg-badge: #c6c5bf; /* color/grey/76: collection initials */
+    --color-fg: #f4f3ee;
+    --color-fg-secondary: #a6a5a0;
+    --color-fg-muted: #8a8a86;
+    --color-fg-subtle: #6b6b67;
+    --color-fg-faint: #55554f;
+    --color-fg-disabled: #3d3d3a;
+    --color-fg-badge: #c6c5bf;
 
-    /* accent and status */
-    --color-accent: #c6f432; /* color/yellow/58 (Starship) */
-    --color-accent-fg: #0e0e0e; /* text on accent */
-    --color-info: #86a8f5; /* color/azure/74 (Jordy Blue): GET, p95, 4xx */
-    --color-warning: #e0b54a; /* color/orange/58 (Anzac): PATCH */
-    --color-danger: #f07b6b; /* color/red/68 (Apricot): DELETE, errors, 5xx, Stop test */
+    --color-accent: #c6f432;
+    --color-accent-fg: #0e0e0e;
+    --color-info: #86a8f5;
+    --color-warning: #e0b54a;
+    --color-danger: #f07b6b;
 
-    /* HTTP methods (PUT is not in the design yet: placeholder) */
     --color-method-get: #86a8f5;
     --color-method-post: #c6f432;
     --color-method-put: #7fd6c2;
@@ -46,34 +37,30 @@
     --color-method-delete: #f07b6b;
     --color-method-other: #8a8a86;
 
-    /* type: font family/Font 1 and Font 2 */
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
 
-    /* font size/* (px) */
-    --text-2xs: 0.59375rem; /* 9.5 */
-    --text-xs: 0.625rem; /* 10 */
-    --text-sm: 0.65625rem; /* 10.5 */
-    --text-label: 0.6875rem; /* 11: field labels, chips, status words */
-    --text-base: 0.71875rem; /* 11.5 */
-    --text-control: 0.75rem; /* 12: segmented items, button labels */
-    --text-md: 0.78125rem; /* 12.5 */
-    --text-lg: 0.875rem; /* 14 */
-    --text-xl: 1.0625rem; /* 17 */
-    --text-2xl: 1.3125rem; /* 21: stat values */
+    --text-2xs: 0.59375rem;
+    --text-xs: 0.625rem;
+    --text-sm: 0.65625rem;
+    --text-label: 0.6875rem;
+    --text-base: 0.71875rem;
+    --text-control: 0.75rem;
+    --text-md: 0.78125rem;
+    --text-lg: 0.875rem;
+    --text-xl: 1.0625rem;
+    --text-2xl: 1.3125rem;
 
-    --tracking-tight: -0.0125rem; /* letter spacing/-0_2 */
-    --tracking-label: 0.05rem; /* letter spacing/0_8, uppercase section labels */
+    --tracking-tight: -0.0125rem;
+    --tracking-label: 0.05rem;
 
-    /* corner radius/* */
-    --radius-xs: 3px; /* dots, small marks */
-    --radius-sm: 5px; /* mono badges */
-    --radius-md: 6px; /* small buttons, chips, logo */
-    --radius-item: 7px; /* avatar, sidebar rows */
-    --radius-lg: 8px; /* inputs, config fields, tabs, Stop test */
-    --radius-editor: 9px; /* body editor */
-    --radius-card: 12px; /* cards */
+    --radius-xs: 3px;
+    --radius-sm: 5px;
+    --radius-md: 6px;
+    --radius-item: 7px;
+    --radius-lg: 8px;
+    --radius-editor: 9px;
+    --radius-card: 12px;
 
-    /* desktop only: below this width the app shows a notice */
     --breakpoint-desktop: 80rem;
 }

@@ -8,13 +8,10 @@ export const router = createRouter({
     routeTree,
     context: { queryClient },
     defaultPreload: 'intent',
-    // let TanStack Query decide freshness
     defaultPreloadStaleTime: 0,
     scrollRestoration: true,
 });
 
-// Session gone mid-use: re-run the guards. _app's guard refetches the user, gets the 401 and
-// redirects to /login?redirect=<current page>.
 setSessionExpiredHandler(() => {
     void router.invalidate();
 });

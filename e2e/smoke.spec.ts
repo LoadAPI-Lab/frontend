@@ -1,8 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-// Runs against `pnpm build:mock` (MSW answers the API), see playwright.config.ts.
-
 test('signed-in user lands on stress tests with the app shell', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/tests$/);
@@ -47,7 +45,6 @@ test('login page offers both OAuth providers', async ({ page }) => {
 });
 
 test('signing in returns to the page the user asked for', async ({ page }) => {
-    // with mocking on, the provider link goes straight to /oauth/callback
     await page.goto('/login?redirect=%2Fhistory');
     await page.getByRole('link', { name: 'Continue with GitHub' }).click();
     await expect(page).toHaveURL(/\/history$/);

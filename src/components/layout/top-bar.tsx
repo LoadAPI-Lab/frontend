@@ -4,14 +4,12 @@ import { useTranslation } from 'react-i18next';
 
 import { LogoMark } from '@/components/ui/icons';
 
-// Figma node 5:308: 56px bar, logo + "routelab", nav pills, account on the right.
 const navLink =
     'text-md flex h-8.5 items-center rounded-lg border border-transparent px-3.5 font-medium text-fg-muted transition-colors outline-none ' +
     'hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 ' +
     'data-[status=active]:border-border-strong data-[status=active]:bg-surface-raised data-[status=active]:font-semibold data-[status=active]:text-fg';
 
 export interface TopBarProps {
-    /** Right-hand slot, e.g. the account menu. */
     actions?: ReactNode;
 }
 

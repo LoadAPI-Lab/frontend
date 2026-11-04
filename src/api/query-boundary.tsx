@@ -9,17 +9,11 @@ import { ApiError } from './fetcher';
 
 export interface QueryBoundaryProps {
     children: ReactNode;
-    /** Shown while suspense queries load. Defaults to three skeleton lines. */
     loading?: ReactNode;
-    /** Accessible name for the loading region, e.g. "Loading collections". */
     loadingLabel?: string;
     size?: 'default' | 'compact';
 }
 
-/**
- * Wrap any subtree that uses `useSuspenseQuery`: shows `loading` while it loads and an
- * ErrorState with the request ID and a retry (which refetches the failed queries) if it fails.
- */
 export function QueryBoundary({
     children,
     loading,

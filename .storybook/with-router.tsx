@@ -8,10 +8,6 @@ import {
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-/**
- * Wraps a story in a memory router so <Link> works. Pick the current URL with
- * `parameters: { route: '/history' }` (default `/tests`).
- */
 export const withRouter: Decorator = (Story, context) => {
     const { route } = context.parameters;
     const initial = typeof route === 'string' ? route : '/tests';

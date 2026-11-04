@@ -6,11 +6,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 
 export interface ErrorStateProps {
-    /** Defaults to "Couldn't load this" */
     title?: ReactNode;
-    /** Usually the error message from core */
     message?: ReactNode;
-    /** Core's x-request-id, shown so support can find the request in the logs */
     requestId?: string | null;
     onRetry?: () => void;
     retrying?: boolean;
@@ -18,7 +15,6 @@ export interface ErrorStateProps {
     className?: string;
 }
 
-/** Tier 2: a section that failed to load, with retry. For whole pages use layout/StatusScreen. */
 export function ErrorState({
     title,
     message,

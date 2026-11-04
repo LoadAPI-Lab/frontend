@@ -1,7 +1,6 @@
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
 export type HttpMethod = (typeof HTTP_METHODS)[number];
 
-/** Tailwind text/background classes per method. The only place method colors are defined. */
 const methodClasses: Record<HttpMethod, string> = {
     GET: 'text-method-get',
     POST: 'text-method-post',

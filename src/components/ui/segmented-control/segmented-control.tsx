@@ -4,14 +4,9 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1: the "Single / Batch / Round-robin" switch (Figma node 5:503).
-// Base UI ToggleGroup in single mode; Root takes a plain string value and never lets the
-// user press the active item off, so exactly one item is always selected.
-
 export interface SegmentedControlRootProps<Value extends string> {
     value: Value;
     onValueChange: (value: Value) => void;
-    /** Accessible name of the group, e.g. "Test mode". */
     'aria-label': string;
     disabled?: boolean;
     className?: string;

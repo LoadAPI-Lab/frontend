@@ -6,16 +6,12 @@ import { ChevronLeftIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 
-// Figma nodes 5:365 (frame), 5:366 (header), 5:494 (footer). 256px wide; collapses to a 48px rail.
-
 export interface SidebarProps {
     id?: string;
     title: string;
     collapsed: boolean;
     onCollapsedChange: (collapsed: boolean) => void;
-    /** Header buttons next to the title (e.g. import). Hidden when collapsed. */
     actions?: ReactNode;
-    /** Pinned to the bottom (e.g. the dashed import button). Hidden when collapsed. */
     footer?: ReactNode;
     children: ReactNode;
 }
@@ -39,7 +35,6 @@ export function Sidebar({
                     <IconButton
                         aria-label={toggleLabel}
                         aria-expanded={!collapsed}
-                        // only reference the content while it is rendered
                         aria-controls={collapsed ? undefined : id}
                         onClick={() => onCollapsedChange(!collapsed)}
                     >

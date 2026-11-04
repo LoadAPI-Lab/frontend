@@ -12,7 +12,7 @@ export const buttonVariants = cva(
                 primary: 'bg-accent text-accent-fg hover:bg-accent/90',
                 secondary: 'border border-border bg-surface-1 text-fg hover:bg-surface-2',
                 ghost: 'text-fg-muted hover:bg-surface-2 hover:text-fg',
-                danger: 'border border-danger/35 bg-danger/10 font-bold text-danger hover:bg-danger/15', // Figma "Stop test"
+                danger: 'border border-danger/35 bg-danger/10 font-bold text-danger hover:bg-danger/15',
             },
             size: {
                 sm: 'h-7 px-2.5 text-xs',

@@ -15,9 +15,7 @@ import { savePostLoginRedirect } from './post-login-redirect';
 import { oauthProvidersQuery, oauthStartUrl } from './providers';
 
 export interface LoginPageProps {
-    /** Same-app path to return to after signing in */
     redirect?: string;
-    /** Error code core sent back from a failed sign-in */
     error?: string;
 }
 

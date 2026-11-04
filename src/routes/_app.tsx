@@ -6,7 +6,6 @@ import { AppShell } from '@/components/layout/app-shell';
 import { sessionQuery, useSignOut } from '@/features/auth';
 import { CollectionsSidebar } from '@/features/collections';
 
-// Pathless layout for every signed-in page: auth guard + shell.
 export const Route = createFileRoute('/_app')({
     beforeLoad: async ({ context, location }) => {
         try {

@@ -5,13 +5,10 @@ import { LogoMark } from '@/components/ui/icons';
 export interface StatusScreenProps {
     title: ReactNode;
     body?: ReactNode;
-    /** e.g. a retry button or a link home */
     action?: ReactNode;
-    /** Shown small under the body so support can match backend logs. */
     requestId?: string | null;
 }
 
-/** Full-page state for errors and not-found, in the routelab style. */
 export function StatusScreen({ title, body, action, requestId }: StatusScreenProps) {
     return (
         <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">

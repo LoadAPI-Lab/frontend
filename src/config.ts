@@ -7,14 +7,12 @@ declare global {
 }
 
 const schema = z.object({
-    // empty = same origin: the browser calls core's own paths (`/v1/...`) on this host
     API_BASE: z.string().default(''),
     API_MOCKING: z.stringbool().default(false),
     FEATURE_BATCH: z.stringbool().default(false),
     FEATURE_ROUND_ROBIN: z.stringbool().default(false),
 });
 
-// Runtime values (public/env.js, written by the container) win over build-time VITE_* values.
 const raw = {
     API_BASE: import.meta.env.VITE_API_BASE,
     API_MOCKING: import.meta.env.VITE_API_MOCKING,

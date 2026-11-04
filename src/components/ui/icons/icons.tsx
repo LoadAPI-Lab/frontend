@@ -1,11 +1,7 @@
 import type { SVGProps } from 'react';
 
-// Exact icons from the Figma file (LoadAPI copy, frame 5:293), recoloured with currentColor.
-// Keep width/height: they are the design's sizes. Decorative by default (aria-hidden).
-
 type IconProps = SVGProps<SVGSVGElement>;
 
-/** routelab logo mark (lightning), 13px. Sits on the lime 24px tile. */
 export function LogoMark(props: IconProps) {
     return (
         <svg
@@ -44,7 +40,6 @@ export function PlusIcon(props: IconProps) {
     );
 }
 
-/** Collapse sidebar. Mirror it (`className="-scale-x-100"`) for expand. */
 export function ChevronLeftIcon(props: IconProps) {
     return (
         <svg

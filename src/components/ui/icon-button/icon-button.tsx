@@ -9,7 +9,6 @@ const iconButton = cva(
     {
         variants: {
             variant: {
-                // Figma "Collapse sidebar" / "+" buttons (node 5:379)
                 secondary:
                     'border-border-strong bg-surface-input text-fg-muted hover:text-fg hover:bg-surface-2',
                 ghost: 'border-transparent text-fg-muted hover:text-fg hover:bg-surface-2',
@@ -23,7 +22,6 @@ const iconButton = cva(
     },
 );
 
-/** Icon-only button. `aria-label` is required: it is the button's only accessible name. */
 export type IconButtonProps = Omit<ComponentProps<'button'>, 'aria-label'> &
     VariantProps<typeof iconButton> & { 'aria-label': string };
 

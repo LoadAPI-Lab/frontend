@@ -37,10 +37,8 @@ export const OnIconButton: Story = {
             within(canvasElement).getByRole('button', { name: 'Collapse sidebar' }),
         );
         const body = within(canvasElement.ownerDocument.body);
-        // the button has no text of its own, so this finds the tooltip popup
         const popup = await body.findByText('Collapse sidebar');
         await expect(popup).toHaveAttribute('data-open');
-        // it fades in from opacity 0, so wait for the transition to finish
         await waitFor(() => expect(popup).toBeVisible());
     },
 };

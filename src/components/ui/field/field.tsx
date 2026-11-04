@@ -2,9 +2,6 @@ import { Field as BaseField } from '@base-ui/react/field';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1: Base UI Field with our styles. Wrap any control (Input, Textarea, NumberField, Select)
-// so the label, description and error are linked to it for assistive tech.
-
 function Root({ className, ...props }: BaseField.Root.Props) {
     return (
         <BaseField.Root

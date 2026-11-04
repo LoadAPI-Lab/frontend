@@ -27,7 +27,6 @@ const emptyBreakdown = (): StatusBreakdown => ({
     network: 0,
 });
 
-/** Groups a route's status-code map by class and folds network errors into one bucket. */
 export function groupStatusCodes(
     route: Pick<RouteSnapshot, 'statusCodes' | 'errors'>,
 ): StatusBreakdown {
@@ -51,10 +50,6 @@ export interface RunningTotals {
     statuses: StatusBreakdown;
 }
 
-/**
- * Sums per-second snapshots into running totals. Percentiles are NOT summable:
- * show the latest second's values live and the final result's values after the run.
- */
 export function runningTotals(snapshots: readonly Snapshot[]): RunningTotals {
     const statuses = emptyBreakdown();
     let requests = 0;

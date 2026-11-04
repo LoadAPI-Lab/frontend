@@ -2,8 +2,6 @@ import { Tabs as BaseTabs } from '@base-ui/react/tabs';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1 keeps Base UI's compound API and only adds our styles.
-
 function List({ className, ...props }: BaseTabs.List.Props) {
     return (
         <BaseTabs.List

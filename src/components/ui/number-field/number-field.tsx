@@ -4,10 +4,6 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1: Base UI NumberField styled as the Figma config fields ("Target RPS 300", "Duration 60s"):
-// a 36px box with an inline label, a bold mono value and an optional unit suffix.
-// Compose inside Field.Root so InlineLabel and Field.Error are linked to the input.
-
 function Root(props: BaseNumberField.Root.Props) {
     return <BaseNumberField.Root {...props} />;
 }
@@ -26,7 +22,6 @@ function Group({ className, ...props }: BaseNumberField.Group.Props) {
     );
 }
 
-/** The label inside the box (Figma: 11px muted). It is a real <label> linked by Field.Root. */
 function InlineLabel({ className, ...props }: BaseField.Label.Props) {
     return (
         <BaseField.Label
@@ -48,7 +43,6 @@ function Input({ className, ...props }: BaseNumberField.Input.Props) {
     );
 }
 
-/** Unit after the value, e.g. "s" for seconds. Hidden from assistive tech: put the unit in the label too. */
 function Suffix({ className, ...props }: ComponentProps<'span'>) {
     return (
         <span

@@ -50,7 +50,6 @@ function ToastList() {
     });
 }
 
-/** Mount once at the app root. Show toasts with `toast.success/error/info()` from './toast-manager'. */
 export function Toaster() {
     return (
         <Toast.Provider

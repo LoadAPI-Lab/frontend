@@ -1,8 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-// Design tokens from src/app/styles/theme.css (Figma "LoadAPI (Copy)", frame 5:293).
-// Keep these lists in sync with theme.css when a token is added or renamed.
-
 const colorGroups = [
     {
         title: 'Surfaces',

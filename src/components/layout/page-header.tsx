@@ -6,7 +6,6 @@ export interface PageHeaderProps {
     title: ReactNode;
     description?: ReactNode;
     actions?: ReactNode;
-    /** Keep the heading for screen readers but hide it visually (the Tests page has no visible title in Figma). */
     visuallyHidden?: boolean;
 }
 

@@ -39,7 +39,6 @@ export const Default: Story = {
         await userEvent.click(batch);
         await expect(batch).toHaveAttribute('aria-pressed', 'true');
         await expect(single).toHaveAttribute('aria-pressed', 'false');
-        // pressing the active item again keeps it selected
         await userEvent.click(batch);
         await expect(batch).toHaveAttribute('aria-pressed', 'true');
     },

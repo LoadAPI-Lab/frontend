@@ -1,6 +1,5 @@
 import { defineConfig } from 'oxlint';
 
-// Mirrors backend apps/core/oxlint.config.ts, plus React, a11y and import-boundary rules.
 export default defineConfig({
     categories: {
         correctness: 'error',
@@ -24,13 +23,11 @@ export default defineConfig({
 
     options: { typeAware: true },
 
-    // no react-perf: the React Compiler memoizes, and slot props (sidebar={<X />}) are our layout pattern
     plugins: ['typescript', 'unicorn', 'react', 'jsx-a11y', 'import', 'vitest'],
 
     rules: {
         'no-console': ['warn', { allow: ['warn', 'error'] }],
         'no-underscore-dangle': ['warn', { allow: ['__ENV__'] }],
-        // side-effect imports we rely on: styles, i18n init, test matchers
         'import/no-unassigned-import': [
             'warn',
             { allow: ['**/*.css', '**/app/i18n', '@testing-library/jest-dom/vitest'] },
@@ -55,7 +52,6 @@ export default defineConfig({
             { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
         ],
 
-        // automatic JSX runtime (React 17+): no `import React` needed
         'react/react-in-jsx-scope': 'off',
         'react/rules-of-hooks': 'error',
         'react/exhaustive-deps': 'warn',
@@ -79,7 +75,6 @@ export default defineConfig({
 
     overrides: [
         {
-            // TanStack Router file names (__root, _app, $param) and config files need default exports / special names
             files: ['src/routes/**'],
             rules: { 'unicorn/filename-case': 'off' },
         },
@@ -88,7 +83,6 @@ export default defineConfig({
             rules: { 'import/no-default-export': 'off' },
         },
         {
-            // tiers 1-2 never fetch data or reach into features
             files: ['src/components/**'],
             rules: {
                 'no-restricted-imports': [
@@ -110,7 +104,6 @@ export default defineConfig({
             },
         },
         {
-            // features talk to each other only through shared layers
             files: ['src/features/**'],
             rules: {
                 'no-restricted-imports': [

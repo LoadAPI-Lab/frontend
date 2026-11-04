@@ -43,7 +43,6 @@ describe('LoginPage', () => {
     it('remembers where to go back to before leaving for the provider', async () => {
         renderWithProviders(<LoginPage redirect="/history" />);
         const link = await screen.findByRole('link', { name: 'Continue with GitHub' });
-        // stop jsdom from trying to navigate
         link.addEventListener('click', (event) => event.preventDefault());
         await userEvent.click(link);
         expect(sessionStorage.getItem('routelab.auth.redirect')).toBe('/history');

@@ -11,7 +11,6 @@ export default defineConfig({
     use: {
         baseURL: `http://localhost:${port}`,
         trace: 'on-first-retry',
-        // desktop only: the app shows a notice below 1280px
         viewport: { width: 1440, height: 900 },
     },
     projects: [
@@ -20,7 +19,6 @@ export default defineConfig({
             use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
         },
     ],
-    // mocked mode: MSW answers every API call, no backend needed
     webServer: {
         command: 'pnpm build:mock && pnpm preview',
         port,
