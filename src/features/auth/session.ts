@@ -1,20 +1,16 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 
-import { apiFetch } from '@/api/fetcher';
+import { getUsersMeQueryKey, usersMe } from '@/api/generated/endpoints/users/users';
+import { UsersMeResponse } from '@/api/generated/zod/users/users.zod';
 
-export const sessionSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.email(),
-    avatarUrl: z.string().nullish(),
-});
+export const sessionSchema = UsersMeResponse;
 
 export type Session = z.infer<typeof sessionSchema>;
 
 export const sessionQuery = queryOptions({
-    queryKey: ['session'],
-    queryFn: async ({ signal }) => sessionSchema.parse(await apiFetch('/v1/users/me', { signal })),
+    queryKey: getUsersMeQueryKey(),
+    queryFn: async ({ signal }) => sessionSchema.parse(await usersMe({ signal })),
     staleTime: 5 * 60_000,
     retry: false,
 });

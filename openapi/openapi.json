@@ -1,0 +1,1981 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Returns healthy when every dependency of the service answers.",
+                "operationId": "HealthController_checkHealth",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "The service is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The service is unavailable or not working correctly",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "SERVICE_UNAVAILABLE",
+                                            "message": "The service is unavailable or not working correctly",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Check service health",
+                "tags": ["Health"]
+            }
+        },
+        "/v1/test-runs": {
+            "post": {
+                "description": "Validates the config, stores a PENDING run and enqueues the job.",
+                "operationId": "TestRunsController_start_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/StartTestRunDto" }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The test run was created and enqueued",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/StartTestRunResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Too many test runs are in progress, or the test job could not be enqueued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "SERVICE_UNAVAILABLE",
+                                            "message": "Too many test runs are in progress, or the test job could not be enqueued",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Start a test run",
+                "tags": ["Test runs"]
+            },
+            "get": {
+                "description": "Returns the run history, newest first, with cursor pagination. Configs and results are never included.",
+                "operationId": "TestRunsController_list_v1",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page size",
+                        "schema": { "minimum": 1, "maximum": 100, "default": 20, "type": "integer" }
+                    },
+                    {
+                        "name": "cursor",
+                        "required": false,
+                        "in": "query",
+                        "description": "Opaque cursor from the previous page",
+                        "schema": { "type": "string" }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "description": "Test run status",
+                        "schema": {
+                            "type": "string",
+                            "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "STOPPED"]
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "required": false,
+                        "in": "query",
+                        "description": "Test type",
+                        "schema": {
+                            "type": "string",
+                            "enum": ["single", "scenario", "batch", "round_robin"]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A page of test runs",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ListTestRunsResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "List test runs",
+                "tags": ["Test runs"]
+            }
+        },
+        "/v1/test-runs/{id}": {
+            "get": {
+                "description": "Returns the run status and final result. The config is never included.",
+                "operationId": "TestRunsController_get_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Test run id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The test run",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/TestRunResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Test run not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "NOT_FOUND",
+                                            "message": "Test run not found",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Get a test run",
+                "tags": ["Test runs"]
+            }
+        },
+        "/v1/test-runs/{id}/stop": {
+            "post": {
+                "description": "Requests a stop and returns the current status. The status becomes STOPPED once the worker reports the run as finished.",
+                "operationId": "TestRunsController_stop_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Test run id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "The stop was requested",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/StopTestRunResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Test run not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "NOT_FOUND",
+                                            "message": "Test run not found",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Test run has already finished",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "CONFLICT",
+                                            "message": "Test run has already finished",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Stop a test run",
+                "tags": ["Test runs"]
+            }
+        },
+        "/v1/test-runs/{id}/metrics": {
+            "get": {
+                "description": "Server-sent events. 'status' carries { status, reason? }: the current status right after connecting, then every change. 'snapshot' carries the per-second metrics of the run. The stream closes when the run reaches a final status.",
+                "operationId": "TestRunsController_watch_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Test run id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Test run not found",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "NOT_FOUND",
+                                            "message": "Test run not found",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Stream live metrics of a test run",
+                "tags": ["Test runs"]
+            }
+        },
+        "/v1/users/me": {
+            "get": {
+                "description": "Returns the profile of the signed-in user.",
+                "operationId": "UsersController_me_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "The current user",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/CurrentUserResponseDto" }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "USER.NOT_FOUND",
+                                            "message": "User not found",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Get the current user",
+                "tags": ["Users"]
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "description": "Reads the refresh_token cookie, rotates it and sets new access_token and refresh_token cookies. A refresh token that was already used revokes the whole session. Every 401 clears both cookies. Public.",
+                "operationId": "AuthController_refresh_v1",
+                "parameters": [],
+                "responses": {
+                    "204": { "description": "New auth cookies were set" },
+                    "401": {
+                        "description": "The session is invalid or has expired, sign in again",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.SESSION_INVALID",
+                                            "message": "The session is invalid or has expired, sign in again",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Requests from this origin are not allowed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.ORIGIN_NOT_ALLOWED",
+                                            "message": "Requests from this origin are not allowed",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Refresh the session",
+                "tags": ["Auth"]
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "description": "Revokes the session of the refresh_token cookie when it is valid and always clears both auth cookies. Idempotent. Public.",
+                "operationId": "AuthController_logout_v1",
+                "parameters": [],
+                "responses": {
+                    "204": { "description": "The auth cookies were cleared" },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Requests from this origin are not allowed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.ORIGIN_NOT_ALLOWED",
+                                            "message": "Requests from this origin are not allowed",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Sign out",
+                "tags": ["Auth"]
+            }
+        },
+        "/v1/oauth/providers": {
+            "get": {
+                "description": "Returns the OAuth providers configured on the server. Public.",
+                "operationId": "OAuthController_providers_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Configured OAuth providers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OAuthProvidersResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "List OAuth providers",
+                "tags": ["OAuth"]
+            }
+        },
+        "/v1/oauth/{provider}": {
+            "get": {
+                "description": "Sets the oauth_state cookie and redirects to the provider's consent page. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.",
+                "operationId": "OAuthController_start_v1",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "required": true,
+                        "in": "path",
+                        "description": "OAuth provider id",
+                        "schema": {
+                            "enum": ["google", "github"],
+                            "type": "string",
+                            "example": "github"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to the provider, or to the frontend with an error code"
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Start OAuth sign-in",
+                "tags": ["OAuth"]
+            }
+        },
+        "/v1/oauth/{provider}/callback": {
+            "get": {
+                "description": "Called by the provider. Checks the state, signs the user in or registers them, sets the access_token and refresh_token cookies and redirects to FRONTEND_URL/oauth/callback. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.",
+                "operationId": "OAuthController_callback_v1",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "required": true,
+                        "in": "path",
+                        "description": "OAuth provider id",
+                        "schema": {
+                            "enum": ["google", "github"],
+                            "type": "string",
+                            "example": "github"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to the frontend, with an error code on failure"
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Finish OAuth sign-in",
+                "tags": ["OAuth"]
+            }
+        }
+    },
+    "info": {
+        "title": "LoadAPI",
+        "description": "LoadAPI control plane",
+        "version": "0.1.0",
+        "contact": {}
+    },
+    "tags": [],
+    "servers": [{ "url": "http://localhost:3001", "description": "Local" }],
+    "components": {
+        "securitySchemes": {
+            "access_token": { "type": "apiKey", "in": "cookie", "name": "access_token" }
+        },
+        "schemas": {
+            "HealthResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "description": "Service health status",
+                        "enum": ["healthy"]
+                    }
+                },
+                "required": ["status"]
+            },
+            "StartTestRunDto": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": { "type": "string", "enum": ["single"] },
+                            "config": {
+                                "type": "object",
+                                "properties": {
+                                    "target": {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "GET",
+                                                    "POST",
+                                                    "PUT",
+                                                    "PATCH",
+                                                    "DELETE",
+                                                    "HEAD",
+                                                    "OPTIONS"
+                                                ]
+                                            },
+                                            "url": { "type": "string" },
+                                            "headers": {
+                                                "type": "object",
+                                                "additionalProperties": { "type": "string" }
+                                            },
+                                            "body": { "type": "string" }
+                                        },
+                                        "required": ["method", "url"]
+                                    },
+                                    "targetRps": { "type": "number" },
+                                    "durationSeconds": { "type": "number" },
+                                    "rampUpSeconds": { "type": "number" }
+                                },
+                                "required": ["target", "targetRps", "durationSeconds"]
+                            }
+                        },
+                        "required": ["type", "config"]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": { "type": "string", "enum": ["scenario"] },
+                            "config": {
+                                "type": "object",
+                                "properties": {
+                                    "steps": {
+                                        "minItems": 1,
+                                        "maxItems": 50,
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "target": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "method": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE",
+                                                                "HEAD",
+                                                                "OPTIONS"
+                                                            ]
+                                                        },
+                                                        "url": { "type": "string" },
+                                                        "headers": {
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "body": { "type": "string" }
+                                                    },
+                                                    "required": ["method", "url"]
+                                                },
+                                                "extract": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "pattern": "^\\w+$"
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "minLength": 1
+                                                            }
+                                                        },
+                                                        "required": ["name", "path"]
+                                                    }
+                                                }
+                                            },
+                                            "required": ["target"]
+                                        }
+                                    }
+                                },
+                                "required": ["steps"]
+                            }
+                        },
+                        "required": ["type", "config"]
+                    }
+                ]
+            },
+            "StartTestRunResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "Test run id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "STOPPED"],
+                        "description": "Test run status"
+                    }
+                },
+                "required": ["id", "status"]
+            },
+            "ListTestRunsResponseDto": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "description": "Test run id"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["single", "scenario", "batch", "round_robin"],
+                                    "description": "Test type"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "PENDING",
+                                        "RUNNING",
+                                        "COMPLETED",
+                                        "FAILED",
+                                        "STOPPED"
+                                    ],
+                                    "description": "Test run status"
+                                },
+                                "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                                    "description": "Creation time, ISO 8601"
+                                },
+                                "startedAt": {
+                                    "description": "Start time, ISO 8601",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                },
+                                "finishedAt": {
+                                    "description": "Finish time, ISO 8601",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                },
+                                "reason": {
+                                    "description": "Failure reason, present on FAILED runs",
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["id", "type", "status", "createdAt"]
+                        },
+                        "description": "Test runs, newest first"
+                    },
+                    "nextCursor": {
+                        "description": "Cursor of the next page, absent on the last page",
+                        "type": "string"
+                    }
+                },
+                "required": ["items"]
+            },
+            "TestRunResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "Test run id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["single", "scenario", "batch", "round_robin"],
+                        "description": "Test type"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "STOPPED"],
+                        "description": "Test run status"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "description": "Creation time, ISO 8601"
+                    },
+                    "startedAt": {
+                        "description": "Start time, ISO 8601",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "finishedAt": {
+                        "description": "Finish time, ISO 8601",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "reason": {
+                        "description": "Failure reason, present on FAILED runs",
+                        "type": "string"
+                    },
+                    "result": { "description": "Final result, absent on FAILED runs" }
+                },
+                "required": ["id", "type", "status", "createdAt"]
+            },
+            "StopTestRunResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "Test run id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "STOPPED"],
+                        "description": "Test run status"
+                    }
+                },
+                "required": ["id", "status"]
+            },
+            "CurrentUserResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "User id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                        "description": "Email address"
+                    },
+                    "name": { "type": "string", "description": "Display name" },
+                    "avatarUrl": {
+                        "description": "Avatar URL, absent when the user has none",
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "description": "Registration time, ISO 8601"
+                    }
+                },
+                "required": ["id", "email", "name", "createdAt"]
+            },
+            "OAuthProvidersResponseDto": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "enum": ["google", "github"],
+                            "description": "Provider id, used in the OAuth URLs"
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Provider name to show on the sign-in button"
+                        }
+                    },
+                    "required": ["id", "name"]
+                },
+                "description": "OAuth providers configured on the server"
+            },
+            "GlobalErrorResponse_Output": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean", "default": false, "const": false },
+                    "error": {
+                        "type": "object",
+                        "properties": {
+                            "code": { "type": "string", "description": "Business error code" },
+                            "message": {
+                                "type": "string",
+                                "description": "Description for the user"
+                            },
+                            "retryable": {
+                                "type": "boolean",
+                                "description": "Whether retrying the request may succeed"
+                            }
+                        },
+                        "required": ["code", "message", "retryable"],
+                        "additionalProperties": false
+                    },
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "field": {
+                                    "type": "string",
+                                    "description": "Path to the field (e.g. \"user.email\")"
+                                },
+                                "message": { "type": "string", "description": "Error message" },
+                                "code": {
+                                    "type": "string",
+                                    "description": "Machine-readable code (e.g. \"too_small\")"
+                                }
+                            },
+                            "required": ["field", "message", "code"],
+                            "additionalProperties": false
+                        }
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "service": {
+                                "default": "core",
+                                "description": "Name of the microservice",
+                                "type": "string"
+                            },
+                            "request": {
+                                "type": "object",
+                                "properties": {
+                                    "requestId": {
+                                        "type": "string",
+                                        "description": "Trace ID for logs"
+                                    },
+                                    "path": { "type": "string", "description": "Endpoint URL" },
+                                    "method": { "type": "string", "description": "HTTP method" },
+                                    "ip": { "description": "Client IP", "type": "string" }
+                                },
+                                "required": ["requestId", "path", "method"],
+                                "additionalProperties": false
+                            },
+                            "timestamp": {
+                                "type": "string",
+                                "description": "Error time, ISO 8601"
+                            },
+                            "debug": {
+                                "type": "object",
+                                "properties": {
+                                    "stack": {
+                                        "description": "Call stack (development only)",
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "required": ["service", "request", "timestamp"],
+                        "additionalProperties": false
+                    }
+                },
+                "required": ["success", "error", "meta"],
+                "additionalProperties": false
+            }
+        }
+    }
+}
