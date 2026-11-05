@@ -10,7 +10,7 @@ description: How to build UI in the LoadAPI frontend, covering the three compone
 | Tier                  | Folder                  | Knows about                                                                         | May import                      | Examples                                                                                                                                                                                                            |
 | --------------------- | ----------------------- | ----------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Primitives         | `components/ui`         | nothing domain-specific                                                             | Base UI, `lib/cn`               | Built: Button, IconButton, Field, Input, Textarea, NumberField, Select, SegmentedControl, Tabs, Tooltip, Menu, Skeleton, Toast (Toaster + `toast.*`), Badge, Chip, Card, icons. Next: Dialog, Progress, Collapsible |
-| 2. Shared blocks      | `components/shared`     | LoadAPI concepts (HTTP methods, percentiles, status codes) but **no data fetching** | tier 1, `lib`                   | MethodBadge, StatCard, LatencyPill, StatusDonut, LiveLatencyChart, JsonBodyEditor, PlaceholderChips, KeyValueEditor, TreeView, EmptyState, ErrorState                                                               |
+| 2. Shared blocks      | `components/shared`     | LoadAPI concepts (HTTP methods, percentiles, status codes) but **no data fetching** | tier 1, `lib`                   | MethodBadge, StatCard, LatencyPill, StatusDonut, LiveLatencyChart, JsonBodyEditor (CodeMirror 6, placeholder chips built in), KeyValueEditor, TreeView, EmptyState, ErrorState                                      |
 | 3. Feature components | `features/*/components` | one feature's data and actions                                                      | tiers 1–2, feature hooks, `api` | CollectionsSidebar, TestConfigBar, EndpointHeader, LiveMetricsRow, RequestEditorPanel, RecentRunsCard, RunsTable                                                                                                    |
 
 Layout pieces (AppShell, TopBar, PageHeader) live in `components/layout`; they are tier 2 that take slots (`children`, `actions`) rather than data.
@@ -31,7 +31,7 @@ StressTestPage (feature)
 ├─ TestConfigBar        → SegmentedControl, NumberField×3, Button(danger)
 ├─ EndpointHeader       → MethodBadge, RunStatus (Progress + timer)
 ├─ LiveMetricsRow       → StatCard×4
-├─ RequestEditorPanel   → Tabs(Body/Headers/Auth/Params) → JsonBodyEditor, PlaceholderChips, KeyValueEditor
+├─ RequestEditorPanel   → Tabs(Body/Headers/Auth/Params) → JsonBodyEditor (CodeMirror 6, placeholder chips built in), KeyValueEditor
 └─ side column
    ├─ LiveLatencyChart
    ├─ StatusDonut
