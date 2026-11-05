@@ -111,5 +111,57 @@
             "invalidBody": "Fix the request body to start.",
             "invalidConfig": "Fix the test settings to start."
         }
+    },
+    "secretInput": {
+        "show": "Show",
+        "hide": "Hide"
+    },
+    "requestCard": {
+        "label": "Request",
+        "rawJson": "raw · JSON",
+        "tabs": {
+            "body": "Body",
+            "headers": "Headers",
+            "auth": "Auth",
+            "params": "Params"
+        },
+        "headers": {
+            "name": "Header name",
+            "value": "Header value",
+            "add": "Add header",
+            "remove": "Remove header {{index}}",
+            "namePlaceholder": "Name",
+            "valuePlaceholder": "Value"
+        },
+        "params": {
+            "path": "Path parameters",
+            "query": "Query parameters",
+            "name": "Query parameter name",
+            "value": "Query parameter value",
+            "add": "Add query parameter",
+            "remove": "Remove query parameter {{index}}",
+            "namePlaceholder": "Name",
+            "valuePlaceholder": "Value"
+        }
+    },
+    "requestAuth": {
+        "type": "Auth type",
+        "kinds": {
+            "none": "None",
+            "bearer": "Bearer token",
+            "basic": "Basic",
+            "apiKey": "API key"
+        },
+        "token": "Token",
+        "username": "Username",
+        "password": "Password",
+        "keyName": "Key name",
+        "keyValue": "Key value",
+        "addTo": "Send the key in",
+        "locations": {
+            "header": "Header",
+            "query": "Query"
+        },
+        "noneHint": "No auth is added to the request."
     }
 }
