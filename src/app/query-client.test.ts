@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, apiFetch } from '@/api/fetcher';
+import { getUsersMeQueryKey } from '@/api/generated/endpoints/users/users';
 import { toastManager } from '@/components/ui/toast';
 import { server } from '@/mocks/server';
 
@@ -65,7 +66,7 @@ describe('query client', () => {
             http.post('*/v1/auth/refresh', () => new HttpResponse(null, { status: 401 })),
         );
         const client = createQueryClient({ onSessionExpired });
-        client.setQueryData(['session'], { id: 'u1' });
+        client.setQueryData(getUsersMeQueryKey(), { id: 'u1' });
         await expect(
             client
                 .getMutationCache()
@@ -76,7 +77,7 @@ describe('query client', () => {
                 .execute('{}'),
         ).rejects.toBeInstanceOf(ApiError);
         expect(onSessionExpired).toHaveBeenCalledOnce();
-        expect(client.getQueryData(['session'])).toBeUndefined();
+        expect(client.getQueryData(getUsersMeQueryKey())).toBeUndefined();
         expect(add).not.toHaveBeenCalled();
     });
 
@@ -89,7 +90,7 @@ describe('query client', () => {
         const client = createQueryClient({ onSessionExpired });
         await expect(
             client.fetchQuery({
-                queryKey: ['session'],
+                queryKey: getUsersMeQueryKey(),
                 queryFn: () => apiFetch('/v1/users/me'),
                 retry: false,
             }),

@@ -4,7 +4,7 @@ export default defineConfig({
     arrowParens: 'always',
     bracketSameLine: false,
     bracketSpacing: true,
-    ignore: [
+    ignorePatterns: [
         '**/node_modules/**',
         '**/.pnpm-store/**',
 
