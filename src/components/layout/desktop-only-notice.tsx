@@ -1,7 +1,6 @@
 import { Monitor } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-/** v1 is desktop only. Below the `desktop` breakpoint (1280px) this covers the app. */
 export function DesktopOnlyNotice() {
     const { t } = useTranslation();
     return (

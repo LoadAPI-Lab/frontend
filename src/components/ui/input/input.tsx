@@ -5,7 +5,6 @@ import { cn } from '@/lib/cn';
 
 export type InputProps = BaseInput.Props;
 
-/** Single-line text input. Put it inside `Field.Root` to get label, description and error wiring. */
 export function Input({ className, ...props }: InputProps) {
     return (
         <BaseInput

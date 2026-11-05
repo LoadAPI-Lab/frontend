@@ -2,11 +2,6 @@ import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1: Base UI Tooltip. Usage:
-// <Tooltip.Root><Tooltip.Trigger render={<IconButton aria-label="Collapse sidebar">…</IconButton>} />
-//   <Tooltip.Content>Collapse sidebar</Tooltip.Content></Tooltip.Root>
-// Tooltips repeat visible or aria-label text; never put essential information only in a tooltip.
-
 function Content({
     className,
     side = 'top',

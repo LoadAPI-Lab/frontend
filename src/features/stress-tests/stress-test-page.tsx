@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 
-// v1 ships Single only; Batch and Round-robin stay behind feature flags.
 const modes = [
     { value: 'single', labelKey: 'stressTests.modes.single', enabled: true },
     { value: 'batch', labelKey: 'stressTests.modes.batch', enabled: config.features.batch },

@@ -23,7 +23,6 @@ export interface MethodBadgeProps extends VariantProps<typeof badge> {
     className?: string;
 }
 
-/** Tier 2: knows HTTP methods, no data fetching. The text label keeps meaning without color. */
 export function MethodBadge({ method, size, className }: MethodBadgeProps) {
     return (
         <span className={cn(badge({ size }), methodColorClass(method), className)}>

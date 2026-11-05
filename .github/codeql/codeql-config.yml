@@ -1,7 +1,5 @@
 name: LoadAPI frontend CodeQL config
 
-# Generated or vendored code: findings there are not ours to fix and are
-# overwritten on the next generation (msw init, orval, TanStack Router).
 paths-ignore:
     - public/mockServiceWorker.js
     - src/api/generated

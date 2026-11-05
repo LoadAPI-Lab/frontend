@@ -4,11 +4,6 @@ import { Check, ChevronDown } from 'lucide-react';
 import { controlBase } from '@/components/ui/field/control-styles';
 import { cn } from '@/lib/cn';
 
-// Tier 1: Base UI Select. Usage:
-// <Select.Root items={items}><Select.Trigger><Select.Value /></Select.Trigger>
-//   <Select.Popup>{items.map(i => <Select.Item key={i.value} value={i.value}>{i.label}</Select.Item>)}</Select.Popup>
-// </Select.Root>
-
 function Trigger({ className, children, ...props }: BaseSelect.Trigger.Props) {
     return (
         <BaseSelect.Trigger
@@ -39,7 +34,6 @@ function Value({ className, ...props }: BaseSelect.Value.Props) {
     );
 }
 
-/** Portal + positioner + popup + list in one part, since we always need all four. */
 function Popup({ className, children, ...props }: BaseSelect.Popup.Props) {
     return (
         <BaseSelect.Portal>

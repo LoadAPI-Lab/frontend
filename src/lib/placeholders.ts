@@ -1,4 +1,3 @@
-/** Generators the worker resolves (backend apps/worker/internal/template/resolver.go). */
 export const GENERATORS = ['uuid', 'randomInt', 'randomEmail', 'timestamp'] as const;
 export type Generator = (typeof GENERATORS)[number];
 
@@ -25,7 +24,6 @@ export function findPlaceholders(text: string): Placeholder[] {
     });
 }
 
-/** Generators the worker would leave unresolved; show these as editor errors. */
 export function unknownGenerators(text: string): string[] {
     return findPlaceholders(text)
         .filter((p) => p.kind === 'generator' && !p.known)

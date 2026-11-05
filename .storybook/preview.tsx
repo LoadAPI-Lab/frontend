@@ -5,7 +5,6 @@ import type { Preview } from '@storybook/react-vite';
 const preview: Preview = {
     parameters: {
         layout: 'centered',
-        // fail story tests on accessibility violations
         a11y: { test: 'error' },
     },
     decorators: [

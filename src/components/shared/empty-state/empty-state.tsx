@@ -3,18 +3,14 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 export interface EmptyStateProps {
-    /** Decorative icon (aria-hidden) */
     icon?: ReactNode;
     title: ReactNode;
     description?: ReactNode;
-    /** Usually one Button or Chip */
     action?: ReactNode;
-    /** `compact` for narrow places like the sidebar */
     size?: 'default' | 'compact';
     className?: string;
 }
 
-/** Tier 2: "nothing here yet" for a list, panel or page, with an optional next step. */
 export function EmptyState({
     icon,
     title,

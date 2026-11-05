@@ -2,7 +2,6 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/cn';
 
-/** Tier 1: placeholder block while content loads. Decorative; the surrounding region announces loading. */
 export function Skeleton({ className, ...props }: ComponentProps<'div'>) {
     return (
         <div

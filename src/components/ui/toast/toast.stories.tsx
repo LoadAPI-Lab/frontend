@@ -48,14 +48,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
     play: async ({ canvasElement }) => {
-        toast.dismiss(); // start clean: the toast manager is global
+        toast.dismiss();
         await userEvent.click(within(canvasElement).getByRole('button', { name: 'Error' }));
         const body = within(canvasElement.ownerDocument.body);
         const message = 'Too many test runs are in progress, try again later';
 
-        // Error toasts are high priority: Base UI announces their text through a live region
-        // and keeps the toast itself (and its close button) out of the accessibility tree
-        // until the user moves into the notifications region with F6.
         await expect((await body.findAllByText(message)).length).toBeGreaterThan(0);
         await userEvent.keyboard('{F6}');
         const dismiss = await body.findByRole('button', { name: 'Dismiss notification' });

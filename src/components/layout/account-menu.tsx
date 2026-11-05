@@ -11,12 +11,10 @@ export interface AccountMenuProps {
     signingOut?: boolean;
 }
 
-/** Avatar button in the top bar that opens the account menu. Presentational: the route passes the user and the action. */
 export function AccountMenu({ user, onSignOut, signingOut = false }: AccountMenuProps) {
     const { t } = useTranslation();
     return (
         <Menu.Root>
-            {/* The visible initials stay in the accessible name ("MK, account menu for …") so voice-control users can say what they see. */}
             <Menu.Trigger className="rounded-item focus-visible:ring-accent/40 outline-none focus-visible:ring-2">
                 <UserAvatar
                     name={user.name}

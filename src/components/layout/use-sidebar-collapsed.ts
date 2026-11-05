@@ -10,7 +10,6 @@ function read(): boolean {
     }
 }
 
-/** Per-browser UI preference; storage may be unavailable (private mode), so failures fall back to expanded. */
 export function useSidebarCollapsed() {
     const [collapsed, setCollapsedState] = useState(read);
     const setCollapsed = useCallback((next: boolean) => {
@@ -18,7 +17,7 @@ export function useSidebarCollapsed() {
         try {
             window.localStorage.setItem(STORAGE_KEY, String(next));
         } catch {
-            // ignore: preference simply won't persist
+            return;
         }
     }, []);
     return [collapsed, setCollapsed] as const;

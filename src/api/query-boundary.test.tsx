@@ -28,7 +28,7 @@ function renderBoundary() {
 
 describe('QueryBoundary', () => {
     it('shows the loading region, then the content', async () => {
-        server.use(http.get('*/api/v1/test-runs', () => HttpResponse.json({ count: 3 })));
+        server.use(http.get('*/v1/test-runs', () => HttpResponse.json({ count: 3 })));
         renderBoundary();
         expect(screen.getByRole('status', { name: 'Loading runs' })).toBeInTheDocument();
         expect(await screen.findByText('3 runs')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('QueryBoundary', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         let calls = 0;
         server.use(
-            http.get('*/api/v1/test-runs', () => {
+            http.get('*/v1/test-runs', () => {
                 calls += 1;
                 return calls === 1
                     ? HttpResponse.json(

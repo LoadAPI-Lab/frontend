@@ -7,7 +7,6 @@ import { IconButton } from '@/components/ui/icon-button';
 import { PlusIcon, UploadIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
 
-// TODO(FE-08): tree of the user's saved docs. TODO(FE-09): both import buttons open the paste dialog.
 export function CollectionsSidebar() {
     const { t } = useTranslation();
     const [collapsed, setCollapsed] = useSidebarCollapsed();

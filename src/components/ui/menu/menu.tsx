@@ -2,8 +2,6 @@ import { Menu as BaseMenu } from '@base-ui/react/menu';
 
 import { cn } from '@/lib/cn';
 
-// Tier 1: Base UI Menu. Popup bundles portal + positioner + popup.
-
 function Popup({
     className,
     align = 'end',

@@ -1,7 +1,7 @@
 # LoadAPI frontend (routelab)
 
 Web app for LoadAPI: design, test and load-test web APIs. React SPA (no SSR), talks to the
-[backend](https://github.com/LoadAPI-Lab/backend) `core` service on the same origin under `/api`.
+[backend](https://github.com/LoadAPI-Lab/backend) `core` service on the same origin (core's `/v1/*` paths are proxied unchanged).
 
 Status: in development. v1 scope: OAuth login, collections, **Single** stress tests with live metrics, scenarios, history.
 Desktop only (≥ 1280px). English only, with every string translatable.
@@ -26,8 +26,7 @@ After that everyone runs `pnpm install`.
 
 ```bash
 pnpm dev:mock   # no backend needed: MSW mocks the API         → http://localhost:5173
-pnpm dev        # proxies /api to core on http://localhost:3001 (override with API_PROXY_TARGET)
-pnpm dev:noauth # same, but skips login while core has no auth endpoints (dev server only)
+pnpm dev        # proxies /v1 to core on http://localhost:3001 (override with API_PROXY_TARGET)
 pnpm storybook  # component workshop                            → http://localhost:6006
 ```
 
@@ -57,7 +56,9 @@ docker run --rm -p 5080:8080 -e API_MOCKING=true ghcr.io/loadapi-lab/frontend:de
 docker run --rm -p 5080:8080 -e API_UPSTREAM=http://host.docker.internal:3000 ghcr.io/loadapi-lab/frontend:dev
 ```
 
-Behind the shared reverse proxy, leave `API_UPSTREAM` empty: the proxy routes `/api` to core.
+Behind the shared reverse proxy, leave `API_UPSTREAM` empty: the proxy routes `/v1/*` to core unchanged
+(no prefix: core's auth cookies are scoped to `/v1/auth` and `/v1/oauth`). Add the site's origin to core's
+`CORS_ALLOWED_ORIGINS`, and set `FRONTEND_URL` to it so sign-in comes back to `/oauth/callback`.
 Runtime variables: `API_UPSTREAM`, `API_MOCKING`, `FEATURE_BATCH`, `FEATURE_ROUND_ROBIN`.
 
 ## Project layout and conventions

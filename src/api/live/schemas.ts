@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-// Shapes published by the Go worker (backend apps/worker/internal/executor/load).
-// Core relays them; switch to generated types once core documents the SSE route.
-
 export const percentilesSchema = z.object({
     p50Ms: z.number(),
     p95Ms: z.number(),
@@ -29,7 +26,6 @@ export const routeSnapshotSchema = z.object({
     errors: z.partialRecord(networkErrorSchema, z.number().int()).optional(),
 });
 
-/** One per second per test. Counts and percentiles cover that second only. */
 export const snapshotSchema = z.object({
     testId: z.string(),
     timestamp: z.string(),

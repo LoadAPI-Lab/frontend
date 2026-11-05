@@ -1,7 +1,4 @@
 #!/usr/bin/env sh
-# One-time bootstrap: resolves the latest versions, writes pnpm-lock.yaml,
-# installs the MSW worker and the Playwright browser. Commit the result.
-# After this, everyone just runs `pnpm install`.
 set -eu
 
 pnpm add \

@@ -6,11 +6,9 @@ import { cn } from '@/lib/cn';
 
 export interface TextareaProps extends Omit<ComponentProps<'textarea'>, 'className'> {
     className?: string;
-    /** Use the monospace font, e.g. for pasting an OpenAPI doc. */
     mono?: boolean;
 }
 
-/** Multi-line text input. Registers with a surrounding `Field.Root` like `Input` does. */
 export function Textarea({ className, mono = false, rows = 6, ...props }: TextareaProps) {
     return (
         <BaseField.Control

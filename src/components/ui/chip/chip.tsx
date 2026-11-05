@@ -4,7 +4,6 @@ import { cn } from '@/lib/cn';
 
 export type ChipProps = Omit<ComponentProps<'button'>, 'type'>;
 
-/** Tier 1: small clickable token, e.g. the "Insert placeholder" chips (Figma node 5:707). */
 export function Chip({ className, ...props }: ChipProps) {
     return (
         <button

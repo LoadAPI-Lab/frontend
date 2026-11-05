@@ -1,4 +1,3 @@
-/** Only same-app paths are allowed as post-login redirects (blocks open redirects). */
 export function safeRedirect(value: unknown, fallback = '/'): string {
     if (
         typeof value !== 'string' ||

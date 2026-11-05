@@ -5,13 +5,11 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TopBar } from './top-bar';
 
 export interface AppShellProps {
-    /** Usually a <Sidebar>. */
     sidebar?: ReactNode;
     topBarActions?: ReactNode;
     children: ReactNode;
 }
 
-/** Layout only: slots in, no data. The signed-in route fills the slots with feature components. */
 export function AppShell({ sidebar, topBarActions, children }: AppShellProps) {
     return (
         <Tooltip.Provider delay={400}>

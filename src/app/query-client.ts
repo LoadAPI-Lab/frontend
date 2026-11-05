@@ -1,16 +1,40 @@
-import { MutationCache, QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 
-import { ApiError } from '@/api/fetcher';
+import { ApiError, isUnauthorized } from '@/api/fetcher';
 import { toast } from '@/components/ui/toast';
 
 import { i18n } from './i18n';
 
-export function createQueryClient() {
+const SESSION_KEY = ['session'] as const;
+
+export interface QueryClientOptions {
+    onSessionExpired?: () => void;
+}
+
+export function createQueryClient({ onSessionExpired }: QueryClientOptions = {}) {
+    const queryCache = new QueryCache({
+        onError: (error, query) => {
+            if (isUnauthorized(error) && query.queryKey[0] !== SESSION_KEY[0]) {
+                expireSession();
+            }
+        },
+    });
+
+    function expireSession() {
+        for (const query of queryCache.findAll({ queryKey: SESSION_KEY })) {
+            queryCache.remove(query);
+        }
+        onSessionExpired?.();
+    }
+
     return new QueryClient({
-        // Every failed mutation (start test, import doc, …) shows core's message as a toast,
-        // unless it opts out with `meta: { toastOnError: false }` and handles the error itself.
+        queryCache,
         mutationCache: new MutationCache({
             onError: (error, _variables, _onMutateResult, mutation) => {
+                if (isUnauthorized(error)) {
+                    expireSession();
+                    return;
+                }
                 if (mutation.meta?.toastOnError === false) {
                     return;
                 }
@@ -24,7 +48,6 @@ export function createQueryClient() {
             queries: {
                 staleTime: 30_000,
                 refetchOnWindowFocus: false,
-                // never retry client errors (4xx); retry once on network or server errors
                 retry: (failureCount, error) =>
                     !(error instanceof ApiError && error.status < 500) && failureCount < 1,
             },
@@ -32,4 +55,12 @@ export function createQueryClient() {
     });
 }
 
-export const queryClient = createQueryClient();
+let sessionExpiredHandler: (() => void) | undefined;
+
+export function setSessionExpiredHandler(handler: () => void) {
+    sessionExpiredHandler = handler;
+}
+
+export const queryClient = createQueryClient({
+    onSessionExpired: () => sessionExpiredHandler?.(),
+});

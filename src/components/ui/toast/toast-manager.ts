@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 
 export type ToastKind = 'success' | 'error' | 'info';
 
-/** One manager for the whole app, so code outside React (query cache, fetcher) can show toasts too. */
 export const toastManager = Toast.createToastManager();
 
 interface ToastInput {
@@ -16,7 +15,6 @@ function show(type: ToastKind, { title, description }: ToastInput) {
         type,
         title,
         description,
-        // errors stay longer and are announced assertively
         timeout: type === 'error' ? 8000 : 4000,
         priority: type === 'error' ? 'high' : 'low',
     });

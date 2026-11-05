@@ -1,8 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-// Runs against `pnpm build:mock` (MSW answers the API), see playwright.config.ts.
-
 test('signed-in user lands on stress tests with the app shell', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/tests$/);
@@ -44,6 +42,20 @@ test('login page offers both OAuth providers', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Continue with GitHub' })).toBeVisible();
+});
+
+test('signing in returns to the page the user asked for', async ({ page }) => {
+    await page.goto('/login?redirect=%2Fhistory');
+    await page.getByRole('link', { name: 'Continue with GitHub' }).click();
+    await expect(page).toHaveURL(/\/history$/);
+    await expect(page.getByRole('heading', { name: 'History', level: 1 })).toBeVisible();
+});
+
+test('a failed sign-in comes back to login with the reason', async ({ page }) => {
+    await page.goto('/oauth/callback?error=OAUTH.PROVIDER_DENIED');
+    await expect(page).toHaveURL(/\/login\?/);
+    await expect(page.getByRole('alert')).toHaveText('Sign-in was cancelled at the provider.');
+    await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
 });
 
 test('shows the desktop-only notice on small screens', async ({ page }) => {

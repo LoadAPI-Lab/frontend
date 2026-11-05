@@ -2,15 +2,18 @@ import { createRouter } from '@tanstack/react-router';
 
 import { routeTree } from '@/routeTree.gen';
 
-import { queryClient } from './query-client';
+import { queryClient, setSessionExpiredHandler } from './query-client';
 
 export const router = createRouter({
     routeTree,
     context: { queryClient },
     defaultPreload: 'intent',
-    // let TanStack Query decide freshness
     defaultPreloadStaleTime: 0,
     scrollRestoration: true,
+});
+
+setSessionExpiredHandler(() => {
+    void router.invalidate();
 });
 
 declare module '@tanstack/react-router' {

@@ -6,7 +6,7 @@ description: Stack, folder layout, state rules, runtime config, v1 scope and git
 # LoadAPI frontend conventions
 
 Client-only single-page app for LoadAPI (API design, testing and load testing). No SSR.
-Backend: `LoadAPI-Lab/backend` (NestJS core + Go worker). This app only talks to `core`, over HTTP and SSE, **on the same origin behind a reverse proxy** (`/api/*` → core).
+Backend: `LoadAPI-Lab/backend` (NestJS core + Go worker). This app only talks to `core`, over HTTP and SSE, **on the same origin behind a reverse proxy** (`/v1/*` → core, paths unchanged).
 
 ## v1 scope
 
@@ -39,7 +39,7 @@ Out until later: **Batch** and **Round-robin** (Figma has frames for them). Keep
 ## Commands
 
 ```bash
-pnpm dev            # Vite on :5173, proxies /api → http://localhost:3001 (core)
+pnpm dev            # Vite on :5173, proxies /v1 → http://localhost:3001 (core)
 pnpm dev:mock       # same, with MSW instead of a backend
 pnpm build          # tsc -b && vite build
 pnpm lint | pnpm format | pnpm typecheck
@@ -140,12 +140,11 @@ routes → features (via index.ts) → components/shared → components/ui → l
 
 ## Runtime config
 
-Same-origin deployment, so the defaults need no config: `API_BASE = '/api'`.
+Same-origin deployment, so the defaults need no config: `API_BASE` is empty and the browser calls `/v1/...` on its own origin.
 
-- Dev: Vite `server.proxy` maps `/api` → `API_PROXY_TARGET` (default `http://localhost:3001`) and strips `/api`. That keeps cookies first-party and avoids CORS.
-- No-auth mode: `pnpm dev:noauth` reads `.env.noauth` (`VITE_AUTH_BYPASS=true`): the session query returns a local dev user instead of calling `/v1/auth/me`. `config.authBypass` is gated on `import.meta.env.DEV`, so production builds and the container can never enable it. Temporary: remove when core ships auth (BE-02).
+- Dev: Vite `server.proxy` forwards `/v1` → `API_PROXY_TARGET` (default `http://localhost:3001`) unchanged. That keeps cookies first-party, avoids CORS, and matches core's cookie paths (`/v1/auth`, `/v1/oauth`), which an `/api` prefix would break.
 - Mock mode: `pnpm dev:mock` / `pnpm build:mock` read `.env.mock` (`VITE_API_MOCKING=true`) and start the MSW worker before rendering.
-- Container: `docker/entrypoint.sh` writes `/env.js` (`window.__ENV__`) from `API_BASE`, `API_MOCKING`, `FEATURE_*` at start, so one image runs anywhere. `API_UPSTREAM` optionally makes the container proxy `/api` itself.
+- Container: `docker/entrypoint.sh` writes `/env.js` (`window.__ENV__`) from `API_BASE`, `API_MOCKING`, `FEATURE_*` at start, so one image runs anywhere. `API_UPSTREAM` optionally makes the container proxy `/v1` itself.
 - `src/config.ts` validates with Zod and exports `config`. Nothing else reads `import.meta.env` or `window.__ENV__`.
 
 ## Git and PRs (same rules as backend CONTRIBUTING.md)
