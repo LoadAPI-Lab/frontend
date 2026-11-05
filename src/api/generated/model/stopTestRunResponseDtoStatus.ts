@@ -9,13 +9,13 @@
 /**
  * Test run status
  */
-export type StopTestRunResponseDtoStatus =
-    (typeof StopTestRunResponseDtoStatus)[keyof typeof StopTestRunResponseDtoStatus];
+export type StopTestRunResponseDtoStatus = typeof StopTestRunResponseDtoStatus[keyof typeof StopTestRunResponseDtoStatus];
+
 
 export const StopTestRunResponseDtoStatus = {
-    PENDING: 'PENDING',
-    RUNNING: 'RUNNING',
-    COMPLETED: 'COMPLETED',
-    FAILED: 'FAILED',
-    STOPPED: 'STOPPED',
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  STOPPED: 'STOPPED',
 } as const;

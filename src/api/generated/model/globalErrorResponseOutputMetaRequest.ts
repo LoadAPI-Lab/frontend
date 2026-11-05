@@ -7,12 +7,12 @@
  */
 
 export type GlobalErrorResponseOutputMetaRequest = {
-    /** Trace ID for logs */
-    requestId: string;
-    /** Endpoint URL */
-    path: string;
-    /** HTTP method */
-    method: string;
-    /** Client IP */
-    ip?: string;
+  /** Trace ID for logs */
+  requestId: string;
+  /** Endpoint URL */
+  path: string;
+  /** HTTP method */
+  method: string;
+  /** Client IP */
+  ip?: string;
 };

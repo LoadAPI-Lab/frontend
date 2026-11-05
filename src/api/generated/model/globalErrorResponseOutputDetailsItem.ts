@@ -7,10 +7,10 @@
  */
 
 export type GlobalErrorResponseOutputDetailsItem = {
-    /** Path to the field (e.g. "user.email") */
-    field: string;
-    /** Error message */
-    message: string;
-    /** Machine-readable code (e.g. "too_small") */
-    code: string;
+  /** Path to the field (e.g. "user.email") */
+  field: string;
+  /** Error message */
+  message: string;
+  /** Machine-readable code (e.g. "too_small") */
+  code: string;
 };

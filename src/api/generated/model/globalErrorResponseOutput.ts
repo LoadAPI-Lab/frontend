@@ -10,8 +10,8 @@ import type { GlobalErrorResponseOutputError } from './globalErrorResponseOutput
 import type { GlobalErrorResponseOutputMeta } from './globalErrorResponseOutputMeta';
 
 export interface GlobalErrorResponseOutput {
-    success: false;
-    error: GlobalErrorResponseOutputError;
-    details?: GlobalErrorResponseOutputDetailsItem[];
-    meta: GlobalErrorResponseOutputMeta;
+  success: false;
+  error: GlobalErrorResponseOutputError;
+  details?: GlobalErrorResponseOutputDetailsItem[];
+  meta: GlobalErrorResponseOutputMeta;
 }

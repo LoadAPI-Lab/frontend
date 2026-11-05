@@ -5,135 +5,173 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation } from '@tanstack/react-query';
-import type {
-    MutationFunction,
-    QueryClient,
-    UseMutationOptions,
-    UseMutationResult,
+import {
+  useMutation
 } from '@tanstack/react-query';
+import type {
+  MutationFunction,
+  QueryClient,
+  UseMutationOptions,
+  UseMutationResult
+} from '@tanstack/react-query';
+
+import type {
+  GlobalErrorResponseOutput
+} from '../../model';
 
 import { orvalFetch } from '../../../fetcher';
 import type { ErrorType } from '../../../fetcher';
-import type { GlobalErrorResponseOutput } from '../../model';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+
+
 export const getAuthRefreshUrl = () => {
-    return `/v1/auth/refresh`;
-};
+
+
+
+
+  return `/v1/auth/refresh`
+}
 
 /**
  * Reads the refresh_token cookie, rotates it and sets new access_token and refresh_token cookies. A refresh token that was already used revokes the whole session. Every 401 clears both cookies. Public.
  * @summary Refresh the session
  */
-export const authRefresh = async (options?: Parameters<typeof orvalFetch>[1]): Promise<void> => {
-    return orvalFetch<void>(getAuthRefreshUrl(), {
-        ...options,
-        method: 'POST',
-    });
-};
+export const authRefresh = async ( options?: Parameters<typeof orvalFetch>[1]): Promise<void> => {
+
+  return orvalFetch<void>(getAuthRefreshUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getAuthRefreshMutationKey = () => ['authRefresh'] as const;
 
-export const getAuthRefreshMutationOptions = <
-    TError = ErrorType<GlobalErrorResponseOutput>,
-    TContext = unknown,
->(options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof authRefresh>>, TError, void, TContext>;
-    request?: SecondParameter<typeof orvalFetch>;
-}): UseMutationOptions<Awaited<ReturnType<typeof authRefresh>>, TError, void, TContext> => {
-    const mutationKey = getAuthRefreshMutationKey();
-    const { mutation: mutationOptions, request: requestOptions } = options
-        ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-            ? options
-            : { ...options, mutation: { ...options.mutation, mutationKey } }
-        : { mutation: { mutationKey }, request: undefined };
+export const getAuthRefreshMutationOptions = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRefresh>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof authRefresh>>, TError,void, TContext> => {
 
-    const mutationFn: MutationFunction<Awaited<ReturnType<typeof authRefresh>>, void> = () => {
-        return authRefresh(requestOptions);
-    };
+const mutationKey = getAuthRefreshMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return { mutationFn, ...mutationOptions };
-};
 
-export type AuthRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof authRefresh>>>;
 
-export type AuthRefreshMutationError = ErrorType<GlobalErrorResponseOutput>;
 
-/**
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authRefresh>>, void> = () => {
+
+
+          return  authRefresh(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof authRefresh>>>
+
+    export type AuthRefreshMutationError = ErrorType<GlobalErrorResponseOutput>
+
+
+    /**
  * @summary Refresh the session
  */
-export const useAuthRefresh = <TError = ErrorType<GlobalErrorResponseOutput>, TContext = unknown>(
-    options?: {
-        mutation?: UseMutationOptions<
-            Awaited<ReturnType<typeof authRefresh>>,
-            TError,
-            void,
-            TContext
-        >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof authRefresh>>, TError, void, TContext> => {
-    return useMutation(getAuthRefreshMutationOptions(options), queryClient);
-};
-export const getAuthLogoutUrl = () => {
-    return `/v1/auth/logout`;
-};
+export const useAuthRefresh = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRefresh>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authRefresh>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getAuthRefreshMutationOptions(options), queryClient);
+    }
+    export const getAuthLogoutUrl = () => {
+
+
+
+
+  return `/v1/auth/logout`
+}
 
 /**
  * Revokes the session of the refresh_token cookie when it is valid and always clears both auth cookies. Idempotent. Public.
  * @summary Sign out
  */
-export const authLogout = async (options?: Parameters<typeof orvalFetch>[1]): Promise<void> => {
-    return orvalFetch<void>(getAuthLogoutUrl(), {
-        ...options,
-        method: 'POST',
-    });
-};
+export const authLogout = async ( options?: Parameters<typeof orvalFetch>[1]): Promise<void> => {
+
+  return orvalFetch<void>(getAuthLogoutUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getAuthLogoutMutationKey = () => ['authLogout'] as const;
 
-export const getAuthLogoutMutationOptions = <
-    TError = ErrorType<GlobalErrorResponseOutput>,
-    TContext = unknown,
->(options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError, void, TContext>;
-    request?: SecondParameter<typeof orvalFetch>;
-}): UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError, void, TContext> => {
-    const mutationKey = getAuthLogoutMutationKey();
-    const { mutation: mutationOptions, request: requestOptions } = options
-        ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-            ? options
-            : { ...options, mutation: { ...options.mutation, mutationKey } }
-        : { mutation: { mutationKey }, request: undefined };
+export const getAuthLogoutMutationOptions = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,void, TContext> => {
 
-    const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLogout>>, void> = () => {
-        return authLogout(requestOptions);
-    };
+const mutationKey = getAuthLogoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return { mutationFn, ...mutationOptions };
-};
 
-export type AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof authLogout>>>;
 
-export type AuthLogoutMutationError = ErrorType<GlobalErrorResponseOutput>;
 
-/**
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLogout>>, void> = () => {
+
+
+          return  authLogout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof authLogout>>>
+
+    export type AuthLogoutMutationError = ErrorType<GlobalErrorResponseOutput>
+
+
+    /**
  * @summary Sign out
  */
-export const useAuthLogout = <TError = ErrorType<GlobalErrorResponseOutput>, TContext = unknown>(
-    options?: {
-        mutation?: UseMutationOptions<
-            Awaited<ReturnType<typeof authLogout>>,
-            TError,
-            void,
-            TContext
-        >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof authLogout>>, TError, void, TContext> => {
-    return useMutation(getAuthLogoutMutationOptions(options), queryClient);
-};
+export const useAuthLogout = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authLogout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getAuthLogoutMutationOptions(options), queryClient);
+    }

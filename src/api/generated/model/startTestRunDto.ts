@@ -6,41 +6,39 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type StartTestRunDto =
-    | {
-          type: 'single';
-          config: {
-              target: {
-                  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
-                  url: string;
-                  headers?: { [key: string]: string };
-                  body?: string;
-              };
-              targetRps: number;
-              durationSeconds: number;
-              rampUpSeconds?: number;
-          };
-      }
-    | {
-          type: 'scenario';
-          config: {
-              /**
-               * @minItems 1
-               * @maxItems 50
-               */
-              steps: {
-                  target: {
-                      method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
-                      url: string;
-                      headers?: { [key: string]: string };
-                      body?: string;
-                  };
-                  extract?: {
-                      /** @pattern ^\w+$ */
-                      name: string;
-                      /** @minLength 1 */
-                      path: string;
-                  }[];
-              }[];
-          };
-      };
+export type StartTestRunDto = {
+  type: 'single';
+  config: {
+  target: {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+  url: string;
+  headers?: {[key: string]: string};
+  body?: string;
+};
+  targetRps: number;
+  durationSeconds: number;
+  rampUpSeconds?: number;
+};
+} | {
+  type: 'scenario';
+  config: {
+  /**
+     * @minItems 1
+     * @maxItems 50
+     */
+  steps: ({
+  target: {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+  url: string;
+  headers?: {[key: string]: string};
+  body?: string;
+};
+  extract?: {
+  /** @pattern ^\w+$ */
+  name: string;
+  /** @minLength 1 */
+  path: string;
+}[];
+})[];
+};
+};

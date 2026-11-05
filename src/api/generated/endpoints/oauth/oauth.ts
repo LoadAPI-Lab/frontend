@@ -5,402 +5,349 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from '@tanstack/react-query';
-import type {
-    DataTag,
-    DefinedInitialDataOptions,
-    DefinedUseQueryResult,
-    QueryClient,
-    QueryFunction,
-    QueryKey,
-    UndefinedInitialDataOptions,
-    UseQueryOptions,
-    UseQueryResult,
+import {
+  useQuery
 } from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
+import type {
+  GlobalErrorResponseOutput,
+  OAuthProvidersResponseDto
+} from '../../model';
 
 import { orvalFetch } from '../../../fetcher';
 import type { ErrorType } from '../../../fetcher';
-import type { GlobalErrorResponseOutput, OAuthProvidersResponseDto } from '../../model';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
-    const result = { queryKey } as T & { queryKey: K };
-    for (const key of Object.keys(query)) {
-        // The explicit queryKey always wins, matching the previous
-        // `{ ...query, queryKey }` spread where it was set last.
-        if (key === 'queryKey') continue;
-        Object.defineProperty(result, key, {
-            enumerable: true,
-            configurable: true,
-            get: () => (query as Record<string, unknown>)[key],
-        });
-    }
-    return result;
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
 
 export const getOauthProvidersUrl = () => {
-    return `/v1/oauth/providers`;
-};
+
+
+
+
+  return `/v1/oauth/providers`
+}
 
 /**
  * Returns the OAuth providers configured on the server. Public.
  * @summary List OAuth providers
  */
-export const oauthProviders = async (
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<OAuthProvidersResponseDto> => {
-    return orvalFetch<OAuthProvidersResponseDto>(getOauthProvidersUrl(), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const oauthProviders = async ( options?: Parameters<typeof orvalFetch>[1]): Promise<OAuthProvidersResponseDto> => {
+
+  return orvalFetch<OAuthProvidersResponseDto>(getOauthProvidersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getOauthProvidersQueryKey = () => {
-    return [`/v1/oauth/providers`] as const;
-};
+    return [
+    `/v1/oauth/providers`
+    ] as const;
+    }
 
-export const getOauthProvidersQueryOptions = <
-    TData = Awaited<ReturnType<typeof oauthProviders>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalFetch>;
-}) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getOauthProvidersQueryKey();
+export const getOauthProvidersQueryOptions = <TData = Awaited<ReturnType<typeof oauthProviders>>, TError = ErrorType<GlobalErrorResponseOutput>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthProviders>>> = ({ signal }) =>
-        oauthProviders({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-        Awaited<ReturnType<typeof oauthProviders>>,
-        TError,
-        TData
-    > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getOauthProvidersQueryKey();
 
-export type OauthProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof oauthProviders>>>;
-export type OauthProvidersQueryError = ErrorType<GlobalErrorResponseOutput>;
 
-export function useOauthProviders<
-    TData = Awaited<ReturnType<typeof oauthProviders>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthProviders>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthProviders>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthProviders<
-    TData = Awaited<ReturnType<typeof oauthProviders>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    options?: {
-        query?: Partial<
-            UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>
-        > &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthProviders>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthProviders>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthProviders<
-    TData = Awaited<ReturnType<typeof oauthProviders>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthProviders>>> = ({ signal }) => oauthProviders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OauthProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof oauthProviders>>>
+export type OauthProvidersQueryError = ErrorType<GlobalErrorResponseOutput>
+
+
+export function useOauthProviders<TData = Awaited<ReturnType<typeof oauthProviders>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthProviders>>,
+          TError,
+          Awaited<ReturnType<typeof oauthProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthProviders<TData = Awaited<ReturnType<typeof oauthProviders>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthProviders>>,
+          TError,
+          Awaited<ReturnType<typeof oauthProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthProviders<TData = Awaited<ReturnType<typeof oauthProviders>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List OAuth providers
  */
 
-export function useOauthProviders<
-    TData = Awaited<ReturnType<typeof oauthProviders>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getOauthProvidersQueryOptions(options);
+export function useOauthProviders<TData = Awaited<ReturnType<typeof oauthProviders>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthProviders>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getOauthProvidersQueryOptions(options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getOauthStartUrl = (provider: 'google' | 'github') => {
-    return `/v1/oauth/${provider}`;
-};
+
+
+
+
+
+export const getOauthStartUrl = (provider: 'google' | 'github',) => {
+
+
+
+
+  return `/v1/oauth/${provider}`
+}
 
 /**
  * Sets the oauth_state cookie and redirects to the provider's consent page. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.
  * @summary Start OAuth sign-in
  */
-export const oauthStart = async (
-    provider: 'google' | 'github',
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<unknown> => {
-    return orvalFetch<unknown>(getOauthStartUrl(provider), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const oauthStart = async (provider: 'google' | 'github', options?: Parameters<typeof orvalFetch>[1]): Promise<unknown> => {
 
-export const getOauthStartQueryKey = (provider: 'google' | 'github') => {
-    return [`/v1/oauth/${provider}`] as const;
-};
+  return orvalFetch<unknown>(getOauthStartUrl(provider),
+  {
+    ...options,
+    method: 'GET'
 
-export const getOauthStartQueryOptions = <
-    TData = Awaited<ReturnType<typeof oauthStart>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
+
+  }
+);}
+
+
+
+
+
+export const getOauthStartQueryKey = (provider: 'google' | 'github',) => {
+    return [
+    `/v1/oauth/${provider}`
+    ] as const;
+    }
+
+
+export const getOauthStartQueryOptions = <TData = Awaited<ReturnType<typeof oauthStart>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getOauthStartQueryKey(provider);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthStart>>> = ({ signal }) =>
-        oauthStart(provider, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getOauthStartQueryKey(provider);
 
-    return {
-        queryKey,
-        queryFn,
-        enabled: provider !== null && provider !== undefined,
-        ...queryOptions,
-    } as UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
-};
 
-export type OauthStartQueryResult = NonNullable<Awaited<ReturnType<typeof oauthStart>>>;
-export type OauthStartQueryError = ErrorType<void | GlobalErrorResponseOutput>;
 
-export function useOauthStart<
-    TData = Awaited<ReturnType<typeof oauthStart>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthStart>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthStart>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthStart<
-    TData = Awaited<ReturnType<typeof oauthStart>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>> &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthStart>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthStart>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthStart<
-    TData = Awaited<ReturnType<typeof oauthStart>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthStart>>> = ({ signal }) => oauthStart(provider, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: provider !== null && provider !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OauthStartQueryResult = NonNullable<Awaited<ReturnType<typeof oauthStart>>>
+export type OauthStartQueryError = ErrorType<void | GlobalErrorResponseOutput>
+
+
+export function useOauthStart<TData = Awaited<ReturnType<typeof oauthStart>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthStart>>,
+          TError,
+          Awaited<ReturnType<typeof oauthStart>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthStart<TData = Awaited<ReturnType<typeof oauthStart>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthStart>>,
+          TError,
+          Awaited<ReturnType<typeof oauthStart>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthStart<TData = Awaited<ReturnType<typeof oauthStart>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Start OAuth sign-in
  */
 
-export function useOauthStart<
-    TData = Awaited<ReturnType<typeof oauthStart>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getOauthStartQueryOptions(provider, options);
+export function useOauthStart<TData = Awaited<ReturnType<typeof oauthStart>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthStart>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getOauthStartQueryOptions(provider,options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getOauthCallbackUrl = (provider: 'google' | 'github') => {
-    return `/v1/oauth/${provider}/callback`;
-};
+
+
+
+
+
+export const getOauthCallbackUrl = (provider: 'google' | 'github',) => {
+
+
+
+
+  return `/v1/oauth/${provider}/callback`
+}
 
 /**
  * Called by the provider. Checks the state, signs the user in or registers them, sets the access_token and refresh_token cookies and redirects to FRONTEND_URL/oauth/callback. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.
  * @summary Finish OAuth sign-in
  */
-export const oauthCallback = async (
-    provider: 'google' | 'github',
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<unknown> => {
-    return orvalFetch<unknown>(getOauthCallbackUrl(provider), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const oauthCallback = async (provider: 'google' | 'github', options?: Parameters<typeof orvalFetch>[1]): Promise<unknown> => {
 
-export const getOauthCallbackQueryKey = (provider: 'google' | 'github') => {
-    return [`/v1/oauth/${provider}/callback`] as const;
-};
+  return orvalFetch<unknown>(getOauthCallbackUrl(provider),
+  {
+    ...options,
+    method: 'GET'
 
-export const getOauthCallbackQueryOptions = <
-    TData = Awaited<ReturnType<typeof oauthCallback>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
+
+  }
+);}
+
+
+
+
+
+export const getOauthCallbackQueryKey = (provider: 'google' | 'github',) => {
+    return [
+    `/v1/oauth/${provider}/callback`
+    ] as const;
+    }
+
+
+export const getOauthCallbackQueryOptions = <TData = Awaited<ReturnType<typeof oauthCallback>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getOauthCallbackQueryKey(provider);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthCallback>>> = ({ signal }) =>
-        oauthCallback(provider, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getOauthCallbackQueryKey(provider);
 
-    return {
-        queryKey,
-        queryFn,
-        enabled: provider !== null && provider !== undefined,
-        ...queryOptions,
-    } as UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
-};
 
-export type OauthCallbackQueryResult = NonNullable<Awaited<ReturnType<typeof oauthCallback>>>;
-export type OauthCallbackQueryError = ErrorType<void | GlobalErrorResponseOutput>;
 
-export function useOauthCallback<
-    TData = Awaited<ReturnType<typeof oauthCallback>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthCallback>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthCallback>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthCallback<
-    TData = Awaited<ReturnType<typeof oauthCallback>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>> &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof oauthCallback>>,
-                    TError,
-                    Awaited<ReturnType<typeof oauthCallback>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useOauthCallback<
-    TData = Awaited<ReturnType<typeof oauthCallback>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthCallback>>> = ({ signal }) => oauthCallback(provider, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: provider !== null && provider !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OauthCallbackQueryResult = NonNullable<Awaited<ReturnType<typeof oauthCallback>>>
+export type OauthCallbackQueryError = ErrorType<void | GlobalErrorResponseOutput>
+
+
+export function useOauthCallback<TData = Awaited<ReturnType<typeof oauthCallback>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthCallback>>,
+          TError,
+          Awaited<ReturnType<typeof oauthCallback>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthCallback<TData = Awaited<ReturnType<typeof oauthCallback>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof oauthCallback>>,
+          TError,
+          Awaited<ReturnType<typeof oauthCallback>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOauthCallback<TData = Awaited<ReturnType<typeof oauthCallback>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Finish OAuth sign-in
  */
 
-export function useOauthCallback<
-    TData = Awaited<ReturnType<typeof oauthCallback>>,
-    TError = ErrorType<void | GlobalErrorResponseOutput>,
->(
-    provider: 'google' | 'github',
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getOauthCallbackQueryOptions(provider, options);
+export function useOauthCallback<TData = Awaited<ReturnType<typeof oauthCallback>>, TError = ErrorType<void | GlobalErrorResponseOutput>>(
+ provider: 'google' | 'github', options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthCallback>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getOauthCallbackQueryOptions(provider,options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

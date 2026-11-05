@@ -5,12 +5,14 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { faker } from '@faker-js/faker';
+import {
+  faker
+} from '@faker-js/faker';
 
-import type { OAuthProvidersResponseDto } from '../../model';
+import type {
+  OAuthProvidersResponseDto
+} from '../../model';
 
-export const getOauthProvidersResponseMock = (): OAuthProvidersResponseDto =>
-    Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
-        id: faker.helpers.arrayElement(['google', 'github'] as const),
-        name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    }));
+
+export const getOauthProvidersResponseMock = (): OAuthProvidersResponseDto => (Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.helpers.arrayElement(['google','github'] as const), name: faker.string.alpha({length: {min: 10, max: 20}})})))
+

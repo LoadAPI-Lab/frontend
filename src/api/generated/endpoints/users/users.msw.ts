@@ -5,35 +5,37 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { HttpResponse, http } from 'msw';
-import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  RequestHandlerOptions
+} from 'msw';
 
-import type { CurrentUserResponseDto } from '../../model';
-import { getUsersMeResponseMock } from './users.faker';
+import type {
+  CurrentUserResponseDto
+} from '../../model';
+
+import {
+  getUsersMeResponseMock
+} from './users.faker';
 
 export { getUsersMeResponseMock } from './users.faker';
 
-export const getUsersMeMockHandler = (
-    overrideResponse?:
-        | CurrentUserResponseDto
-        | ((
-              info: Parameters<HttpResponseResolver>[0],
-          ) => Promise<CurrentUserResponseDto> | CurrentUserResponseDto),
-    options?: RequestHandlerOptions,
-) => {
-    return http.get(
-        '*/v1/users/me',
-        async (info: Parameters<HttpResponseResolver>[0]) => {
-            return HttpResponse.json(
-                overrideResponse !== undefined
-                    ? typeof overrideResponse === 'function'
-                        ? await overrideResponse(info)
-                        : overrideResponse
-                    : getUsersMeResponseMock(),
-                { status: 200 },
-            );
-        },
-        options,
-    );
-};
-export const getUsersMock = () => [getUsersMeMockHandler()];
+
+export const getUsersMeMockHandler = (overrideResponse?: CurrentUserResponseDto | ((info: Parameters<HttpResponseResolver>[0]) => Promise<CurrentUserResponseDto> | CurrentUserResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/v1/users/me', async (info: Parameters<HttpResponseResolver>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getUsersMeResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+export const getUsersMock = () => [
+  getUsersMeMockHandler()
+]

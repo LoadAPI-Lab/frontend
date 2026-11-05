@@ -7,14 +7,16 @@
  */
 import * as zod from 'zod';
 
+
 /**
  * Reads the refresh_token cookie, rotates it and sets new access_token and refresh_token cookies. A refresh token that was already used revokes the whole session. Every 401 clears both cookies. Public.
  * @summary Refresh the session
  */
-export const AuthRefreshResponse = zod.void();
+export const AuthRefreshResponse = zod.void()
 
 /**
  * Revokes the session of the refresh_token cookie when it is valid and always clears both auth cookies. Idempotent. Public.
  * @summary Sign out
  */
-export const AuthLogoutResponse = zod.void();
+export const AuthLogoutResponse = zod.void()
+

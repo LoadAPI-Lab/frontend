@@ -5,20 +5,14 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { faker } from '@faker-js/faker';
+import {
+  faker
+} from '@faker-js/faker';
 
-import type { CurrentUserResponseDto } from '../../model';
+import type {
+  CurrentUserResponseDto
+} from '../../model';
 
-export const getUsersMeResponseMock = (
-    overrideResponse: Partial<Extract<CurrentUserResponseDto, object>> = {},
-): CurrentUserResponseDto => ({
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    avatarUrl: faker.helpers.arrayElement([
-        faker.string.alpha({ length: { min: 10, max: 20 } }),
-        undefined,
-    ]),
-    createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z',
-    ...overrideResponse,
-});
+
+export const getUsersMeResponseMock = (overrideResponse: Partial<Extract<CurrentUserResponseDto, object>> = {}): CurrentUserResponseDto => ({id: faker.string.uuid(), email: faker.internet.email(), name: faker.string.alpha({length: {min: 10, max: 20}}), avatarUrl: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), createdAt: faker.date.past().toISOString().slice(0, 19) + 'Z', ...overrideResponse})
+

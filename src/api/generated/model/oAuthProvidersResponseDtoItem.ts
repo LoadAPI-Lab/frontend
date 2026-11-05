@@ -8,8 +8,8 @@
 import type { OAuthProvidersResponseDtoItemId } from './oAuthProvidersResponseDtoItemId';
 
 export type OAuthProvidersResponseDtoItem = {
-    /** Provider id, used in the OAuth URLs */
-    id: OAuthProvidersResponseDtoItemId;
-    /** Provider name to show on the sign-in button */
-    name: string;
+  /** Provider id, used in the OAuth URLs */
+  id: OAuthProvidersResponseDtoItemId;
+  /** Provider name to show on the sign-in button */
+  name: string;
 };

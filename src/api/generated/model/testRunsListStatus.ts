@@ -6,12 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TestRunsListStatus = (typeof TestRunsListStatus)[keyof typeof TestRunsListStatus];
+export type TestRunsListStatus = typeof TestRunsListStatus[keyof typeof TestRunsListStatus];
+
 
 export const TestRunsListStatus = {
-    PENDING: 'PENDING',
-    RUNNING: 'RUNNING',
-    COMPLETED: 'COMPLETED',
-    FAILED: 'FAILED',
-    STOPPED: 'STOPPED',
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  STOPPED: 'STOPPED',
 } as const;

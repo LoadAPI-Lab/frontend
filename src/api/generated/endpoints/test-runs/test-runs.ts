@@ -5,616 +5,527 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
-import type {
-    DataTag,
-    DefinedInitialDataOptions,
-    DefinedUseQueryResult,
-    MutationFunction,
-    QueryClient,
-    QueryFunction,
-    QueryKey,
-    UndefinedInitialDataOptions,
-    UseMutationOptions,
-    UseMutationResult,
-    UseQueryOptions,
-    UseQueryResult,
+import {
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
+import type {
+  GlobalErrorResponseOutput,
+  ListTestRunsResponseDto,
+  StartTestRunDto,
+  StartTestRunResponseDto,
+  StopTestRunResponseDto,
+  TestRunResponseDto,
+  TestRunsListParams
+} from '../../model';
 
 import { orvalFetch } from '../../../fetcher';
 import type { ErrorType } from '../../../fetcher';
-import type {
-    GlobalErrorResponseOutput,
-    ListTestRunsResponseDto,
-    StartTestRunDto,
-    StartTestRunResponseDto,
-    StopTestRunResponseDto,
-    TestRunResponseDto,
-    TestRunsListParams,
-} from '../../model';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
-    const result = { queryKey } as T & { queryKey: K };
-    for (const key of Object.keys(query)) {
-        // The explicit queryKey always wins, matching the previous
-        // `{ ...query, queryKey }` spread where it was set last.
-        if (key === 'queryKey') continue;
-        Object.defineProperty(result, key, {
-            enumerable: true,
-            configurable: true,
-            get: () => (query as Record<string, unknown>)[key],
-        });
-    }
-    return result;
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
 
 export const getTestRunsStartUrl = () => {
-    return `/v1/test-runs`;
-};
+
+
+
+
+  return `/v1/test-runs`
+}
 
 /**
  * Validates the config, stores a PENDING run and enqueues the job.
  * @summary Start a test run
  */
-export const testRunsStart = async (
-    startTestRunDto: StartTestRunDto,
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<StartTestRunResponseDto> => {
-    const getHeaders = (
-        h?: NonNullable<RequestInit['headers']>,
-    ): Record<string, string | readonly string[]> => {
-        if (!h) return {};
-        if (h instanceof Headers) return Object.fromEntries(h.entries());
-        if (Symbol.iterator in h) {
-            return Object.fromEntries(
-                Array.from(
-                    h as Iterable<Iterable<string>>,
-                    (entry) => Array.from(entry) as [string, string],
-                ),
-            );
-        }
-        const headers: Record<string, string | readonly string[]> = {};
-        for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-            if (value !== undefined) headers[name] = value;
-        }
-        return headers;
-    };
-    return orvalFetch<StartTestRunResponseDto>(getTestRunsStartUrl(), {
-        ...options,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-        body: JSON.stringify(startTestRunDto),
-    });
-};
+export const testRunsStart = async (startTestRunDto: StartTestRunDto, options?: Parameters<typeof orvalFetch>[1]): Promise<StartTestRunResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalFetch<StartTestRunResponseDto>(getTestRunsStartUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(startTestRunDto)
+  }
+);}
+
+
+
+
 
 export const getTestRunsStartMutationKey = () => ['testRunsStart'] as const;
 
-export const getTestRunsStartMutationOptions = <
-    TError = ErrorType<GlobalErrorResponseOutput>,
-    TContext = unknown,
->(options?: {
-    mutation?: UseMutationOptions<
+export const getTestRunsStartMutationOptions = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsStart>>, TError,TestRunsStartMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testRunsStart>>, TError,TestRunsStartMutationVariables, TContext> => {
+
+const mutationKey = getTestRunsStartMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testRunsStart>>, TestRunsStartMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  testRunsStart(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestRunsStartMutationResult = NonNullable<Awaited<ReturnType<typeof testRunsStart>>>
+    export type TestRunsStartMutationBody = StartTestRunDto
+    export type TestRunsStartMutationError = ErrorType<GlobalErrorResponseOutput>
+    export type TestRunsStartMutationVariables = {data: StartTestRunDto}
+
+    /**
+ * @summary Start a test run
+ */
+export const useTestRunsStart = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsStart>>, TError,TestRunsStartMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof testRunsStart>>,
         TError,
         TestRunsStartMutationVariables,
         TContext
-    >;
-    request?: SecondParameter<typeof orvalFetch>;
-}): UseMutationOptions<
-    Awaited<ReturnType<typeof testRunsStart>>,
-    TError,
-    TestRunsStartMutationVariables,
-    TContext
-> => {
-    const mutationKey = getTestRunsStartMutationKey();
-    const { mutation: mutationOptions, request: requestOptions } = options
-        ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-            ? options
-            : { ...options, mutation: { ...options.mutation, mutationKey } }
-        : { mutation: { mutationKey }, request: undefined };
+      > => {
+      return useMutation(getTestRunsStartMutationOptions(options), queryClient);
+    }
+    export const getTestRunsListUrl = (params?: TestRunsListParams,) => {
+  const normalizedParams = new URLSearchParams();
 
-    const mutationFn: MutationFunction<
-        Awaited<ReturnType<typeof testRunsStart>>,
-        TestRunsStartMutationVariables
-    > = (props) => {
-        const { data } = props ?? {};
+  Object.entries(params || {}).forEach(([key, value]) => {
 
-        return testRunsStart(data, requestOptions);
-    };
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
-    return { mutationFn, ...mutationOptions };
-};
+  const stringifiedParams = normalizedParams.toString();
 
-export type TestRunsStartMutationResult = NonNullable<Awaited<ReturnType<typeof testRunsStart>>>;
-export type TestRunsStartMutationBody = StartTestRunDto;
-export type TestRunsStartMutationError = ErrorType<GlobalErrorResponseOutput>;
-export type TestRunsStartMutationVariables = { data: StartTestRunDto };
-
-/**
- * @summary Start a test run
- */
-export const useTestRunsStart = <TError = ErrorType<GlobalErrorResponseOutput>, TContext = unknown>(
-    options?: {
-        mutation?: UseMutationOptions<
-            Awaited<ReturnType<typeof testRunsStart>>,
-            TError,
-            TestRunsStartMutationVariables,
-            TContext
-        >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseMutationResult<
-    Awaited<ReturnType<typeof testRunsStart>>,
-    TError,
-    TestRunsStartMutationVariables,
-    TContext
-> => {
-    return useMutation(getTestRunsStartMutationOptions(options), queryClient);
-};
-export const getTestRunsListUrl = (params?: TestRunsListParams) => {
-    const normalizedParams = new URLSearchParams();
-
-    Object.entries(params || {}).forEach(([key, value]) => {
-        if (value !== undefined) {
-            normalizedParams.append(key, value === null ? 'null' : String(value));
-        }
-    });
-
-    const stringifiedParams = normalizedParams.toString();
-
-    return stringifiedParams.length > 0 ? `/v1/test-runs?${stringifiedParams}` : `/v1/test-runs`;
-};
+  return stringifiedParams.length > 0 ? `/v1/test-runs?${stringifiedParams}` : `/v1/test-runs`
+}
 
 /**
  * Returns the run history, newest first, with cursor pagination. Configs and results are never included.
  * @summary List test runs
  */
-export const testRunsList = async (
-    params?: TestRunsListParams,
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<ListTestRunsResponseDto> => {
-    return orvalFetch<ListTestRunsResponseDto>(getTestRunsListUrl(params), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const testRunsList = async (params?: TestRunsListParams, options?: Parameters<typeof orvalFetch>[1]): Promise<ListTestRunsResponseDto> => {
 
-export const getTestRunsListQueryKey = (params?: TestRunsListParams) => {
-    return [`/v1/test-runs`, ...(params ? [params] : [])] as const;
-};
+  return orvalFetch<ListTestRunsResponseDto>(getTestRunsListUrl(params),
+  {
+    ...options,
+    method: 'GET'
 
-export const getTestRunsListQueryOptions = <
-    TData = Awaited<ReturnType<typeof testRunsList>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    params?: TestRunsListParams,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
+
+  }
+);}
+
+
+
+
+
+export const getTestRunsListQueryKey = (params?: TestRunsListParams,) => {
+    return [
+    `/v1/test-runs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getTestRunsListQueryOptions = <TData = Awaited<ReturnType<typeof testRunsList>>, TError = ErrorType<GlobalErrorResponseOutput>>(params?: TestRunsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getTestRunsListQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsList>>> = ({ signal }) =>
-        testRunsList(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getTestRunsListQueryKey(params);
 
-    return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-        Awaited<ReturnType<typeof testRunsList>>,
-        TError,
-        TData
-    > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type TestRunsListQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsList>>>;
-export type TestRunsListQueryError = ErrorType<GlobalErrorResponseOutput>;
 
-export function useTestRunsList<
-    TData = Awaited<ReturnType<typeof testRunsList>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    params: undefined | TestRunsListParams,
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsList>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsList>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsList<
-    TData = Awaited<ReturnType<typeof testRunsList>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    params?: TestRunsListParams,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>> &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsList>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsList>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsList<
-    TData = Awaited<ReturnType<typeof testRunsList>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    params?: TestRunsListParams,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsList>>> = ({ signal }) => testRunsList(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TestRunsListQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsList>>>
+export type TestRunsListQueryError = ErrorType<GlobalErrorResponseOutput>
+
+
+export function useTestRunsList<TData = Awaited<ReturnType<typeof testRunsList>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ params: undefined |  TestRunsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsList>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsList<TData = Awaited<ReturnType<typeof testRunsList>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ params?: TestRunsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsList>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsList<TData = Awaited<ReturnType<typeof testRunsList>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ params?: TestRunsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List test runs
  */
 
-export function useTestRunsList<
-    TData = Awaited<ReturnType<typeof testRunsList>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    params?: TestRunsListParams,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getTestRunsListQueryOptions(params, options);
+export function useTestRunsList<TData = Awaited<ReturnType<typeof testRunsList>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ params?: TestRunsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsList>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getTestRunsListQueryOptions(params,options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getTestRunsGetUrl = (id: string) => {
-    return `/v1/test-runs/${id}`;
-};
+
+
+
+
+
+export const getTestRunsGetUrl = (id: string,) => {
+
+
+
+
+  return `/v1/test-runs/${id}`
+}
 
 /**
  * Returns the run status and final result. The config is never included.
  * @summary Get a test run
  */
-export const testRunsGet = async (
-    id: string,
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<TestRunResponseDto> => {
-    return orvalFetch<TestRunResponseDto>(getTestRunsGetUrl(id), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const testRunsGet = async (id: string, options?: Parameters<typeof orvalFetch>[1]): Promise<TestRunResponseDto> => {
 
-export const getTestRunsGetQueryKey = (id: string) => {
-    return [`/v1/test-runs/${id}`] as const;
-};
+  return orvalFetch<TestRunResponseDto>(getTestRunsGetUrl(id),
+  {
+    ...options,
+    method: 'GET'
 
-export const getTestRunsGetQueryOptions = <
-    TData = Awaited<ReturnType<typeof testRunsGet>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
+
+  }
+);}
+
+
+
+
+
+export const getTestRunsGetQueryKey = (id: string,) => {
+    return [
+    `/v1/test-runs/${id}`
+    ] as const;
+    }
+
+
+export const getTestRunsGetQueryOptions = <TData = Awaited<ReturnType<typeof testRunsGet>>, TError = ErrorType<GlobalErrorResponseOutput>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getTestRunsGetQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsGet>>> = ({ signal }) =>
-        testRunsGet(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getTestRunsGetQueryKey(id);
 
-    return {
-        queryKey,
-        queryFn,
-        enabled: id !== null && id !== undefined,
-        ...queryOptions,
-    } as UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
-};
 
-export type TestRunsGetQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsGet>>>;
-export type TestRunsGetQueryError = ErrorType<GlobalErrorResponseOutput>;
 
-export function useTestRunsGet<
-    TData = Awaited<ReturnType<typeof testRunsGet>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsGet>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsGet>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsGet<
-    TData = Awaited<ReturnType<typeof testRunsGet>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>> &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsGet>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsGet>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsGet<
-    TData = Awaited<ReturnType<typeof testRunsGet>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsGet>>> = ({ signal }) => testRunsGet(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TestRunsGetQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsGet>>>
+export type TestRunsGetQueryError = ErrorType<GlobalErrorResponseOutput>
+
+
+export function useTestRunsGet<TData = Awaited<ReturnType<typeof testRunsGet>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsGet>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsGet<TData = Awaited<ReturnType<typeof testRunsGet>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsGet>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsGet<TData = Awaited<ReturnType<typeof testRunsGet>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get a test run
  */
 
-export function useTestRunsGet<
-    TData = Awaited<ReturnType<typeof testRunsGet>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getTestRunsGetQueryOptions(id, options);
+export function useTestRunsGet<TData = Awaited<ReturnType<typeof testRunsGet>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getTestRunsGetQueryOptions(id,options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getTestRunsStopUrl = (id: string) => {
-    return `/v1/test-runs/${id}/stop`;
-};
+
+
+
+
+
+export const getTestRunsStopUrl = (id: string,) => {
+
+
+
+
+  return `/v1/test-runs/${id}/stop`
+}
 
 /**
  * Requests a stop and returns the current status. The status becomes STOPPED once the worker reports the run as finished.
  * @summary Stop a test run
  */
-export const testRunsStop = async (
-    id: string,
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<StopTestRunResponseDto> => {
-    return orvalFetch<StopTestRunResponseDto>(getTestRunsStopUrl(id), {
-        ...options,
-        method: 'POST',
-    });
-};
+export const testRunsStop = async (id: string, options?: Parameters<typeof orvalFetch>[1]): Promise<StopTestRunResponseDto> => {
+
+  return orvalFetch<StopTestRunResponseDto>(getTestRunsStopUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getTestRunsStopMutationKey = () => ['testRunsStop'] as const;
 
-export const getTestRunsStopMutationOptions = <
-    TError = ErrorType<GlobalErrorResponseOutput>,
-    TContext = unknown,
->(options?: {
-    mutation?: UseMutationOptions<
+export const getTestRunsStopMutationOptions = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsStop>>, TError,TestRunsStopMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testRunsStop>>, TError,TestRunsStopMutationVariables, TContext> => {
+
+const mutationKey = getTestRunsStopMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testRunsStop>>, TestRunsStopMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  testRunsStop(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestRunsStopMutationResult = NonNullable<Awaited<ReturnType<typeof testRunsStop>>>
+
+    export type TestRunsStopMutationError = ErrorType<GlobalErrorResponseOutput>
+    export type TestRunsStopMutationVariables = {id: string}
+
+    /**
+ * @summary Stop a test run
+ */
+export const useTestRunsStop = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsStop>>, TError,TestRunsStopMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof testRunsStop>>,
         TError,
         TestRunsStopMutationVariables,
         TContext
-    >;
-    request?: SecondParameter<typeof orvalFetch>;
-}): UseMutationOptions<
-    Awaited<ReturnType<typeof testRunsStop>>,
-    TError,
-    TestRunsStopMutationVariables,
-    TContext
-> => {
-    const mutationKey = getTestRunsStopMutationKey();
-    const { mutation: mutationOptions, request: requestOptions } = options
-        ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-            ? options
-            : { ...options, mutation: { ...options.mutation, mutationKey } }
-        : { mutation: { mutationKey }, request: undefined };
+      > => {
+      return useMutation(getTestRunsStopMutationOptions(options), queryClient);
+    }
+    export const getTestRunsWatchUrl = (id: string,) => {
 
-    const mutationFn: MutationFunction<
-        Awaited<ReturnType<typeof testRunsStop>>,
-        TestRunsStopMutationVariables
-    > = (props) => {
-        const { id } = props ?? {};
 
-        return testRunsStop(id, requestOptions);
-    };
 
-    return { mutationFn, ...mutationOptions };
-};
 
-export type TestRunsStopMutationResult = NonNullable<Awaited<ReturnType<typeof testRunsStop>>>;
-
-export type TestRunsStopMutationError = ErrorType<GlobalErrorResponseOutput>;
-export type TestRunsStopMutationVariables = { id: string };
-
-/**
- * @summary Stop a test run
- */
-export const useTestRunsStop = <TError = ErrorType<GlobalErrorResponseOutput>, TContext = unknown>(
-    options?: {
-        mutation?: UseMutationOptions<
-            Awaited<ReturnType<typeof testRunsStop>>,
-            TError,
-            TestRunsStopMutationVariables,
-            TContext
-        >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseMutationResult<
-    Awaited<ReturnType<typeof testRunsStop>>,
-    TError,
-    TestRunsStopMutationVariables,
-    TContext
-> => {
-    return useMutation(getTestRunsStopMutationOptions(options), queryClient);
-};
-export const getTestRunsWatchUrl = (id: string) => {
-    return `/v1/test-runs/${id}/metrics`;
-};
+  return `/v1/test-runs/${id}/metrics`
+}
 
 /**
  * Server-sent events. 'status' carries { status, reason? }: the current status right after connecting, then every change. 'snapshot' carries the per-second metrics of the run. The stream closes when the run reaches a final status.
  * @summary Stream live metrics of a test run
  */
-export const testRunsWatch = async (
-    id: string,
-    options?: Parameters<typeof orvalFetch>[1],
-): Promise<unknown> => {
-    return orvalFetch<unknown>(getTestRunsWatchUrl(id), {
-        ...options,
-        method: 'GET',
-    });
-};
+export const testRunsWatch = async (id: string, options?: Parameters<typeof orvalFetch>[1]): Promise<unknown> => {
 
-export const getTestRunsWatchQueryKey = (id: string) => {
-    return [`/v1/test-runs/${id}/metrics`] as const;
-};
+  return orvalFetch<unknown>(getTestRunsWatchUrl(id),
+  {
+    ...options,
+    method: 'GET'
 
-export const getTestRunsWatchQueryOptions = <
-    TData = Awaited<ReturnType<typeof testRunsWatch>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
+
+  }
+);}
+
+
+
+
+
+export const getTestRunsWatchQueryKey = (id: string,) => {
+    return [
+    `/v1/test-runs/${id}/metrics`
+    ] as const;
+    }
+
+
+export const getTestRunsWatchQueryOptions = <TData = Awaited<ReturnType<typeof testRunsWatch>>, TError = ErrorType<GlobalErrorResponseOutput>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
-    const { query: queryOptions, request: requestOptions } = options ?? {};
 
-    const queryKey = queryOptions?.queryKey ?? getTestRunsWatchQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsWatch>>> = ({ signal }) =>
-        testRunsWatch(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getTestRunsWatchQueryKey(id);
 
-    return {
-        queryKey,
-        queryFn,
-        enabled: id !== null && id !== undefined,
-        ...queryOptions,
-    } as UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
-};
 
-export type TestRunsWatchQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsWatch>>>;
-export type TestRunsWatchQueryError = ErrorType<GlobalErrorResponseOutput>;
 
-export function useTestRunsWatch<
-    TData = Awaited<ReturnType<typeof testRunsWatch>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options: {
-        query: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>> &
-            Pick<
-                DefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsWatch>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsWatch>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsWatch<
-    TData = Awaited<ReturnType<typeof testRunsWatch>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>> &
-            Pick<
-                UndefinedInitialDataOptions<
-                    Awaited<ReturnType<typeof testRunsWatch>>,
-                    TError,
-                    Awaited<ReturnType<typeof testRunsWatch>>
-                >,
-                'initialData'
-            >;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTestRunsWatch<
-    TData = Awaited<ReturnType<typeof testRunsWatch>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof testRunsWatch>>> = ({ signal }) => testRunsWatch(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TestRunsWatchQueryResult = NonNullable<Awaited<ReturnType<typeof testRunsWatch>>>
+export type TestRunsWatchQueryError = ErrorType<GlobalErrorResponseOutput>
+
+
+export function useTestRunsWatch<TData = Awaited<ReturnType<typeof testRunsWatch>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsWatch>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsWatch>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsWatch<TData = Awaited<ReturnType<typeof testRunsWatch>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testRunsWatch>>,
+          TError,
+          Awaited<ReturnType<typeof testRunsWatch>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestRunsWatch<TData = Awaited<ReturnType<typeof testRunsWatch>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Stream live metrics of a test run
  */
 
-export function useTestRunsWatch<
-    TData = Awaited<ReturnType<typeof testRunsWatch>>,
-    TError = ErrorType<GlobalErrorResponseOutput>,
->(
-    id: string,
-    options?: {
-        query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>;
-        request?: SecondParameter<typeof orvalFetch>;
-    },
-    queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-    const queryOptions = getTestRunsWatchQueryOptions(id, options);
+export function useTestRunsWatch<TData = Awaited<ReturnType<typeof testRunsWatch>>, TError = ErrorType<GlobalErrorResponseOutput>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testRunsWatch>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-    const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-        queryKey: DataTag<QueryKey, TData, TError>;
-    };
+  const queryOptions = getTestRunsWatchQueryOptions(id,options)
 
-    return withQueryKey(query, queryOptions.queryKey);
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

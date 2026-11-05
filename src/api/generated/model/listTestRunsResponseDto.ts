@@ -8,8 +8,8 @@
 import type { ListTestRunsResponseDtoItemsItem } from './listTestRunsResponseDtoItemsItem';
 
 export interface ListTestRunsResponseDto {
-    /** Test runs, newest first */
-    items: ListTestRunsResponseDtoItemsItem[];
-    /** Cursor of the next page, absent on the last page */
-    nextCursor?: string;
+  /** Test runs, newest first */
+  items: ListTestRunsResponseDtoItemsItem[];
+  /** Cursor of the next page, absent on the last page */
+  nextCursor?: string;
 }

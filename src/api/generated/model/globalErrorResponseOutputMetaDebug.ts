@@ -7,6 +7,6 @@
  */
 
 export type GlobalErrorResponseOutputMetaDebug = {
-    /** Call stack (development only) */
-    stack?: string;
+  /** Call stack (development only) */
+  stack?: string;
 };

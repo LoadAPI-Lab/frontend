@@ -9,13 +9,13 @@
 /**
  * Test run status
  */
-export type ListTestRunsResponseDtoItemsItemStatus =
-    (typeof ListTestRunsResponseDtoItemsItemStatus)[keyof typeof ListTestRunsResponseDtoItemsItemStatus];
+export type ListTestRunsResponseDtoItemsItemStatus = typeof ListTestRunsResponseDtoItemsItemStatus[keyof typeof ListTestRunsResponseDtoItemsItemStatus];
+
 
 export const ListTestRunsResponseDtoItemsItemStatus = {
-    PENDING: 'PENDING',
-    RUNNING: 'RUNNING',
-    COMPLETED: 'COMPLETED',
-    FAILED: 'FAILED',
-    STOPPED: 'STOPPED',
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  STOPPED: 'STOPPED',
 } as const;

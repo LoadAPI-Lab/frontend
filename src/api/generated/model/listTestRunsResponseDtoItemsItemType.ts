@@ -9,12 +9,12 @@
 /**
  * Test type
  */
-export type ListTestRunsResponseDtoItemsItemType =
-    (typeof ListTestRunsResponseDtoItemsItemType)[keyof typeof ListTestRunsResponseDtoItemsItemType];
+export type ListTestRunsResponseDtoItemsItemType = typeof ListTestRunsResponseDtoItemsItemType[keyof typeof ListTestRunsResponseDtoItemsItemType];
+
 
 export const ListTestRunsResponseDtoItemsItemType = {
-    single: 'single',
-    scenario: 'scenario',
-    batch: 'batch',
-    round_robin: 'round_robin',
+  single: 'single',
+  scenario: 'scenario',
+  batch: 'batch',
+  round_robin: 'round_robin',
 } as const;

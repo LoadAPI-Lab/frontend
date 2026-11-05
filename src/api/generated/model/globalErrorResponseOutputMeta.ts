@@ -9,10 +9,10 @@ import type { GlobalErrorResponseOutputMetaDebug } from './globalErrorResponseOu
 import type { GlobalErrorResponseOutputMetaRequest } from './globalErrorResponseOutputMetaRequest';
 
 export type GlobalErrorResponseOutputMeta = {
-    /** Name of the microservice */
-    service: string;
-    request: GlobalErrorResponseOutputMetaRequest;
-    /** Error time, ISO 8601 */
-    timestamp: string;
-    debug?: GlobalErrorResponseOutputMetaDebug;
+  /** Name of the microservice */
+  service: string;
+  request: GlobalErrorResponseOutputMetaRequest;
+  /** Error time, ISO 8601 */
+  timestamp: string;
+  debug?: GlobalErrorResponseOutputMetaDebug;
 };

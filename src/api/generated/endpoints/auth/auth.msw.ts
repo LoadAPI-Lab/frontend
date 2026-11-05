@@ -5,40 +5,37 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { HttpResponse, http } from 'msw';
-import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  RequestHandlerOptions
+} from 'msw';
 
-export const getAuthRefreshMockHandler = (
-    overrideResponse?: void | ((info: Parameters<HttpResponseResolver>[0]) => Promise<void> | void),
-    options?: RequestHandlerOptions,
-) => {
-    return http.post(
-        '*/v1/auth/refresh',
-        async (info: Parameters<HttpResponseResolver>[0]) => {
-            if (typeof overrideResponse === 'function') {
-                await overrideResponse(info);
-            }
 
-            return new HttpResponse(null, { status: 204 });
-        },
-        options,
-    );
-};
 
-export const getAuthLogoutMockHandler = (
-    overrideResponse?: void | ((info: Parameters<HttpResponseResolver>[0]) => Promise<void> | void),
-    options?: RequestHandlerOptions,
-) => {
-    return http.post(
-        '*/v1/auth/logout',
-        async (info: Parameters<HttpResponseResolver>[0]) => {
-            if (typeof overrideResponse === 'function') {
-                await overrideResponse(info);
-            }
+export const getAuthRefreshMockHandler = (overrideResponse?: void | ((info: Parameters<HttpResponseResolver>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.post('*/v1/auth/refresh', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-            return new HttpResponse(null, { status: 204 });
-        },
-        options,
-    );
-};
-export const getAuthMock = () => [getAuthRefreshMockHandler(), getAuthLogoutMockHandler()];
+    return new HttpResponse(null,
+      { status: 204
+      })
+  }, options)
+}
+
+export const getAuthLogoutMockHandler = (overrideResponse?: void | ((info: Parameters<HttpResponseResolver>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.post('*/v1/auth/logout', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 204
+      })
+  }, options)
+}
+export const getAuthMock = () => [
+  getAuthRefreshMockHandler(),
+  getAuthLogoutMockHandler()
+]

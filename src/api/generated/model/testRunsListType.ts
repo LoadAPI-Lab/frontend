@@ -6,11 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TestRunsListType = (typeof TestRunsListType)[keyof typeof TestRunsListType];
+export type TestRunsListType = typeof TestRunsListType[keyof typeof TestRunsListType];
+
 
 export const TestRunsListType = {
-    single: 'single',
-    scenario: 'scenario',
-    batch: 'batch',
-    round_robin: 'round_robin',
+  single: 'single',
+  scenario: 'scenario',
+  batch: 'batch',
+  round_robin: 'round_robin',
 } as const;

@@ -7,10 +7,10 @@
  */
 
 export type GlobalErrorResponseOutputError = {
-    /** Business error code */
-    code: string;
-    /** Description for the user */
-    message: string;
-    /** Whether retrying the request may succeed */
-    retryable: boolean;
+  /** Business error code */
+  code: string;
+  /** Description for the user */
+  message: string;
+  /** Whether retrying the request may succeed */
+  retryable: boolean;
 };

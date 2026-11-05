@@ -9,10 +9,10 @@
 /**
  * Provider id, used in the OAuth URLs
  */
-export type OAuthProvidersResponseDtoItemId =
-    (typeof OAuthProvidersResponseDtoItemId)[keyof typeof OAuthProvidersResponseDtoItemId];
+export type OAuthProvidersResponseDtoItemId = typeof OAuthProvidersResponseDtoItemId[keyof typeof OAuthProvidersResponseDtoItemId];
+
 
 export const OAuthProvidersResponseDtoItemId = {
-    google: 'google',
-    github: 'github',
+  google: 'google',
+  github: 'github',
 } as const;

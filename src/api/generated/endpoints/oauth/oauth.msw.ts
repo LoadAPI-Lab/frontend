@@ -5,81 +5,59 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
-import { HttpResponse, http } from 'msw';
-import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  RequestHandlerOptions
+} from 'msw';
 
-import type { OAuthProvidersResponseDto } from '../../model';
-import { getOauthProvidersResponseMock } from './oauth.faker';
+import type {
+  OAuthProvidersResponseDto
+} from '../../model';
+
+import {
+  getOauthProvidersResponseMock
+} from './oauth.faker';
 
 export { getOauthProvidersResponseMock } from './oauth.faker';
 
-export const getOauthProvidersMockHandler = (
-    overrideResponse?:
-        | OAuthProvidersResponseDto
-        | ((
-              info: Parameters<HttpResponseResolver>[0],
-          ) => Promise<OAuthProvidersResponseDto> | OAuthProvidersResponseDto),
-    options?: RequestHandlerOptions,
-) => {
-    return http.get(
-        '*/v1/oauth/providers',
-        async (info: Parameters<HttpResponseResolver>[0]) => {
-            return HttpResponse.json(
-                overrideResponse !== undefined
-                    ? typeof overrideResponse === 'function'
-                        ? await overrideResponse(info)
-                        : overrideResponse
-                    : getOauthProvidersResponseMock(),
-                { status: 200 },
-            );
-        },
-        options,
-    );
-};
 
-export const getOauthStartMockHandler = (
-    overrideResponse?:
-        | unknown
-        | ((
-              info: Parameters<HttpResponseResolver<{ provider: string }>>[0],
-          ) => Promise<unknown> | unknown),
-    options?: RequestHandlerOptions,
-) => {
-    return http.get<{ provider: string }>(
-        '*/v1/oauth/:provider',
-        async (info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => {
-            if (typeof overrideResponse === 'function') {
-                await overrideResponse(info);
-            }
+export const getOauthProvidersMockHandler = (overrideResponse?: OAuthProvidersResponseDto | ((info: Parameters<HttpResponseResolver>[0]) => Promise<OAuthProvidersResponseDto> | OAuthProvidersResponseDto), options?: RequestHandlerOptions) => {
+  return http.get('*/v1/oauth/providers', async (info: Parameters<HttpResponseResolver>[0]) => {
 
-            return new HttpResponse(null, { status: 200 });
-        },
-        options,
-    );
-};
 
-export const getOauthCallbackMockHandler = (
-    overrideResponse?:
-        | unknown
-        | ((
-              info: Parameters<HttpResponseResolver<{ provider: string }>>[0],
-          ) => Promise<unknown> | unknown),
-    options?: RequestHandlerOptions,
-) => {
-    return http.get<{ provider: string }>(
-        '*/v1/oauth/:provider/callback',
-        async (info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => {
-            if (typeof overrideResponse === 'function') {
-                await overrideResponse(info);
-            }
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getOauthProvidersResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 
-            return new HttpResponse(null, { status: 200 });
-        },
-        options,
-    );
-};
+export const getOauthStartMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get<{ provider: string }>('*/v1/oauth/:provider', async (info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getOauthCallbackMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get<{ provider: string }>('*/v1/oauth/:provider/callback', async (info: Parameters<HttpResponseResolver<{ provider: string }>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 export const getOauthMock = () => [
-    getOauthProvidersMockHandler(),
-    getOauthStartMockHandler(),
-    getOauthCallbackMockHandler(),
-];
+  getOauthProvidersMockHandler(),
+  getOauthStartMockHandler(),
+  getOauthCallbackMockHandler()
+]

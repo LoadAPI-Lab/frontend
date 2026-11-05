@@ -7,32 +7,34 @@
  */
 import * as zod from 'zod';
 
+
 /**
  * Returns the OAuth providers configured on the server. Public.
  * @summary List OAuth providers
  */
 export const OauthProvidersResponseItem = zod.object({
-    id: zod.enum(['google', 'github']).describe('Provider id, used in the OAuth URLs'),
-    name: zod.string().describe('Provider name to show on the sign-in button'),
-});
-export const OauthProvidersResponse = zod.array(OauthProvidersResponseItem);
+  "id": zod.enum(['google', 'github']).describe('Provider id, used in the OAuth URLs'),
+  "name": zod.string().describe('Provider name to show on the sign-in button')
+})
+export const OauthProvidersResponse = zod.array(OauthProvidersResponseItem)
 
 /**
  * Sets the oauth_state cookie and redirects to the provider's consent page. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.
  * @summary Start OAuth sign-in
  */
 export const OauthStartParams = zod.object({
-    provider: zod.enum(['google', 'github']).describe('OAuth provider id'),
-});
+  "provider": zod.enum(['google', 'github']).describe('OAuth provider id')
+})
 
-export const OauthStartResponse = zod.void();
+export const OauthStartResponse = zod.void()
 
 /**
  * Called by the provider. Checks the state, signs the user in or registers them, sets the access_token and refresh_token cookies and redirects to FRONTEND_URL/oauth/callback. On any error redirects to FRONTEND_URL/oauth/callback?error=<code> instead of returning JSON. Public.
  * @summary Finish OAuth sign-in
  */
 export const OauthCallbackParams = zod.object({
-    provider: zod.enum(['google', 'github']).describe('OAuth provider id'),
-});
+  "provider": zod.enum(['google', 'github']).describe('OAuth provider id')
+})
 
-export const OauthCallbackResponse = zod.void();
+export const OauthCallbackResponse = zod.void()
+
