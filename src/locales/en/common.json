@@ -76,5 +76,15 @@
     },
     "toast": {
         "dismiss": "Dismiss notification"
+    },
+    "bodyEditor": {
+        "label": "Request body",
+        "empty": "No body. Type JSON or insert a placeholder.",
+        "insertPlaceholder": "Insert placeholder",
+        "issues": {
+            "syntax": "Line {{line}}: this isn't valid JSON.",
+            "unquotedText": "Line {{line}}: {{token}} is replaced with text. Put it inside quotes.",
+            "unknownGenerator": "Line {{line}}: {{token}} isn't a placeholder. Use one of {{known}}."
+        }
     }
 }
