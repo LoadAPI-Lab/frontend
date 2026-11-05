@@ -1,10 +1,19 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
+import {
+    buildRequest,
+    emptyDraft,
+    pathParamNames,
+    type RequestDraft,
+    type RequestRoute,
+} from '@/lib/request-draft';
 
+import { RequestCard } from './request-card';
 import { TestConfigBar } from './test-config-bar';
 import { useTestRunControls } from './use-test-run-controls';
 
@@ -19,13 +28,20 @@ const modes = [
 ] as const;
 
 export interface StressTestPageProps {
+    route?: RequestRoute | null;
     runId: string | undefined;
     onRunStarted: (runId: string) => void;
 }
 
-export function StressTestPage({ runId, onRunStarted }: StressTestPageProps) {
+export function StressTestPage({ route = null, runId, onRunStarted }: StressTestPageProps) {
     const { t } = useTranslation();
-    const controls = useTestRunControls({ target: null, body: '', runId, onRunStarted });
+    const [draft, setDraft] = useState<RequestDraft>(emptyDraft);
+    const controls = useTestRunControls({
+        target: route ? buildRequest(route, draft) : null,
+        body: draft.body,
+        runId,
+        onRunStarted,
+    });
     return (
         <>
             <PageHeader
@@ -58,8 +74,14 @@ export function StressTestPage({ runId, onRunStarted }: StressTestPageProps) {
                 </div>
                 <Tabs.Panel
                     value="single"
-                    className="pt-4"
+                    className="grid grid-cols-2 items-start gap-3 pt-4"
                 >
+                    <RequestCard
+                        draft={draft}
+                        onDraftChange={setDraft}
+                        pathParams={route ? pathParamNames(route.url) : []}
+                        className="h-[596px]"
+                    />
                     <Card>
                         <p className="text-fg-muted text-sm">{t('stressTests.pickRoute')}</p>
                     </Card>
