@@ -46,20 +46,54 @@ To run against a local backend: start it from the backend repo (`infra/README.md
 
 ## Docker
 
-Images are published to `ghcr.io/loadapi-lab/frontend` (`dev`, `main`, `latest`, `sha-…`, semver tags).
+Images are published to `ghcr.io/loadapi-lab/frontend` (`dev`, `main`, `latest`, `sha-…`, semver tags)
+for linux/amd64 and linux/arm64.
+
+### Run with Docker Compose (no Node or pnpm needed)
+
+Start the backend first (its `infra/README.md`), then from this folder:
 
 ```bash
-# mocked, no backend
-docker run --rm -p 5080:8080 -e API_MOCKING=true ghcr.io/loadapi-lab/frontend:dev
-
-# against core running on your machine
-docker run --rm -p 5080:8080 -e API_UPSTREAM=http://host.docker.internal:3000 ghcr.io/loadapi-lab/frontend:dev
+docker compose pull
+docker compose up -d
 ```
 
-Behind the shared reverse proxy, leave `API_UPSTREAM` empty: the proxy routes `/v1/*` to core unchanged
-(no prefix: core's auth cookies are scoped to `/v1/auth` and `/v1/oauth`). Add the site's origin to core's
-`CORS_ALLOWED_ORIGINS`, and set `FRONTEND_URL` to it so sign-in comes back to `/oauth/callback`.
-Runtime variables: `API_UPSTREAM`, `API_MOCKING`, `FEATURE_BATCH`, `FEATURE_ROUND_ROBIN`.
+Open http://localhost:5173. The container serves the app and forwards `/v1/*` to core on
+`localhost:3001`, so sign-in works with the backend's default `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS`
+(`http://localhost:5173`). Don't run it together with `pnpm dev`: both use port 5173.
+
+```bash
+docker compose up -d --build   # build from this checkout instead of pulling
+docker compose logs -f         # logs
+docker compose down            # stop
+```
+
+`docker login ghcr.io` is only needed if the package is private. Optional settings go in a `.env`
+next to `docker-compose.yml` (see `.env.example`):
+
+| Variable        | Default                            | Use                                                                                 |
+| --------------- | ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `IMAGE_TAG`     | `dev`                              | pin a version, e.g. `sha-…`                                                         |
+| `FRONTEND_PORT` | `5173`                             | another host port (then add it to core's `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS`) |
+| `API_UPSTREAM`  | `http://host.docker.internal:3001` | where core runs                                                                     |
+| `API_MOCKING`   | `false`                            | `true` runs the app on mocks, no backend                                            |
+
+`host.docker.internal` is provided by Docker Desktop (macOS, Windows). On Linux, core's ports are bound to
+`127.0.0.1` and are not reachable from another compose project.
+
+### Run the image directly
+
+```bash
+docker run --rm -p 5080:8080 -e API_MOCKING=true ghcr.io/loadapi-lab/frontend:dev
+docker run --rm -p 5080:8080 -e API_UPSTREAM=http://host.docker.internal:3001 ghcr.io/loadapi-lab/frontend:dev
+```
+
+### Behind the shared reverse proxy
+
+Leave `API_UPSTREAM` empty: the proxy routes `/v1/*` to core unchanged (no prefix: core's auth cookies are
+scoped to `/v1/auth` and `/v1/oauth`). Add the site's origin to core's `CORS_ALLOWED_ORIGINS`, and set
+`FRONTEND_URL` to it so sign-in comes back to `/oauth/callback`. Runtime variables: `API_UPSTREAM`,
+`API_MOCKING`, `FEATURE_BATCH`, `FEATURE_ROUND_ROBIN`.
 
 ## Project layout and conventions
 
