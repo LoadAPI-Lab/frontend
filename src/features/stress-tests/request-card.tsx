@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { JsonBodyEditor } from '@/components/shared/json-body-editor';
 import { KeyValueEditor } from '@/components/shared/key-value-editor';
+import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Tabs } from '@/components/ui/tabs';
@@ -15,6 +16,7 @@ export interface RequestCardProps {
     draft: RequestDraft;
     onDraftChange: (draft: RequestDraft) => void;
     pathParams: string[];
+    onFillPlaceholders?: () => void;
     className?: string;
 }
 
@@ -25,7 +27,13 @@ function Count({ value }: { value: number }) {
     return value > 0 ? <span className="text-fg-muted font-mono">{value}</span> : null;
 }
 
-export function RequestCard({ draft, onDraftChange, pathParams, className }: RequestCardProps) {
+export function RequestCard({
+    draft,
+    onDraftChange,
+    pathParams,
+    onFillPlaceholders,
+    className,
+}: RequestCardProps) {
     const { t } = useTranslation();
     const [tab, setTab] = useState('body');
     const change = (changes: Partial<RequestDraft>) => onDraftChange({ ...draft, ...changes });
@@ -76,9 +84,20 @@ export function RequestCard({ draft, onDraftChange, pathParams, className }: Req
                         </Tabs.Tab>
                     </Tabs.List>
                     {tab === 'body' ? (
-                        <span className="border-border-strong text-fg-muted rounded-sm border px-2 py-1 font-mono text-sm">
-                            {t('requestCard.rawJson')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            {onFillPlaceholders ? (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onFillPlaceholders}
+                                >
+                                    {t('requestCard.fillPlaceholders')}
+                                </Button>
+                            ) : null}
+                            <span className="border-border-strong text-fg-muted rounded-sm border px-2 py-1 font-mono text-sm">
+                                {t('requestCard.rawJson')}
+                            </span>
+                        </div>
                     ) : null}
                 </div>
                 <Tabs.Panel
