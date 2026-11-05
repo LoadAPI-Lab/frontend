@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@theme {
+@theme static {
     --color-bg: #0e0e0e;
     --color-surface-1: #141414;
     --color-surface-input: #151515;
@@ -36,6 +36,10 @@
     --color-method-patch: #e0b54a;
     --color-method-delete: #f07b6b;
     --color-method-other: #8a8a86;
+
+    --color-syntax-key: #c79bf2;
+    --color-syntax-string: #e4e3dd;
+    --color-syntax-number: #7fd8f7;
 
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
