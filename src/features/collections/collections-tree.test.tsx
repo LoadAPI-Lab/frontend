@@ -7,16 +7,32 @@ import { shopSpec } from '@/mocks/api-specs';
 import { server } from '@/mocks/server';
 import { renderWithProviders } from '@/test/render';
 
-import { CollectionsTree, type EndpointSelection } from './collections-tree';
+import {
+    CollectionsTree,
+    type CollectionsTreeProps,
+    type EndpointSelection,
+} from './collections-tree';
+import { useExpanded } from './use-expanded';
 
 afterEach(() => window.localStorage.clear());
+
+function Harness(props: Pick<CollectionsTreeProps, 'onSelect' | 'onImport'>) {
+    const [expanded, setExpanded] = useExpanded();
+    return (
+        <CollectionsTree
+            selected={null}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            {...props}
+        />
+    );
+}
 
 function setup() {
     const onSelect = vi.fn<(selection: EndpointSelection) => void>();
     const onImport = vi.fn<() => void>();
     renderWithProviders(
-        <CollectionsTree
-            selected={null}
+        <Harness
             onSelect={onSelect}
             onImport={onImport}
         />,

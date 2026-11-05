@@ -168,5 +168,23 @@
             "query": "Query"
         },
         "noneHint": "No auth is added to the request."
+    },
+    "importSpec": {
+        "title": "Import an OpenAPI doc",
+        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON. Its endpoints appear in the sidebar.",
+        "name": "Name (optional)",
+        "namePlaceholder": "Uses the doc's title",
+        "content": "OpenAPI document",
+        "contentPlaceholder": "openapi: 3.0.3\ninfo:\n  title: My API\n  version: 1.0.0\npaths: …",
+        "cancel": "Cancel",
+        "submit": "Import",
+        "importing": "Importing…",
+        "errors": {
+            "syntax": "This isn't valid YAML or JSON.",
+            "syntaxAt": "Line {{line}}, column {{column}}: {{detail}}",
+            "invalid": "This isn't a valid OpenAPI document:",
+            "unsupportedVersion": "Only OpenAPI 3.0 and 3.1 are supported. Convert Swagger 2.0 docs first.",
+            "tooLarge": "This doc is over 5 MB, the import limit."
+        }
     }
 }

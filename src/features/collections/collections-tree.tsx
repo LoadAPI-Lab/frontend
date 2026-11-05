@@ -25,7 +25,6 @@ import {
     specInitials,
     specNodeId,
 } from './spec-tree';
-import { useExpanded } from './use-expanded';
 
 export interface EndpointSelection {
     specId: string;
@@ -35,6 +34,8 @@ export interface EndpointSelection {
 export interface CollectionsTreeProps {
     selected: EndpointSelection | null;
     onSelect: (selection: EndpointSelection) => void;
+    expanded: ReadonlySet<string>;
+    onExpandedChange: (id: string, open: boolean) => void;
     onImport?: () => void;
 }
 
@@ -50,19 +51,21 @@ function Chevron({ open, className }: { open: boolean; className?: string }) {
 
 function PendingRows() {
     return (
-        <li
-            role="none"
-            className="flex flex-col gap-1.5 py-1.5 pr-2 pl-8"
-        >
+        <div className="flex flex-col gap-1.5 py-1.5 pr-2 pl-8">
             <Skeleton className="h-4" />
             <Skeleton className="h-4 w-3/4" />
-        </li>
+        </div>
     );
 }
 
-export function CollectionsTree({ selected, onSelect, onImport }: CollectionsTreeProps) {
+export function CollectionsTree({
+    selected,
+    onSelect,
+    expanded,
+    onExpandedChange,
+    onImport,
+}: CollectionsTreeProps) {
     const { t } = useTranslation();
-    const [expanded, setExpanded] = useExpanded();
     const specs = useQuery(apiSpecsQuery);
     const openSpecIds = (specs.data ?? [])
         .map((spec) => spec.id)
@@ -247,7 +250,7 @@ export function CollectionsTree({ selected, onSelect, onImport }: CollectionsTre
                 nodes={nodes}
                 aria-label={t('collections.title')}
                 expandedIds={expanded}
-                onExpandedChange={setExpanded}
+                onExpandedChange={onExpandedChange}
                 selectedId={selected ? endpointNodeId(selected.specId, selected.endpointKey) : null}
                 onSelect={(node) => {
                     const [, specId = '', ...key] = node.id.split(':');
