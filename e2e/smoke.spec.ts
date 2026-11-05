@@ -17,6 +17,35 @@ test('picking an endpoint in the collections tree opens it on the Tests page', a
     await tree.getByRole('treeitem', { name: 'GET /products/{productId}' }).click();
     await expect(page).toHaveURL(/spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37/);
     await expect(page).toHaveURL(/endpoint=GET/);
+    await expect(
+        page.getByRole('heading', { name: '/products/{productId}', level: 2 }),
+    ).toBeVisible();
+    await expect(page.getByText('Shop API', { exact: true }).last()).toBeVisible();
+    await page.reload();
+    await expect(
+        page.getByRole('heading', { name: '/products/{productId}', level: 2 }),
+    ).toBeVisible();
+});
+
+test('an endpoint opens with its example body and a Bearer auth tab', async ({ page }) => {
+    await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=POST%20%2Forders');
+    await expect(page.getByRole('heading', { name: '/orders', level: 2 })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Request body' })).toContainText(
+        '"quantity": 1',
+    );
+    await page.getByRole('button', { name: 'Fill with placeholders' }).click();
+    await expect(page.getByRole('textbox', { name: 'Request body' })).toContainText(
+        '{{$randomInt}}',
+    );
+    await page.getByRole('tab', { name: 'Auth' }).click();
+    await expect(page.getByRole('button', { name: 'Bearer token', pressed: true })).toBeVisible();
+});
+
+test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {
+    await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fnope');
+    await expect(page.getByText("This endpoint isn't in your collections")).toBeVisible();
+    await page.goto('/tests?spec=00000000-0000-0000-0000-000000000000&endpoint=GET%20%2Fx');
+    await expect(page.getByText("This endpoint isn't in your collections")).toBeVisible();
 });
 
 test('importing a pasted OpenAPI doc adds it to the collections', async ({ page }) => {

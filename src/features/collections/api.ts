@@ -34,6 +34,16 @@ export const endpointSchema = z.object({
             required: z.boolean().optional(),
             contentType: z.string(),
             example: z.string().optional(),
+            fields: z
+                .array(
+                    z.object({
+                        path: z.string(),
+                        type: z.string().optional(),
+                        format: z.string().optional(),
+                        required: z.boolean().optional(),
+                    }),
+                )
+                .default([]),
         })
         .optional(),
 });

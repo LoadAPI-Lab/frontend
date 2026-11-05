@@ -22,6 +22,7 @@ export type RunPhase = 'idle' | 'starting' | 'running' | 'stopping';
 
 export type StartBlock =
     | { kind: 'noTarget' }
+    | { kind: 'noServer' }
     | { kind: 'pathParam'; param: string }
     | { kind: 'invalidBody' }
     | { kind: 'invalidConfig' };
@@ -43,6 +44,9 @@ function startBlock(
 ): StartBlock | null {
     if (!target) {
         return { kind: 'noTarget' };
+    }
+    if (!/^https?:\/\/[^/]/i.test(target.url)) {
+        return { kind: 'noServer' };
     }
     const param = unresolvedPathParam(target.url);
     if (param) {

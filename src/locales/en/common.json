@@ -57,7 +57,12 @@
             "batch": "Batch",
             "roundRobin": "Round-robin"
         },
-        "pickRoute": "Pick a route from the collections to start a test."
+        "pickRoute": "Pick a route from the collections to start a test.",
+        "notFound": {
+            "title": "This endpoint isn't in your collections",
+            "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
+        },
+        "resultsLater": "Live results show here once the test starts."
     },
     "scenarios": {
         "title": "Scenarios"
@@ -114,7 +119,8 @@
             "noTarget": "Pick a route from the collections to start a test.",
             "pathParam": "Fill in {{param}} in the URL to start.",
             "invalidBody": "Fix the request body to start.",
-            "invalidConfig": "Fix the test settings to start."
+            "invalidConfig": "Fix the test settings to start.",
+            "noServer": "Set a base URL for this collection to start."
         }
     },
     "secretInput": {
@@ -147,7 +153,8 @@
             "remove": "Remove query parameter {{index}}",
             "namePlaceholder": "Name",
             "valuePlaceholder": "Value"
-        }
+        },
+        "fillPlaceholders": "Fill with placeholders"
     },
     "requestAuth": {
         "type": "Auth type",
@@ -186,5 +193,10 @@
             "unsupportedVersion": "Only OpenAPI 3.0 and 3.1 are supported. Convert Swagger 2.0 docs first.",
             "tooLarge": "This doc is over 5 MB, the import limit."
         }
+    },
+    "endpointHeader": {
+        "label": "Endpoint",
+        "server": "Base URL",
+        "deprecated": ", deprecated"
     }
 }

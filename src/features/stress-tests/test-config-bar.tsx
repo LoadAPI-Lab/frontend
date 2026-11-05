@@ -39,6 +39,9 @@ function BlockText({ block }: { block: StartBlock }) {
     if (block.kind === 'noTarget') {
         return t('testConfig.blocked.noTarget');
     }
+    if (block.kind === 'noServer') {
+        return t('testConfig.blocked.noServer');
+    }
     if (block.kind === 'pathParam') {
         return t('testConfig.blocked.pathParam', { param: block.param });
     }

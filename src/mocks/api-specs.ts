@@ -27,10 +27,13 @@ const taskId = {
     required: true,
     schema: { type: 'integer', example: 1 },
 } as const;
-const json = (example: unknown) => ({
+type Field = { path: string; type?: string; format?: string; required?: boolean };
+
+const json = (example: unknown, fields: Field[] = []) => ({
     required: true,
     contentType: 'application/json',
     example: JSON.stringify(example, null, 2),
+    fields,
 });
 
 export const testServerSpec: ApiSpec = {
@@ -123,7 +126,10 @@ export const testServerSpec: ApiSpec = {
             path: '/users',
             summary: 'Register a user; a repeated email gives 409',
             tags: ['templating'],
-            requestBody: json({ email: '{{$randomEmail}}', name: 'Demo' }),
+            requestBody: json({ email: '{{$randomEmail}}', name: 'Demo' }, [
+                { path: 'email', type: 'string', format: 'email', required: true },
+                { path: 'name', type: 'string', required: true },
+            ]),
         }),
         endpoint({
             method: 'GET',
@@ -194,7 +200,18 @@ export const shopSpec: ApiSpec = {
             summary: 'Create an order',
             tags: ['orders'],
             parameters: [bearer],
-            requestBody: json({ productId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', quantity: 1 }),
+            requestBody: json(
+                {
+                    productId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                    quantity: 1,
+                    comment: 'string',
+                },
+                [
+                    { path: 'productId', type: 'string', format: 'uuid', required: true },
+                    { path: 'quantity', type: 'integer', required: true },
+                    { path: 'comment', type: 'string', required: false },
+                ],
+            ),
         }),
         endpoint({ method: 'GET', path: '/health', summary: 'Health check' }),
     ],

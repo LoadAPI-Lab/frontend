@@ -1,1 +1,1 @@
-export { StressTestPage } from './stress-test-page';
+export { type EndpointSelection, StressTestPage } from './stress-test-page';
