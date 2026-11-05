@@ -43,7 +43,12 @@
         "empty": "No collections yet",
         "import": "Import OpenAPI / Swagger",
         "importShort": "Import OpenAPI doc",
-        "emptyBody": "Import an OpenAPI doc to see its endpoints here."
+        "emptyBody": "Import an OpenAPI doc to see its endpoints here.",
+        "loading": "Loading collections",
+        "endpointsFailed": "Couldn't load the endpoints",
+        "endpointCount_one": ", {{count}} endpoint",
+        "endpointCount_other": ", {{count}} endpoints",
+        "deprecated": ", deprecated"
     },
     "stressTests": {
         "title": "Stress tests",

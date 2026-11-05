@@ -1,15 +1,23 @@
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { useSidebarCollapsed } from '@/components/layout/use-sidebar-collapsed';
-import { EmptyState } from '@/components/shared/empty-state';
 import { IconButton } from '@/components/ui/icon-button';
 import { PlusIcon, UploadIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
 
+import { CollectionsTree } from './collections-tree';
+
 export function CollectionsSidebar() {
     const { t } = useTranslation();
     const [collapsed, setCollapsed] = useSidebarCollapsed();
+    const navigate = useNavigate();
+    const search = useSearch({ strict: false });
+    const selected =
+        search.spec && search.endpoint
+            ? { specId: search.spec, endpointKey: search.endpoint }
+            : null;
 
     return (
         <Sidebar
@@ -38,11 +46,14 @@ export function CollectionsSidebar() {
                 </button>
             }
         >
-            <EmptyState
-                size="compact"
-                icon={<UploadIcon />}
-                title={t('collections.empty')}
-                description={t('collections.emptyBody')}
+            <CollectionsTree
+                selected={selected}
+                onSelect={({ specId, endpointKey }) => {
+                    void navigate({
+                        to: '/tests',
+                        search: { spec: specId, endpoint: endpointKey },
+                    });
+                }}
             />
         </Sidebar>
     );
