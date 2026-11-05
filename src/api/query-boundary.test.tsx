@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { coreError } from '@/mocks/core-error';
 import { server } from '@/mocks/server';
 import { renderWithProviders } from '@/test/render';
 
@@ -41,12 +42,11 @@ describe('QueryBoundary', () => {
             http.get('*/v1/test-runs', () => {
                 calls += 1;
                 return calls === 1
-                    ? HttpResponse.json(
-                          {
-                              code: 'TEST_RUN.ENQUEUE_FAILED',
-                              message: 'Failed to enqueue the test job',
-                          },
-                          { status: 503, headers: { 'x-request-id': 'req_42' } },
+                    ? coreError(
+                          503,
+                          'TEST_RUN.ENQUEUE_FAILED',
+                          'Failed to enqueue the test job',
+                          'req_42',
                       )
                     : HttpResponse.json({ count: 1 });
             }),

@@ -86,5 +86,30 @@
             "unquotedText": "Line {{line}}: {{token}} is replaced with text. Put it inside quotes.",
             "unknownGenerator": "Line {{line}}: {{token}} isn't a placeholder. Use one of {{known}}."
         }
+    },
+    "testConfig": {
+        "targetRps": "Target RPS",
+        "duration": "Duration",
+        "rampUp": "Ramp-up",
+        "secondsUnit": "s",
+        "inSeconds": " (seconds)",
+        "start": "Start test",
+        "starting": "Starting…",
+        "stop": "Stop test",
+        "stopping": "Stopping…",
+        "startFailed": "Couldn't start the test",
+        "capacityExceeded": "Another test is running, try again shortly.",
+        "issues": {
+            "required": "Enter a value.",
+            "wholeNumber": "Use a whole number.",
+            "range": "Use {{min}} to {{max}}.",
+            "rampLongerThanDuration": "Can't be longer than the duration ({{max}}s)."
+        },
+        "blocked": {
+            "noTarget": "Pick a route from the collections to start a test.",
+            "pathParam": "Fill in {{param}} in the URL to start.",
+            "invalidBody": "Fix the request body to start.",
+            "invalidConfig": "Fix the test settings to start."
+        }
     }
 }
