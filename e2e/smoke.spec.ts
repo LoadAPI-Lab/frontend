@@ -19,6 +19,21 @@ test('picking an endpoint in the collections tree opens it on the Tests page', a
     await expect(page).toHaveURL(/endpoint=GET/);
 });
 
+test('importing a pasted OpenAPI doc adds it to the collections', async ({ page }) => {
+    await page.goto('/tests');
+    await page.getByRole('button', { name: 'Import OpenAPI / Swagger' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Import an OpenAPI doc' });
+    await dialog
+        .getByRole('textbox', { name: 'OpenAPI document' })
+        .fill('openapi: 3.0.3\ninfo:\n  title: Pet Store\n  version: 1.0.0\npaths: {}\n');
+    await dialog.getByRole('button', { name: 'Import' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('treeitem', { name: /^Pet Store/ })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
+});
+
 test('navigates between top-level pages', async ({ page }) => {
     await page.goto('/tests');
     await page.getByRole('link', { name: 'History' }).click();

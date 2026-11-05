@@ -20,6 +20,7 @@ export default defineConfig({
     },
     optimizeDeps: {
         include: [
+            '@base-ui/react/dialog',
             '@base-ui/react/field',
             '@base-ui/react/input',
             '@base-ui/react/menu',

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { z } from 'zod';
 
 import type { ApiSpec, ApiSpecSummary, Endpoint } from '@/features/collections/api';
 
@@ -199,7 +200,74 @@ export const shopSpec: ApiSpec = {
     ],
 };
 
-export const mockApiSpecs: ApiSpec[] = [shopSpec, testServerSpec];
+const seededSpecs: ApiSpec[] = [shopSpec, testServerSpec];
+
+export const mockApiSpecs: ApiSpec[] = [...seededSpecs];
+
+export function resetMockApiSpecs() {
+    mockApiSpecs.splice(0, mockApiSpecs.length, ...seededSpecs);
+}
+
+function syntaxError(line: number, column: number, message: string) {
+    return HttpResponse.json(
+        {
+            success: false,
+            error: {
+                code: 'API_SPEC.INVALID_SYNTAX',
+                message: 'The file is not valid YAML or JSON',
+                retryable: false,
+            },
+            details: [{ field: 'content', message, code: 'yaml_syntax', line, column }],
+        },
+        { status: 400 },
+    );
+}
+
+function importSpec(content: string, name: string | undefined): Response {
+    const text = content.trim();
+    if (text.startsWith('{')) {
+        try {
+            JSON.parse(text);
+        } catch {
+            return syntaxError(1, 1, 'unexpected token in JSON');
+        }
+    }
+    const tabLine = content.split('\n').findIndex((line) => line.startsWith('\t'));
+    if (tabLine !== -1) {
+        return syntaxError(tabLine + 1, 1, 'tabs are not allowed for indentation');
+    }
+    if (/\bswagger\b/.test(text) || !/\bopenapi\b/.test(text)) {
+        return coreError(
+            400,
+            'API_SPEC.UNSUPPORTED_VERSION',
+            'Only OpenAPI 3.0 and 3.1 documents are supported',
+        );
+    }
+    if (!/\bpaths\b/.test(text)) {
+        return HttpResponse.json(
+            {
+                success: false,
+                error: {
+                    code: 'API_SPEC.INVALID',
+                    message: 'The file is not a valid OpenAPI document',
+                    retryable: false,
+                },
+                details: [{ field: 'paths', message: 'is required', code: 'invalid_spec' }],
+            },
+            { status: 400 },
+        );
+    }
+    const title = /"?title"?\s*:\s*"?([^"\n,]+)"?/.exec(text)?.[1]?.trim() ?? 'Imported API';
+    const spec: ApiSpec = {
+        ...testServerSpec,
+        id: crypto.randomUUID(),
+        name: name ?? title,
+        title,
+        createdAt: new Date().toISOString(),
+    };
+    mockApiSpecs.unshift(spec);
+    return HttpResponse.json(spec, { status: 201 });
+}
 
 export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
     id: spec.id,
@@ -211,6 +279,12 @@ export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
 });
 
 export const apiSpecHandlers = [
+    http.post('*/v1/api-specs', async ({ request }) => {
+        const body = z
+            .object({ name: z.string().optional(), content: z.string().default('') })
+            .parse(await request.json());
+        return importSpec(body.content, body.name);
+    }),
     http.get('*/v1/api-specs', () => HttpResponse.json(mockApiSpecs.map(toSummary))),
     http.get('*/v1/api-specs/:id', ({ params }) => {
         const spec = mockApiSpecs.find((candidate) => candidate.id === params.id);
