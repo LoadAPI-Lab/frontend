@@ -9,6 +9,16 @@ test('signed-in user lands on stress tests with the app shell', async ({ page })
     await expect(page.getByRole('heading', { name: 'Collections' })).toBeVisible();
 });
 
+test('picking an endpoint in the collections tree opens it on the Tests page', async ({ page }) => {
+    await page.goto('/tests');
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await tree.getByText('Shop API').click();
+    await tree.getByText('products').click();
+    await tree.getByRole('treeitem', { name: 'GET /products/{productId}' }).click();
+    await expect(page).toHaveURL(/spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37/);
+    await expect(page).toHaveURL(/endpoint=GET/);
+});
+
 test('navigates between top-level pages', async ({ page }) => {
     await page.goto('/tests');
     await page.getByRole('link', { name: 'History' }).click();
