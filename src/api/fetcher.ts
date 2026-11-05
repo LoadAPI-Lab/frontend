@@ -1,11 +1,11 @@
 import { config } from '@/config';
 
-export class ApiError extends Error {
+export class ApiError<Body = unknown> extends Error {
     constructor(
         readonly status: number,
         message: string,
         readonly requestId: string | null,
-        readonly body: unknown,
+        readonly body: Body,
     ) {
         super(message);
         this.name = 'ApiError';
@@ -100,6 +100,8 @@ export function errorCode(error: unknown): string | undefined {
 export function isUnauthorized(error: unknown): error is ApiError {
     return error instanceof ApiError && error.status === 401;
 }
+
+export type ErrorType<Body> = ApiError<Body>;
 
 export function orvalFetch<T>(url: string, init?: RequestInit): Promise<T> {
     return apiFetch<T>(url, init);

@@ -18,7 +18,10 @@ We **generate** the client; we never hand-write request types that exist in the 
 pnpm api:generate   # orval: spec → src/api/generated (Query hooks, Zod schemas, MSW handlers)
 ```
 
-- `orval.config.ts` points `input` at `OPENAPI_URL` (default local core) or a committed `openapi.json` snapshot. Commit the snapshot so CI and mock mode work without a backend.
+- `orval.config.ts` points `input` at `OPENAPI_URL` or the committed `openapi/openapi.json` snapshot (refresh it with `curl -sf http://localhost:3001/docs/json -o openapi/openapi.json` on a running core). Commit the snapshot so CI and mock mode work without a backend.
+- The config skips the `Health` tag, rewrites `const` to a one-value `enum` (core's spec says OpenAPI 3.0 but uses 3.1's `const`), and names operations from core's ids: `UsersController_me_v1` → `usersMe`, hook `useUsersMe`, key `getUsersMeQueryKey()`, Zod `UsersMeResponse`.
+- `fetcher.ts` exports `ErrorType`, so generated hooks type errors as `ApiError<GlobalErrorResponseOutput>`.
+- CI regenerates and fails if `src/api/generated` differs from what is committed.
 - Output mode `tags-split`, client `react-query`, plus the `zod` and `msw` generators.
 - `src/api/generated/**` is never edited by hand and is excluded from lint and format.
 - When the backend changes the spec: refresh the snapshot, regenerate, fix type errors, and commit as `chore(api): sync openapi`.
@@ -47,7 +50,7 @@ pnpm api:generate   # orval: spec → src/api/generated (Query hooks, Zod schema
 
 ## TanStack Query rules
 
-- Use generated hooks (`useGetX`, `usePostX`). Wrap them in a feature hook only to add `select` mapping or invalidation.
+- Use generated hooks and functions (`useTestRunsList`, `useTestRunsStart`, `testRunsGet`). Validate responses the UI depends on with the generated Zod schema. Wrap them in a feature hook only to add `select` mapping or invalidation.
 - Mutations invalidate by generated query-key helpers, never by string literals.
 - Errors: the `MutationCache` in `src/app/query-client.ts` toasts every failed mutation with core's message; opt out per mutation with `meta: { toastOnError: false }`. Queries surface errors through `QueryBoundary`.
 - Defaults in `src/app/query-client.ts`: `staleTime: 30s`, `retry: 1` (no retry on 4xx), `refetchOnWindowFocus: false` while a test is running.
@@ -110,7 +113,7 @@ Rules:
 
 ## Mocks (MSW)
 
-- `src/mocks/handlers.ts` combines orval-generated handlers with hand-written ones.
+- `src/mocks/handlers.ts` lists hand-written handlers first (MSW uses the first match, so they win), then the generated `get…Mock()` handlers, which answer every other endpoint with faker data.
 - `src/mocks/live.ts` fakes `/v1/test-runs/:id/metrics` with MSW 3's `sse()` handler: a `status` RUNNING event, then a plausible `snapshot` every second ramping `actualRps` over `rampUpSeconds`, then a final `status` COMPLETED; `GET /v1/test-runs/:id` then returns a matching `result`.
 - Mock mode (`pnpm dev:mock`, or `API_MOCKING=true` in the container) starts the MSW service worker before rendering. Tests use the same handlers through `msw/node`.
 - When the real backend and a mock disagree, the backend wins: update the snapshot spec and regenerate.
