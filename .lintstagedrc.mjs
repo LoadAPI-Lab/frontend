@@ -8,6 +8,9 @@ export default {
         if (own.length === 0) {
             return [];
         }
-        return [`oxfmt ${quote(own)}`, `oxlint --fix --no-error-on-unmatched-pattern ${quote(own)}`];
+        return [
+            `oxfmt ${quote(own)}`,
+            `oxlint --fix --no-error-on-unmatched-pattern ${quote(own)}`,
+        ];
     },
 };
