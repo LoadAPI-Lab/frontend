@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/cn';
@@ -47,15 +48,20 @@ export function EndpointHeader({
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <h2
-                    className={cn(
-                        'text-fg truncate font-mono text-xl font-bold',
-                        deprecated && 'line-through',
-                    )}
+                    className="text-fg flex min-w-0 items-center gap-2 font-mono text-xl font-bold"
                     title={summary}
                 >
-                    {path}
+                    <span className="truncate">{path}</span>
                     {deprecated ? (
-                        <span className="sr-only">{t('endpointHeader.deprecated')}</span>
+                        <>
+                            {' '}
+                            <Badge
+                                variant="outline"
+                                className="font-sans"
+                            >
+                                {t('endpointHeader.deprecated')}
+                            </Badge>
+                        </>
                     ) : null}
                 </h2>
                 <div className="text-fg-muted text-label flex min-w-0 items-center gap-1.5 font-mono">

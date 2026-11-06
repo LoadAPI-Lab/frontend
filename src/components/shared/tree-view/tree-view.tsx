@@ -1,6 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react';
 import { useRef, useState } from 'react';
 
+import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 
 export interface TreeNode {
@@ -10,6 +11,7 @@ export interface TreeNode {
     busy?: boolean;
     pending?: ReactNode;
     rowClassName?: string;
+    tooltip?: string;
 }
 
 export interface TreeViewProps {
@@ -152,7 +154,7 @@ export function TreeView({
                 const { item } = row;
                 const { node } = item;
                 const parent = isParent(node);
-                return (
+                const treeItem = (
                     <li
                         key={node.id}
                         ref={(element) => {
@@ -185,6 +187,17 @@ export function TreeView({
                     >
                         {node.content}
                     </li>
+                );
+                if (!node.tooltip) {
+                    return treeItem;
+                }
+                return (
+                    <Tooltip.Root key={node.id}>
+                        <Tooltip.Trigger render={treeItem} />
+                        <Tooltip.Content side="right">
+                            <span className="font-mono">{node.tooltip}</span>
+                        </Tooltip.Content>
+                    </Tooltip.Root>
                 );
             })}
         </ul>
