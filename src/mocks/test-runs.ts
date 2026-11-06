@@ -182,13 +182,17 @@ export const liveStreamHandlers = () => [
             let second = elapsedOf(run);
             const timer = setInterval(() => {
                 second += 1;
+                if (run.stoppedAt === null && second <= run.durationSeconds) {
+                    client.send({
+                        event: 'snapshot',
+                        data: JSON.stringify(mockSnapshot(run, second)),
+                    });
+                }
                 if (statusOf(run) !== 'RUNNING') {
                     clearInterval(timer);
                     sendStatus();
                     client.close();
-                    return;
                 }
-                client.send({ event: 'snapshot', data: JSON.stringify(mockSnapshot(run, second)) });
             }, 1000);
             request.signal.addEventListener('abort', () => clearInterval(timer));
         },

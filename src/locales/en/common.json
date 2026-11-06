@@ -199,5 +199,53 @@
         "label": "Endpoint",
         "server": "Base URL",
         "deprecated": "Deprecated"
+    },
+    "liveMetrics": {
+        "stats": {
+            "label": "Live metrics",
+            "rps": "RPS",
+            "rpsTarget": "RPS · target {{target}}",
+            "p50": "p50 · median",
+            "p95": "p95",
+            "errors": "errors · {{errors}} of {{requests}}",
+            "errorsEmpty": "errors"
+        },
+        "units": {
+            "ms": "ms"
+        },
+        "latency": {
+            "title": "Latency",
+            "subtitle": "per second, live",
+            "legend": "Lines",
+            "lines": {
+                "p50": "p50",
+                "p95": "p95",
+                "p99": "p99"
+            },
+            "summary": "Latency chart. Latest second: p50 {{p50}} ms, p95 {{p95}} ms, p99 {{p99}} ms.",
+            "browse": "Latency by second",
+            "at": "{{second}}s",
+            "ms": "{{value}} ms",
+            "point": "{{second}}s: p50 {{p50}}, p95 {{p95}}, p99 {{p99}}"
+        },
+        "statusCodes": {
+            "title": "Status codes",
+            "groups": {
+                "2xx": "2xx",
+                "3xx": "3xx",
+                "4xx": "4xx",
+                "5xx": "5xx",
+                "network": "Network"
+            }
+        }
+    },
+    "runStatus": {
+        "PENDING": "Pending",
+        "RUNNING": "Running",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed",
+        "STOPPED": "Stopped",
+        "clock": "{{elapsed}} / {{duration}}",
+        "progress": "Test progress"
     }
 }

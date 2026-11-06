@@ -71,6 +71,8 @@ export function useLiveTest(runId: string | undefined, { durationSeconds }: Live
     };
 }
 
+export type LiveTest = ReturnType<typeof useLiveTest>;
+
 export function resetLiveRuns() {
     for (const entry of runs.values()) {
         entry.disconnect?.();
