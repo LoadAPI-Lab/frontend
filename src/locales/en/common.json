@@ -211,22 +211,20 @@
             "errorsEmpty": "errors"
         },
         "units": {
-            "ms": "ms"
+            "ms": "ms",
+            "msValue": "{{value}} ms",
+            "rpsValue": "{{value}} RPS"
         },
         "latency": {
-            "title": "Latency",
-            "subtitle": "per second, live",
-            "legend": "Lines",
             "lines": {
                 "p50": "p50",
                 "p95": "p95",
-                "p99": "p99"
+                "p99": "p99",
+                "service95": "service p95",
+                "service99": "service p99"
             },
             "summary": "Latency chart. Latest second: p50 {{p50}} ms, p95 {{p95}} ms, p99 {{p99}} ms.",
-            "browse": "Latency by second",
-            "at": "{{second}}s",
-            "ms": "{{value}} ms",
-            "point": "{{second}}s: p50 {{p50}}, p95 {{p95}}, p99 {{p99}}"
+            "serviceTime": "Service time"
         },
         "statusCodes": {
             "title": "Status codes",
@@ -236,7 +234,53 @@
                 "4xx": "4xx",
                 "5xx": "5xx",
                 "network": "Network"
+            },
+            "network": {
+                "timeout": "Timeout",
+                "connection_refused": "Connection refused",
+                "connection_reset": "Connection reset",
+                "dns": "DNS",
+                "other": "Other"
+            },
+            "empty": "No responses yet.",
+            "columns": {
+                "response": "Response",
+                "count": "Count",
+                "share": "Share of all responses"
             }
+        },
+        "charts": {
+            "legend": "{{chart}} legend",
+            "tabs": {
+                "latency": "Latency",
+                "throughput": "Throughput",
+                "errors": "Errors"
+            },
+            "subtitles": {
+                "latency": "milliseconds, per second, live",
+                "throughput": "requests per second, live",
+                "errors": "failed responses per second · % of all responses"
+            },
+            "browse": "{{chart}} by second",
+            "at": "{{second}}s",
+            "point": "{{second}}s: {{values}}",
+            "value": "{{label}} {{value}}",
+            "noData": "No data yet",
+            "zoomHint": "Drag across a chart to zoom in. Double-click to reset.",
+            "zoomed": "Showing {{from}}s to {{to}}s",
+            "resetZoom": "Reset zoom"
+        },
+        "throughput": {
+            "actual": "Actual",
+            "target": "Target",
+            "summary": "Throughput chart. Latest second: {{actual}} RPS against a target of {{target}}."
+        },
+        "errorsChart": {
+            "summary": "Errors chart. Latest second: {{clientErrors}} 4xx, {{serverErrors}} 5xx, {{network}} network errors."
+        },
+        "late": {
+            "message_one": "{{late}} request ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
+            "message_other": "{{late}} requests ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS."
         }
     },
     "runStatus": {

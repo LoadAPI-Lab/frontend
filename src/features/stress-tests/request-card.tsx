@@ -21,10 +21,12 @@ export interface RequestCardProps {
 }
 
 const tabClass =
-    'text-base px-2.75 py-1.75 font-medium aria-selected:font-bold flex items-center gap-1.5';
+    'text-base px-2.75 py-1.75 font-medium aria-selected:font-bold flex items-baseline gap-1.5';
 
 function Count({ value }: { value: number }) {
-    return value > 0 ? <span className="text-fg-muted font-mono">{value}</span> : null;
+    return value > 0 ? (
+        <span className="text-fg-muted font-mono text-sm font-medium tabular-nums">{value}</span>
+    ) : null;
 }
 
 export function RequestCard({
