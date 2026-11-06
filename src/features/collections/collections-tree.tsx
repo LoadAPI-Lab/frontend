@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { type TreeNode, TreeView } from '@/components/shared/tree-view';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UploadIcon } from '@/components/ui/icons';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -143,13 +144,20 @@ export function CollectionsTree({
                         className={cn(
                             'text-label min-w-0 flex-1 truncate font-mono',
                             isSelected ? 'text-fg' : 'text-fg-secondary',
-                            endpoint.deprecated && 'line-through',
                         )}
                     >
                         {endpoint.path}
                     </span>
                     {endpoint.deprecated ? (
-                        <span className="sr-only">{t('collections.deprecated')}</span>
+                        <>
+                            {' '}
+                            <Badge
+                                variant="outline"
+                                className="text-2xs shrink-0 px-1 py-0.5 font-sans"
+                            >
+                                {t('collections.deprecated')}
+                            </Badge>
+                        </>
                     ) : null}
                 </>
             ),
