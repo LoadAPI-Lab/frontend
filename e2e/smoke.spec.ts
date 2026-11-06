@@ -41,6 +41,24 @@ test('an endpoint opens with its example body and a Bearer auth tab', async ({ p
     await expect(page.getByRole('button', { name: 'Bearer token', pressed: true })).toBeVisible();
 });
 
+test('a started run streams live and finishes on its own', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    const duration = page.getByRole('textbox', { name: /Duration/ });
+    await duration.fill('3');
+    await page.getByRole('textbox', { name: 'Ramp-up (seconds)' }).fill('1');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByRole('button', { name: 'Stop test' })).toBeVisible();
+    await expect(page).toHaveURL(/run=/);
+    await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 10_000 });
+});
+
+test('a running test can be stopped', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await page.getByRole('button', { name: 'Stop test' }).click();
+    await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 5000 });
+});
+
 test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {
     await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fnope');
     await expect(page.getByText("This endpoint isn't in your collections")).toBeVisible();
