@@ -27,6 +27,13 @@ import {
     specNodeId,
 } from './spec-tree';
 
+function splitPath(path: string) {
+    const index = path.lastIndexOf('/');
+    return index > 0
+        ? { head: path.slice(0, index), tail: path.slice(index) }
+        : { head: '', tail: path };
+}
+
 export interface EndpointSelection {
     specId: string;
     endpointKey: string;
@@ -121,8 +128,10 @@ export function CollectionsTree({
 
     const endpointNode = (spec: ApiSpecSummary, endpoint: Endpoint, indent: string): TreeNode => {
         const isSelected = selected?.specId === spec.id && selected.endpointKey === endpoint.key;
+        const { head, tail } = splitPath(endpoint.path);
         return {
             id: endpointNodeId(spec.id, endpoint.key),
+            tooltip: endpoint.path,
             rowClassName: cn(
                 'flex h-7 items-center gap-2 rounded-md border-l-2 px-2 transition-colors',
                 indent,
@@ -141,13 +150,16 @@ export function CollectionsTree({
                         {endpoint.method}
                     </span>{' '}
                     <span
+                        aria-hidden
                         className={cn(
-                            'text-label min-w-0 flex-1 truncate font-mono',
+                            'text-label flex min-w-0 flex-1 font-mono',
                             isSelected ? 'text-fg' : 'text-fg-secondary',
                         )}
                     >
-                        {endpoint.path}
+                        <span className="min-w-0 shrink-[100] truncate">{head}</span>
+                        <span className="min-w-0 truncate">{tail}</span>
                     </span>
+                    <span className="sr-only">{endpoint.path}</span>
                     {endpoint.deprecated ? (
                         <>
                             {' '}
@@ -155,7 +167,8 @@ export function CollectionsTree({
                                 variant="outline"
                                 className="text-2xs shrink-0 px-1 py-0.5 font-sans"
                             >
-                                {t('collections.deprecated')}
+                                <span aria-hidden>{t('collections.deprecatedShort')}</span>
+                                <span className="sr-only">{t('collections.deprecated')}</span>
                             </Badge>
                         </>
                     ) : null}

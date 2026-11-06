@@ -48,7 +48,8 @@
         "endpointsFailed": "Couldn't load the endpoints",
         "endpointCount_one": ", {{count}} endpoint",
         "endpointCount_other": ", {{count}} endpoints",
-        "deprecated": "Deprecated"
+        "deprecated": "Deprecated",
+        "deprecatedShort": "dep."
     },
     "stressTests": {
         "title": "Stress tests",
