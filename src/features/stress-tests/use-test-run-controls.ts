@@ -1,15 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorCode } from '@/api/fetcher';
-import {
-    getTestRunsGetQueryKey,
-    useTestRunsGet,
-    useTestRunsStart,
-    useTestRunsStop,
-} from '@/api/generated/endpoints/test-runs/test-runs';
+import { useTestRunsStart, useTestRunsStop } from '@/api/generated/endpoints/test-runs/test-runs';
 import type { StartTestRunDto } from '@/api/generated/model';
+import { useLiveTest } from '@/api/live';
 import { toast } from '@/components/ui/toast';
 import { isValidJsonBody } from '@/lib/json-body';
 import { unresolvedPathParam } from '@/lib/target-url';
@@ -28,7 +23,6 @@ export type StartBlock =
     | { kind: 'invalidConfig' };
 
 const ACTIVE_STATUSES = new Set(['PENDING', 'RUNNING']);
-const POLL_MS = 2000;
 
 export interface TestRunControlsOptions {
     target: RunTarget | null;
@@ -60,28 +54,13 @@ function startBlock(
 
 export function useTestRunControls({ target, body, runId, onRunStarted }: TestRunControlsOptions) {
     const { t } = useTranslation();
-    const queryClient = useQueryClient();
     const [config, setConfig] = useState<TestConfig>(DEFAULT_CONFIG);
     const issues = validateConfig(config);
     const block = startBlock(target, body, Object.keys(issues).length === 0);
 
-    const run = useTestRunsGet(runId ?? '', {
-        query: {
-            enabled: Boolean(runId),
-            refetchInterval: (query) => {
-                const status = query.state.data?.status;
-                return status && !ACTIVE_STATUSES.has(status) ? false : POLL_MS;
-            },
-        },
-    });
+    const live = useLiveTest(runId, { durationSeconds: config.durationSeconds ?? undefined });
 
-    const stop = useTestRunsStop({
-        mutation: {
-            onSettled: async (_data, _error, { id }) => {
-                await queryClient.invalidateQueries({ queryKey: getTestRunsGetQueryKey(id) });
-            },
-        },
-    });
+    const stop = useTestRunsStop();
 
     const start = useTestRunsStart({
         mutation: {
@@ -102,8 +81,8 @@ export function useTestRunControls({ target, body, runId, onRunStarted }: TestRu
         },
     });
 
-    const active =
-        Boolean(runId) && (run.data ? ACTIVE_STATUSES.has(run.data.status) : run.isPending);
+    const streaming = ['connecting', 'open', 'reconnecting'].includes(live.connection);
+    const active = Boolean(runId) && (live.status ? ACTIVE_STATUSES.has(live.status) : streaming);
     let phase: RunPhase = 'idle';
     if (start.isPending) {
         phase = 'starting';
@@ -114,6 +93,7 @@ export function useTestRunControls({ target, body, runId, onRunStarted }: TestRu
     }
 
     return {
+        live,
         config,
         setConfig,
         issues,

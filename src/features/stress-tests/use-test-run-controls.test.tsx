@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { toastManager } from '@/components/ui/toast';
 import { coreError } from '@/mocks/core-error';
 import { server } from '@/mocks/server';
+import { FakeEventSource } from '@/test/fake-event-source';
 
 import { type TestRunControlsOptions, useTestRunControls } from './use-test-run-controls';
 
@@ -91,25 +92,27 @@ describe('useTestRunControls', () => {
         expect(onRunStarted).not.toHaveBeenCalled();
     });
 
-    it('shows a running run and stops it', async () => {
-        let status = 'RUNNING';
+    it('follows the run through the live stream and stops it', async () => {
+        let stopped = false;
         server.use(
-            http.get('*/v1/test-runs/:id', () =>
-                HttpResponse.json({
-                    id: RUN_ID,
-                    type: 'single',
-                    status,
-                    createdAt: '2026-11-05T12:00:00Z',
-                }),
-            ),
             http.post('*/v1/test-runs/:id/stop', () => {
-                status = 'STOPPED';
+                stopped = true;
                 return HttpResponse.json({ id: RUN_ID, status: 'RUNNING' }, { status: 202 });
             }),
         );
         const { result } = setup({ runId: RUN_ID });
-        await waitFor(() => expect(result.current.phase).toBe('running'));
+        expect(result.current.phase).toBe('running');
+
+        const source = FakeEventSource.latest();
+        act(() => source.emit('status', { status: 'RUNNING' }));
+        expect(result.current.phase).toBe('running');
+
         act(() => result.current.stop());
-        await waitFor(() => expect(result.current.phase).toBe('idle'));
+        await waitFor(() => expect(stopped).toBe(true));
+        expect(result.current.phase).toBe('stopping');
+
+        act(() => source.emit('status', { status: 'STOPPED' }));
+        expect(result.current.phase).toBe('idle');
+        expect(result.current.live.status).toBe('STOPPED');
     });
 });
