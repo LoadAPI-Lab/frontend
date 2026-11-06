@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ export interface EndpointHeaderProps {
     servers: { url: string; description?: string }[];
     server: string;
     onServerChange: (url: string) => void;
+    status?: ReactNode;
     className?: string;
 }
 
@@ -27,6 +29,7 @@ export function EndpointHeader({
     servers,
     server,
     onServerChange,
+    status,
     className,
 }: EndpointHeaderProps) {
     const { t } = useTranslation();
@@ -113,6 +116,7 @@ export function EndpointHeader({
                     )}
                 </div>
             </div>
+            {status}
         </section>
     );
 }

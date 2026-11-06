@@ -49,7 +49,17 @@ test('a started run streams live and finishes on its own', async ({ page }) => {
     await page.getByRole('button', { name: 'Start test' }).click();
     await expect(page.getByRole('button', { name: 'Stop test' })).toBeVisible();
     await expect(page).toHaveURL(/run=/);
+    await expect(page.getByRole('status').filter({ hasText: 'Running' })).toBeVisible();
+    await expect(
+        page.getByRole('figure', { name: /^Latency chart\. Latest second/ }),
+    ).toBeVisible();
+    await expect(page.getByRole('definition').first()).not.toHaveText('—');
     await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('status').filter({ hasText: 'Completed' })).toBeVisible();
+    await expect(page.getByRole('progressbar', { name: 'Test progress' })).toHaveAttribute(
+        'value',
+        '100',
+    );
 });
 
 test('a running test can be stopped', async ({ page }) => {

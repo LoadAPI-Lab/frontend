@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 import type { ApiSpec, Endpoint } from '@/features/collections';
+import { LatencyCard, LiveStats, RunProgress, StatusCodesCard } from '@/features/live-metrics';
 import { buildRequest, emptyDraft, pathParamNames, type RequestDraft } from '@/lib/request-draft';
 
 import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-draft';
@@ -56,6 +57,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
         runId,
         onRunStarted,
     });
+    const { live } = controls;
 
     return (
         <Tabs.Root defaultValue="single">
@@ -96,6 +98,15 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                         servers={selection.spec.servers}
                         server={server}
                         onServerChange={setServer}
+                        status={
+                            runId ? (
+                                <RunProgress
+                                    status={live.status}
+                                    elapsedSeconds={live.latest?.elapsedSeconds ?? 0}
+                                    durationSeconds={controls.config.durationSeconds}
+                                />
+                            ) : null
+                        }
                     />
                 ) : null}
                 {missing ? (
@@ -107,32 +118,43 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                         />
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-2 items-start gap-3">
-                        <RequestCard
-                            draft={draft}
-                            onDraftChange={setDraft}
-                            pathParams={route ? pathParamNames(route.url) : []}
-                            onFillPlaceholders={
-                                endpoint && hasBodyFields(endpoint)
-                                    ? () =>
-                                          setDraft({
-                                              ...draft,
-                                              body: placeholderBody(
-                                                  endpoint.requestBody?.fields ?? [],
-                                              ),
-                                          })
-                                    : undefined
-                            }
-                            className="h-[596px]"
+                    <>
+                        <LiveStats
+                            live={live}
+                            targetRps={controls.config.targetRps}
                         />
-                        <Card>
-                            <p className="text-fg-muted text-sm">
-                                {selection
-                                    ? t('stressTests.resultsLater')
-                                    : t('stressTests.pickRoute')}
-                            </p>
-                        </Card>
-                    </div>
+                        <div className="grid grid-cols-2 items-start gap-3">
+                            <RequestCard
+                                draft={draft}
+                                onDraftChange={setDraft}
+                                pathParams={route ? pathParamNames(route.url) : []}
+                                onFillPlaceholders={
+                                    endpoint && hasBodyFields(endpoint)
+                                        ? () =>
+                                              setDraft({
+                                                  ...draft,
+                                                  body: placeholderBody(
+                                                      endpoint.requestBody?.fields ?? [],
+                                                  ),
+                                              })
+                                        : undefined
+                                }
+                                className="h-[596px]"
+                            />
+                            <div className="flex min-w-0 flex-col gap-3">
+                                <LatencyCard
+                                    snapshots={live.snapshots}
+                                    durationSeconds={controls.config.durationSeconds}
+                                    emptyMessage={
+                                        selection
+                                            ? t('stressTests.resultsLater')
+                                            : t('stressTests.pickRoute')
+                                    }
+                                />
+                                <StatusCodesCard statuses={live.totals.statuses} />
+                            </div>
+                        </div>
+                    </>
                 )}
             </Tabs.Panel>
         </Tabs.Root>

@@ -4,6 +4,7 @@ export {
     type RunningTotals,
     type StatusBreakdown,
 } from './aggregate';
+export { type LatencySeries, latencySeries, snapshotLatency } from './latency';
 export type { LiveConnection, LiveState } from './live-store';
 export {
     isFinalStatus,
@@ -14,6 +15,7 @@ export {
 } from './schemas';
 export { metricsUrl } from './snapshot-stream';
 export {
+    type LiveTest,
     type LiveTestOptions,
     resetLiveRuns,
     setLiveStreamOptions,
