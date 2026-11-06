@@ -7,7 +7,13 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 import type { ApiSpec, Endpoint } from '@/features/collections';
-import { LatencyCard, LiveStats, RunProgress, StatusCodesCard } from '@/features/live-metrics';
+import {
+    LateWarning,
+    LiveCharts,
+    LiveStats,
+    RunProgress,
+    StatusCodesCard,
+} from '@/features/live-metrics';
 import { buildRequest, emptyDraft, pathParamNames, type RequestDraft } from '@/lib/request-draft';
 
 import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-draft';
@@ -123,7 +129,11 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                             live={live}
                             targetRps={controls.config.targetRps}
                         />
-                        <div className="grid grid-cols-2 items-start gap-3">
+                        <LateWarning
+                            late={live.totals.late}
+                            requests={live.totals.requests}
+                        />
+                        <div className="grid grid-cols-2 items-stretch gap-3">
                             <RequestCard
                                 draft={draft}
                                 onDraftChange={setDraft}
@@ -139,10 +149,10 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                               })
                                         : undefined
                                 }
-                                className="h-[596px]"
+                                className="h-0 min-h-full"
                             />
                             <div className="flex min-w-0 flex-col gap-3">
-                                <LatencyCard
+                                <LiveCharts
                                     snapshots={live.snapshots}
                                     durationSeconds={controls.config.durationSeconds}
                                     emptyMessage={
@@ -151,7 +161,10 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                             : t('stressTests.pickRoute')
                                     }
                                 />
-                                <StatusCodesCard statuses={live.totals.statuses} />
+                                <StatusCodesCard
+                                    codes={live.totals.codes}
+                                    networkErrors={live.totals.networkErrors}
+                                />
                             </div>
                         </div>
                     </>
