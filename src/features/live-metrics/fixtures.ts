@@ -21,6 +21,11 @@ export function sampleSnapshot(second: number, overrides: Partial<Snapshot> = {}
                     p95Ms: Math.round(p50 * 2.8),
                     p99Ms: Math.round(p50 * 4.3),
                 },
+                serviceTime: {
+                    p50Ms: Math.round(p50 * 0.85),
+                    p95Ms: Math.round(p50 * 2.2),
+                    p99Ms: Math.round(p50 * 3.2),
+                },
                 statusCodes: { '200': 288, '404': 6, '503': 1 },
             },
         ],
@@ -28,5 +33,26 @@ export function sampleSnapshot(second: number, overrides: Partial<Snapshot> = {}
     };
 }
 
-export const sampleSnapshots = (count: number) =>
-    Array.from({ length: count }, (_, index) => sampleSnapshot(index + 1));
+export function troubledSnapshot(second: number): Snapshot {
+    const base = sampleSnapshot(second);
+    const [route] = base.targets;
+    if (!route || second % 4 !== 0) {
+        return base;
+    }
+    return {
+        ...base,
+        targets: [
+            {
+                ...route,
+                errorCount: route.errorCount + 3,
+                lateCount: 12,
+                errors: { timeout: 2, connection_reset: 1 },
+            },
+        ],
+    };
+}
+
+export const sampleSnapshots = (count: number, troubled = false) =>
+    Array.from({ length: count }, (_, index) =>
+        troubled ? troubledSnapshot(index + 1) : sampleSnapshot(index + 1),
+    );
