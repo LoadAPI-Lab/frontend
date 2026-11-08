@@ -1,69 +1,112 @@
 import { useTranslation } from 'react-i18next';
 
-import type { StatusBreakdown } from '@/api/live';
-import { StatusDonut } from '@/components/shared/status-donut';
+import { NETWORK_ERRORS, type NetworkError } from '@/api/live';
 import { Card, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 
-const GROUPS = [
-    { key: '2xx', stroke: 'stroke-accent', swatch: 'bg-accent', always: true },
-    { key: '3xx', stroke: 'stroke-fg-muted', swatch: 'bg-fg-muted', always: false },
-    { key: '4xx', stroke: 'stroke-info', swatch: 'bg-info', always: true },
-    { key: '5xx', stroke: 'stroke-danger', swatch: 'bg-danger', always: true },
-    { key: 'network', stroke: 'stroke-warning', swatch: 'bg-warning', always: false },
-] as const satisfies readonly {
-    key: keyof StatusBreakdown;
-    stroke: string;
+const CLASS_SWATCHES: Record<string, string> = {
+    '2': 'bg-accent',
+    '3': 'bg-fg-muted',
+    '4': 'bg-info',
+    '5': 'bg-danger',
+};
+
+interface Row {
+    key: string;
+    label: string;
+    count: number;
     swatch: string;
-    always: boolean;
-}[];
+    mono: boolean;
+}
 
 export interface StatusCodesCardProps {
-    statuses: StatusBreakdown;
+    codes: Record<string, number>;
+    networkErrors?: Record<NetworkError, number>;
     className?: string;
 }
 
-export function StatusCodesCard({ statuses, className }: StatusCodesCardProps) {
+export function StatusCodesCard({ codes, networkErrors, className }: StatusCodesCardProps) {
     const { t, i18n } = useTranslation();
-    const total = GROUPS.reduce((sum, group) => sum + statuses[group.key], 0);
-    const shown = GROUPS.filter((group) => group.always || statuses[group.key] > 0);
+    const format = (value: number, digits = 0) => formatNumber(value, digits, i18n.language);
+
+    const rows: Row[] = [
+        ...Object.entries(codes)
+            .filter(([, count]) => count > 0)
+            .toSorted(([first], [second]) => first.localeCompare(second))
+            .map(([code, count]) => ({
+                key: code,
+                label: code,
+                count,
+                swatch: CLASS_SWATCHES[code.charAt(0)] ?? 'bg-fg-muted',
+                mono: true,
+            })),
+        ...NETWORK_ERRORS.filter((kind) => (networkErrors?.[kind] ?? 0) > 0).map((kind) => ({
+            key: kind,
+            label: t(`liveMetrics.statusCodes.network.${kind}`),
+            count: networkErrors?.[kind] ?? 0,
+            swatch: 'bg-warning',
+            mono: false,
+        })),
+    ];
+    const total = rows.reduce((sum, row) => sum + row.count, 0);
 
     return (
-        <Card className={cn('flex items-center gap-4 px-4 py-3', className)}>
-            <StatusDonut
-                slices={GROUPS.map((group) => ({
-                    key: group.key,
-                    value: statuses[group.key],
-                    strokeClassName: group.stroke,
-                }))}
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-1.75">
-                <CardTitle className="text-md font-bold">
-                    {t('liveMetrics.statusCodes.title')}
-                </CardTitle>
-                <ul className="flex flex-wrap gap-x-4 gap-y-1">
-                    {shown.map((group) => (
-                        <li
-                            key={group.key}
-                            className="text-label flex items-center gap-1.5"
-                        >
-                            <span
-                                aria-hidden
-                                className={cn('size-1.75 rounded-xs', group.swatch)}
-                            />
-                            <span className="text-fg-muted">
-                                {t(`liveMetrics.statusCodes.groups.${group.key}`)}
-                            </span>
-                            <span className="text-fg font-mono font-bold tabular-nums">
-                                {total > 0
-                                    ? `${formatNumber((statuses[group.key] / total) * 100, 1, i18n.language)}%`
-                                    : '—'}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+        <Card className={cn('flex flex-col gap-2 px-4 py-3', className)}>
+            <CardTitle className="text-md font-bold">
+                {t('liveMetrics.statusCodes.title')}
+            </CardTitle>
+            {rows.length === 0 ? (
+                <p className="text-fg-muted text-sm">{t('liveMetrics.statusCodes.empty')}</p>
+            ) : (
+                <table className="text-label w-full tabular-nums">
+                    <thead className="sr-only">
+                        <tr>
+                            <th scope="col">{t('liveMetrics.statusCodes.columns.response')}</th>
+                            <th scope="col">{t('liveMetrics.statusCodes.columns.count')}</th>
+                            <th scope="col">{t('liveMetrics.statusCodes.columns.share')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((row) => (
+                            <tr
+                                key={row.key}
+                                className="border-border border-t first:border-t-0"
+                            >
+                                <th
+                                    scope="row"
+                                    aria-label={row.label}
+                                    className="py-1 text-left font-normal"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                'size-1.75 shrink-0 rounded-xs',
+                                                row.swatch,
+                                            )}
+                                        />
+                                        <span
+                                            className={cn(
+                                                'text-fg',
+                                                row.mono && 'font-mono font-bold',
+                                            )}
+                                        >
+                                            {row.label}
+                                        </span>
+                                    </span>
+                                </th>
+                                <td className="text-fg-muted py-1 text-right font-mono">
+                                    {format(row.count)}
+                                </td>
+                                <td className="text-fg w-16 py-1 text-right font-mono font-bold">
+                                    {`${format((row.count / total) * 100, 1)}%`}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </Card>
     );
 }
