@@ -56,6 +56,18 @@ test('a started run streams live and finishes on its own', async ({ page }) => {
     await expect(page.getByRole('definition').first()).not.toHaveText('—');
     await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole('status').filter({ hasText: 'Completed' })).toBeVisible();
+    await expect(page.getByText('Test completed')).toBeVisible();
+    await expect(page.getByText(/^avg RPS · target/)).toBeVisible();
+
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('link', { name: 'History' }).click();
+    await expect(page).toHaveURL(/\/history/);
+    await nav.getByRole('link', { name: 'Stress tests' }).click();
+    await expect(page).toHaveURL(/run=/);
+    await expect(page.getByText(/^avg RPS · target/)).toBeVisible();
+    await expect(
+        page.getByRole('figure', { name: /^Latency chart\. Latest second/ }),
+    ).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Test progress' })).toHaveAttribute(
         'value',
         '100',
@@ -67,6 +79,7 @@ test('a running test can be stopped', async ({ page }) => {
     await page.getByRole('button', { name: 'Start test' }).click();
     await page.getByRole('button', { name: 'Stop test' }).click();
     await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Test stopped')).toBeVisible();
 });
 
 test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {

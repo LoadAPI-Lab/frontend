@@ -31,17 +31,45 @@ function entryFor(runId: string, maxPoints: number): RunEntry {
     return entry;
 }
 
+export const MAX_KEPT_RUNS = 5;
+
+const STREAMING: ReadonlySet<LiveState['connection']> = new Set([
+    'connecting',
+    'open',
+    'reconnecting',
+]);
+
+function isStreaming(entry: RunEntry) {
+    return entry.disconnect !== null && STREAMING.has(entry.store.getState().connection);
+}
+
+function drop(runId: string, entry: RunEntry) {
+    entry.disconnect?.();
+    entry.disconnect = null;
+    runs.delete(runId);
+}
+
+function pruneIdleRuns() {
+    const idleRuns = [...runs].filter(([, entry]) => entry.users === 0 && !isStreaming(entry));
+    for (const [runId, entry] of idleRuns.slice(0, Math.max(0, runs.size - MAX_KEPT_RUNS))) {
+        drop(runId, entry);
+    }
+}
+
 function acquire(runId: string, maxPoints: number): () => void {
     const entry = entryFor(runId, maxPoints);
+    runs.delete(runId);
+    runs.set(runId, entry);
     entry.users += 1;
-    entry.disconnect ??= streamRun(runId, entry.store, streamOptions);
+    if (!isFinalStatus(entry.store.getState().status) && !isStreaming(entry)) {
+        entry.disconnect?.();
+        entry.disconnect = streamRun(runId, entry.store, streamOptions);
+    }
     return () => {
         entry.users -= 1;
         setTimeout(() => {
             if (entry.users === 0 && runs.get(runId) === entry) {
-                entry.disconnect?.();
-                entry.disconnect = null;
-                runs.delete(runId);
+                pruneIdleRuns();
             }
         }, 0);
     };

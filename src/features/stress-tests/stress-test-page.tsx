@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { snapshotLatency } from '@/api/live';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import {
     LateWarning,
     LiveCharts,
     LiveStats,
+    RunFailure,
     RunProgress,
     StatusCodesCard,
 } from '@/features/live-metrics';
@@ -20,6 +22,7 @@ import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-dr
 import { EndpointHeader } from './endpoint-header';
 import { RequestCard } from './request-card';
 import { TestConfigBar } from './test-config-bar';
+import { useRunOutcome } from './use-run-outcome';
 import { useServer } from './use-server';
 import { useTestRunControls } from './use-test-run-controls';
 
@@ -64,6 +67,15 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
         onRunStarted,
     });
     const { live } = controls;
+    const outcome = useRunOutcome(runId, live);
+    const { summary } = outcome;
+    const totals = summary?.totals ?? live.totals;
+    let chartsEmpty = selection ? t('stressTests.resultsLater') : t('stressTests.pickRoute');
+    if (outcome.failure) {
+        chartsEmpty = t('stressTests.failedNoData');
+    } else if (live.isFinal) {
+        chartsEmpty = t('stressTests.finishedNoData');
+    }
 
     return (
         <Tabs.Root defaultValue="single">
@@ -108,7 +120,9 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                             runId ? (
                                 <RunProgress
                                     status={live.status}
-                                    elapsedSeconds={live.latest?.elapsedSeconds ?? 0}
+                                    elapsedSeconds={
+                                        live.latest?.elapsedSeconds ?? summary?.durationSeconds ?? 0
+                                    }
                                     durationSeconds={controls.config.durationSeconds}
                                 />
                             ) : null
@@ -126,12 +140,22 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                 ) : (
                     <>
                         <LiveStats
-                            live={live}
-                            targetRps={controls.config.targetRps}
+                            rps={summary?.avgRps ?? live.latest?.actualRps ?? null}
+                            latency={
+                                summary
+                                    ? summary.latency
+                                    : live.latest
+                                      ? snapshotLatency(live.latest)
+                                      : null
+                            }
+                            totals={totals}
+                            targetRps={summary?.targetRps ?? controls.config.targetRps}
+                            scope={summary ? 'run' : 'second'}
                         />
+                        {outcome.failure ? <RunFailure reason={outcome.failure} /> : null}
                         <LateWarning
-                            late={live.totals.late}
-                            requests={live.totals.requests}
+                            late={totals.late}
+                            requests={totals.requests}
                         />
                         <div className="grid grid-cols-2 items-stretch gap-3">
                             <RequestCard
@@ -155,15 +179,11 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                 <LiveCharts
                                     snapshots={live.snapshots}
                                     durationSeconds={controls.config.durationSeconds}
-                                    emptyMessage={
-                                        selection
-                                            ? t('stressTests.resultsLater')
-                                            : t('stressTests.pickRoute')
-                                    }
+                                    emptyMessage={chartsEmpty}
                                 />
                                 <StatusCodesCard
-                                    codes={live.totals.codes}
-                                    networkErrors={live.totals.networkErrors}
+                                    codes={totals.codes}
+                                    networkErrors={totals.networkErrors}
                                 />
                             </div>
                         </div>

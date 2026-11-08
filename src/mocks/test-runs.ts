@@ -1,7 +1,7 @@
 import { http, HttpResponse, sse } from 'msw';
 import { z } from 'zod';
 
-import type { RunStatus, Snapshot } from '@/api/live';
+import type { RunResult, RunStatus, Snapshot } from '@/api/live';
 
 import { coreError } from './core-error';
 
@@ -32,14 +32,82 @@ const startSchema = z.object({
     }),
 });
 
+export const MOCK_FAILING_PATH = '/status/599';
+export const MOCK_FAILURE_REASON = 'The worker lost its connection to the target.';
+const FAIL_AFTER_SECONDS = 2;
+
 const elapsedOf = (run: MockRun, now = Date.now()) =>
     Math.floor(((run.stoppedAt ?? now) - run.createdAt) / 1000);
+
+const failing = (run: MockRun) => run.url.includes(MOCK_FAILING_PATH);
 
 function statusOf(run: MockRun): RunStatus {
     if (run.stoppedAt !== null) {
         return 'STOPPED';
     }
+    if (failing(run) && elapsedOf(run) >= FAIL_AFTER_SECONDS) {
+        return 'FAILED';
+    }
     return elapsedOf(run) >= run.durationSeconds ? 'COMPLETED' : 'RUNNING';
+}
+
+const lastSecond = (run: MockRun) => (failing(run) ? FAIL_AFTER_SECONDS : run.durationSeconds);
+
+const finishedSecond = (run: MockRun) => Math.min(elapsedOf(run), lastSecond(run));
+
+function sum(values: readonly number[]) {
+    return values.reduce((total, value) => total + value, 0);
+}
+
+function mergeCounts(maps: readonly (Record<string, number> | undefined)[]) {
+    const merged: Record<string, number> = {};
+    for (const map of maps) {
+        for (const [key, count] of Object.entries(map ?? {})) {
+            merged[key] = (merged[key] ?? 0) + count;
+        }
+    }
+    return merged;
+}
+
+export function mockResult(run: MockRun): RunResult {
+    const seconds = Math.max(1, finishedSecond(run));
+    const routes = Array.from(
+        { length: seconds },
+        (_, index) => mockSnapshot(run, index + 1).targets[0],
+    ).filter((route) => route !== undefined);
+    const successCount = sum(routes.map((route) => route.successCount));
+    const errorCount = sum(routes.map((route) => route.errorCount));
+    const totalRequests = successCount + errorCount;
+    const average = (pick: (route: (typeof routes)[number]) => number | undefined) =>
+        Math.round(sum(routes.map((route) => pick(route) ?? 0)) / routes.length);
+    return {
+        durationMs: seconds * 1000,
+        targetRps: run.targetRps,
+        avgRps: Math.round((totalRequests / seconds) * 10) / 10,
+        targets: [
+            {
+                method: run.method,
+                url: run.url,
+                totalRequests,
+                successCount,
+                errorCount,
+                errorRate: totalRequests === 0 ? 0 : errorCount / totalRequests,
+                lateCount: sum(routes.map((route) => route.lateCount)),
+                responseTime: {
+                    p50Ms: average((route) => route.responseTime?.p50Ms),
+                    p95Ms: average((route) => route.responseTime?.p95Ms),
+                    p99Ms: average((route) => route.responseTime?.p99Ms),
+                },
+                serviceTime: {
+                    p50Ms: average((route) => route.serviceTime?.p50Ms),
+                    p95Ms: average((route) => route.serviceTime?.p95Ms),
+                    p99Ms: average((route) => route.serviceTime?.p99Ms),
+                },
+                statusCodes: mergeCounts(routes.map((route) => route.statusCodes)),
+                errors: { timeout: sum(routes.map((route) => route.errors?.timeout ?? 0)) },
+            },
+        ],
+    };
 }
 
 function wobble(seed: number): number {
@@ -93,20 +161,25 @@ export function mockSnapshot(run: MockRun, second: number): Snapshot {
     };
 }
 
-const runBody = (run: MockRun) => ({
-    id: run.id,
-    type: 'single',
-    status: statusOf(run),
-    createdAt: new Date(run.createdAt).toISOString(),
-    startedAt: new Date(run.createdAt).toISOString(),
-    ...(statusOf(run) === 'RUNNING'
-        ? {}
-        : {
-              finishedAt: new Date(
-                  run.stoppedAt ?? run.createdAt + run.durationSeconds * 1000,
-              ).toISOString(),
-          }),
-});
+function runBody(run: MockRun) {
+    const status = statusOf(run);
+    const base = {
+        id: run.id,
+        type: 'single',
+        status,
+        createdAt: new Date(run.createdAt).toISOString(),
+        startedAt: new Date(run.createdAt).toISOString(),
+    };
+    if (status === 'RUNNING') {
+        return base;
+    }
+    const finishedAt = new Date(
+        run.stoppedAt ?? run.createdAt + finishedSecond(run) * 1000,
+    ).toISOString();
+    return status === 'FAILED'
+        ? { ...base, finishedAt, reason: MOCK_FAILURE_REASON }
+        : { ...base, finishedAt, result: mockResult(run) };
+}
 
 const notFound = () => coreError(404, 'TEST_RUN.NOT_FOUND', 'Test run not found');
 
@@ -160,6 +233,16 @@ export const testRunHandlers = [
     }),
 ];
 
+function statusEvent(status: RunStatus) {
+    if (status === 'STOPPED') {
+        return { status, reason: 'Stopped by user' };
+    }
+    if (status === 'FAILED') {
+        return { status, reason: MOCK_FAILURE_REASON };
+    }
+    return { status };
+}
+
 export const liveStreamHandlers = () => [
     sse<{ status: string; snapshot: string }>(
         '*/v1/test-runs/:id/metrics',
@@ -177,9 +260,7 @@ export const liveStreamHandlers = () => [
                 const status = statusOf(run);
                 client.send({
                     event: 'status',
-                    data: JSON.stringify(
-                        status === 'STOPPED' ? { status, reason: 'Stopped by user' } : { status },
-                    ),
+                    data: JSON.stringify(statusEvent(status)),
                 });
                 return status;
             };
@@ -190,7 +271,7 @@ export const liveStreamHandlers = () => [
             let second = elapsedOf(run);
             const timer = setInterval(() => {
                 second += 1;
-                if (run.stoppedAt === null && second <= run.durationSeconds) {
+                if (run.stoppedAt === null && second <= lastSecond(run)) {
                     client.send({
                         event: 'snapshot',
                         data: JSON.stringify(mockSnapshot(run, second)),

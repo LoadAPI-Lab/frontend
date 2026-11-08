@@ -10,6 +10,7 @@ import { LateWarning } from './late-warning';
 import { LiveChartCard, LiveCharts } from './live-charts';
 import { appendFrame, isSingleAppend, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
+import { RunFailure } from './run-failure';
 import { RunProgress } from './run-progress';
 import { StatusCodesCard } from './status-codes-card';
 
@@ -24,7 +25,9 @@ describe('LiveStats', () => {
     it('shows dashes before the first snapshot', () => {
         render(
             <LiveStats
-                live={{ latest: null, totals: idleTotals }}
+                rps={null}
+                latency={null}
+                totals={idleTotals}
                 targetRps={300}
             />,
         );
@@ -39,13 +42,35 @@ describe('LiveStats', () => {
         const latest = snapshots.at(-1) ?? null;
         render(
             <LiveStats
-                live={{ latest, totals: runningTotals(snapshots) }}
+                rps={latest?.actualRps ?? null}
+                latency={latest?.targets[0]?.responseTime ?? null}
+                totals={runningTotals(snapshots)}
                 targetRps={300}
             />,
         );
         expect(stat(/^RPS/)).toBe('297.4');
         expect(stat(/^p50/)).toBe(`${latest?.targets[0]?.responseTime?.p50Ms}ms`);
         expect(stat(/^errors · 4 of 1,180$/)).toBe('0.3%');
+    });
+
+    it('labels the numbers as whole-run results once the run is over', () => {
+        const { container } = render(
+            <LiveStats
+                rps={99.8}
+                latency={{ p50Ms: 48, p95Ms: 134, p99Ms: 212 }}
+                totals={{ requests: 998, errors: 3, errorRate: 0.003 }}
+                targetRps={100}
+                scope="run"
+            />,
+        );
+        expect(container.querySelector('dl')).toHaveAttribute(
+            'aria-label',
+            'Results for the whole run',
+        );
+        expect(stat(/^avg RPS · target 100$/)).toBe('99.8');
+        expect(stat(/^p50 · whole run$/)).toBe('48ms');
+        expect(stat(/^p95 · whole run$/)).toBe('134ms');
+        expect(stat(/^errors · 3 of 998$/)).toBe('0.3%');
     });
 });
 
@@ -391,6 +416,15 @@ describe('appendFrame', () => {
                 [1, 2, 3],
             ]),
         ).toBe(false);
+    });
+});
+
+describe('RunFailure', () => {
+    it('keeps the failure reason on the page', () => {
+        render(<RunFailure reason="The worker lost its connection to the target." />);
+        expect(
+            screen.getByText('The worker lost its connection to the target.', { exact: false }),
+        ).toHaveTextContent('Test failed The worker lost its connection to the target.');
     });
 });
 

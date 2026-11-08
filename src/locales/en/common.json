@@ -63,7 +63,9 @@
             "title": "This endpoint isn't in your collections",
             "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
         },
-        "resultsLater": "Live results show here once the test starts."
+        "resultsLater": "Live results show here once the test starts.",
+        "finishedNoData": "This run has finished. Per-second charts only fill in while you watch a run live.",
+        "failedNoData": "The run failed before it sent any per-second data."
     },
     "scenarios": {
         "title": "Scenarios"
@@ -208,7 +210,12 @@
             "p50": "p50 · median",
             "p95": "p95",
             "errors": "errors · {{errors}} of {{requests}}",
-            "errorsEmpty": "errors"
+            "errorsEmpty": "errors",
+            "runLabel": "Results for the whole run",
+            "avgRps": "avg RPS",
+            "avgRpsTarget": "avg RPS · target {{target}}",
+            "p50Run": "p50 · whole run",
+            "p95Run": "p95 · whole run"
         },
         "units": {
             "ms": "ms",
@@ -291,5 +298,11 @@
         "STOPPED": "Stopped",
         "clock": "{{elapsed}} / {{duration}}",
         "progress": "Test progress"
+    },
+    "runOutcome": {
+        "completed": "Test completed",
+        "stopped": "Test stopped",
+        "failed": "Test failed",
+        "noReason": "The worker didn't give a reason."
     }
 }
