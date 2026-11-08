@@ -43,7 +43,13 @@
         "empty": "No collections yet",
         "import": "Import OpenAPI / Swagger",
         "importShort": "Import OpenAPI doc",
-        "emptyBody": "Import an OpenAPI doc to see its endpoints here."
+        "emptyBody": "Import an OpenAPI doc to see its endpoints here.",
+        "loading": "Loading collections",
+        "endpointsFailed": "Couldn't load the endpoints",
+        "endpointCount_one": ", {{count}} endpoint",
+        "endpointCount_other": ", {{count}} endpoints",
+        "deprecated": "Deprecated",
+        "deprecatedShort": "dep."
     },
     "stressTests": {
         "title": "Stress tests",
@@ -52,7 +58,12 @@
             "batch": "Batch",
             "roundRobin": "Round-robin"
         },
-        "pickRoute": "Pick a route from the collections to start a test."
+        "pickRoute": "Pick a route from the collections to start a test.",
+        "notFound": {
+            "title": "This endpoint isn't in your collections",
+            "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
+        },
+        "resultsLater": "Live results show here once the test starts."
     },
     "scenarios": {
         "title": "Scenarios"
@@ -76,5 +87,209 @@
     },
     "toast": {
         "dismiss": "Dismiss notification"
+    },
+    "bodyEditor": {
+        "label": "Request body",
+        "empty": "No body. Type JSON or insert a placeholder.",
+        "insertPlaceholder": "Insert placeholder",
+        "issues": {
+            "syntax": "Line {{line}}: this isn't valid JSON.",
+            "unquotedText": "Line {{line}}: {{token}} is replaced with text. Put it inside quotes.",
+            "unknownGenerator": "Line {{line}}: {{token}} isn't a placeholder. Use one of {{known}}."
+        }
+    },
+    "testConfig": {
+        "targetRps": "Target RPS",
+        "duration": "Duration",
+        "rampUp": "Ramp-up",
+        "secondsUnit": "s",
+        "inSeconds": " (seconds)",
+        "start": "Start test",
+        "starting": "Starting…",
+        "stop": "Stop test",
+        "stopping": "Stopping…",
+        "startFailed": "Couldn't start the test",
+        "capacityExceeded": "Another test is running, try again shortly.",
+        "issues": {
+            "required": "Enter a value.",
+            "wholeNumber": "Use a whole number.",
+            "range": "Use {{min}} to {{max}}.",
+            "rampLongerThanDuration": "Can't be longer than the duration ({{max}}s)."
+        },
+        "blocked": {
+            "noTarget": "Pick a route from the collections to start a test.",
+            "pathParam": "Fill in {{param}} in the URL to start.",
+            "invalidBody": "Fix the request body to start.",
+            "invalidConfig": "Fix the test settings to start.",
+            "noServer": "Set a base URL for this collection to start."
+        }
+    },
+    "secretInput": {
+        "show": "Show",
+        "hide": "Hide"
+    },
+    "requestCard": {
+        "label": "Request",
+        "rawJson": "raw · JSON",
+        "tabs": {
+            "body": "Body",
+            "headers": "Headers",
+            "auth": "Auth",
+            "params": "Params"
+        },
+        "headers": {
+            "name": "Header name",
+            "value": "Header value",
+            "add": "Add header",
+            "remove": "Remove header {{index}}",
+            "namePlaceholder": "Name",
+            "valuePlaceholder": "Value"
+        },
+        "params": {
+            "path": "Path parameters",
+            "query": "Query parameters",
+            "name": "Query parameter name",
+            "value": "Query parameter value",
+            "add": "Add query parameter",
+            "remove": "Remove query parameter {{index}}",
+            "namePlaceholder": "Name",
+            "valuePlaceholder": "Value"
+        },
+        "fillPlaceholders": "Fill with placeholders"
+    },
+    "requestAuth": {
+        "type": "Auth type",
+        "kinds": {
+            "none": "None",
+            "bearer": "Bearer token",
+            "basic": "Basic",
+            "apiKey": "API key"
+        },
+        "token": "Token",
+        "username": "Username",
+        "password": "Password",
+        "keyName": "Key name",
+        "keyValue": "Key value",
+        "addTo": "Send the key in",
+        "locations": {
+            "header": "Header",
+            "query": "Query"
+        },
+        "noneHint": "No auth is added to the request."
+    },
+    "importSpec": {
+        "title": "Import an OpenAPI doc",
+        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON. Its endpoints appear in the sidebar.",
+        "name": "Name (optional)",
+        "namePlaceholder": "Uses the doc's title",
+        "content": "OpenAPI document",
+        "contentPlaceholder": "openapi: 3.0.3\ninfo:\n  title: My API\n  version: 1.0.0\npaths: …",
+        "cancel": "Cancel",
+        "submit": "Import",
+        "importing": "Importing…",
+        "errors": {
+            "syntax": "This isn't valid YAML or JSON.",
+            "syntaxAt": "Line {{line}}, column {{column}}: {{detail}}",
+            "invalid": "This isn't a valid OpenAPI document:",
+            "unsupportedVersion": "Only OpenAPI 3.0 and 3.1 are supported. Convert Swagger 2.0 docs first.",
+            "tooLarge": "This doc is over 5 MB, the import limit."
+        }
+    },
+    "endpointHeader": {
+        "label": "Endpoint",
+        "server": "Base URL",
+        "deprecated": "Deprecated"
+    },
+    "liveMetrics": {
+        "stats": {
+            "label": "Live metrics",
+            "rps": "RPS",
+            "rpsTarget": "RPS · target {{target}}",
+            "p50": "p50 · median",
+            "p95": "p95",
+            "errors": "errors · {{errors}} of {{requests}}",
+            "errorsEmpty": "errors"
+        },
+        "units": {
+            "ms": "ms",
+            "msValue": "{{value}} ms",
+            "rpsValue": "{{value}} RPS"
+        },
+        "latency": {
+            "lines": {
+                "p50": "p50",
+                "p95": "p95",
+                "p99": "p99",
+                "service95": "service p95",
+                "service99": "service p99"
+            },
+            "summary": "Latency chart. Latest second: p50 {{p50}} ms, p95 {{p95}} ms, p99 {{p99}} ms.",
+            "serviceTime": "Service time"
+        },
+        "statusCodes": {
+            "title": "Status codes",
+            "groups": {
+                "2xx": "2xx",
+                "3xx": "3xx",
+                "4xx": "4xx",
+                "5xx": "5xx",
+                "network": "Network"
+            },
+            "network": {
+                "timeout": "Timeout",
+                "connection_refused": "Connection refused",
+                "connection_reset": "Connection reset",
+                "dns": "DNS",
+                "other": "Other"
+            },
+            "empty": "No responses yet.",
+            "columns": {
+                "response": "Response",
+                "count": "Count",
+                "share": "Share of all responses"
+            }
+        },
+        "charts": {
+            "legend": "{{chart}} legend",
+            "tabs": {
+                "latency": "Latency",
+                "throughput": "Throughput",
+                "errors": "Errors"
+            },
+            "subtitles": {
+                "latency": "milliseconds, per second, live",
+                "throughput": "requests per second, live",
+                "errors": "failed responses per second · % of all responses"
+            },
+            "browse": "{{chart}} by second",
+            "at": "{{second}}s",
+            "point": "{{second}}s: {{values}}",
+            "value": "{{label}} {{value}}",
+            "noData": "No data yet",
+            "zoomHint": "Drag across a chart to zoom in. Double-click to reset.",
+            "zoomed": "Showing {{from}}s to {{to}}s",
+            "resetZoom": "Reset zoom"
+        },
+        "throughput": {
+            "actual": "Actual",
+            "target": "Target",
+            "summary": "Throughput chart. Latest second: {{actual}} RPS against a target of {{target}}."
+        },
+        "errorsChart": {
+            "summary": "Errors chart. Latest second: {{clientErrors}} 4xx, {{serverErrors}} 5xx, {{network}} network errors."
+        },
+        "late": {
+            "message_one": "{{late}} request ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
+            "message_other": "{{late}} requests ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS."
+        }
+    },
+    "runStatus": {
+        "PENDING": "Pending",
+        "RUNNING": "Running",
+        "COMPLETED": "Completed",
+        "FAILED": "Failed",
+        "STOPPED": "Stopped",
+        "clock": "{{elapsed}} / {{duration}}",
+        "progress": "Test progress"
     }
 }

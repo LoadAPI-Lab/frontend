@@ -20,6 +20,7 @@ export default defineConfig({
     },
     optimizeDeps: {
         include: [
+            '@base-ui/react/dialog',
             '@base-ui/react/field',
             '@base-ui/react/input',
             '@base-ui/react/menu',
@@ -30,6 +31,13 @@ export default defineConfig({
             '@base-ui/react/toggle',
             '@base-ui/react/toggle-group',
             '@base-ui/react/tooltip',
+            '@codemirror/commands',
+            '@codemirror/lang-json',
+            '@codemirror/language',
+            '@codemirror/state',
+            '@codemirror/view',
+            '@lezer/common',
+            '@lezer/highlight',
             'class-variance-authority',
             'clsx',
             'tailwind-merge',

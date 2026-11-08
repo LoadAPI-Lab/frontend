@@ -63,7 +63,8 @@ deps:
 
 devops:
     - changed-files:
-          - any-glob-to-any-file: ['.github/**', 'Dockerfile', '.dockerignore', 'docker/**']
+          - any-glob-to-any-file:
+                ['.github/**', 'Dockerfile', '.dockerignore', 'docker/**', 'docker-compose.yml']
 
 docs:
     - changed-files:
