@@ -2,6 +2,25 @@
 @import '@fontsource-variable/jetbrains-mono';
 @import './theme.css';
 
+@theme {
+    --animate-tree-in: tree-in 160ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    --animate-tree-out: tree-out 120ms ease-in forwards;
+
+    @keyframes tree-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+    }
+
+    @keyframes tree-out {
+        to {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+    }
+}
+
 @layer base {
     html {
         color-scheme: dark;

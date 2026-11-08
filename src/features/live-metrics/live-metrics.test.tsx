@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -6,7 +6,7 @@ import { runningTotals } from '@/api/live';
 import { FakeUPlot } from '@/test/fake-uplot';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
-import { LateWarning } from './late-warning';
+import { LateBadge } from './late-badge';
 import { LiveChartCard, LiveCharts } from './live-charts';
 import { appendFrame, isSingleAppend, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
@@ -298,16 +298,70 @@ describe('LiveChartCard', () => {
         fireEvent.keyDown(slider, { key: 'Home' });
         fireEvent.keyDown(slider, { key: '+' });
 
-        expect(screen.getByText('Showing 1s to 21s')).toBeInTheDocument();
+        expect(screen.getAllByText(/· 1s to 21s$/)).toHaveLength(3);
         expect(FakeUPlot.instances.map((chart) => chart.scale)).toEqual([
             { min: 1, max: 21 },
             { min: 1, max: 21 },
             { min: 1, max: 21 },
         ]);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Reset zoom' }));
-        expect(screen.getByText(/Drag across a chart to zoom in/)).toBeInTheDocument();
+        const [reset] = screen.getAllByRole('button', { name: 'Reset zoom' });
+        if (reset) {
+            fireEvent.click(reset);
+        }
+        expect(screen.queryAllByRole('button', { name: 'Reset zoom' })).toHaveLength(0);
+        expect(screen.getAllByText(/· drag to zoom$/)).toHaveLength(3);
         expect(FakeUPlot.instances[0]?.scale).toEqual({ min: 1, max: 40 });
+    });
+
+    it('collapses a chart card from its title and remembers it', () => {
+        const props = {
+            snapshots: [sampleSnapshot(1)],
+            durationSeconds: 60,
+            emptyMessage: 'Nothing yet',
+        };
+        const first = render(<LiveCharts {...props} />);
+        const toggle = screen.getByRole('button', { name: 'Throughput' });
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+        fireEvent.click(toggle);
+
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(screen.queryByRole('figure', { name: /^Throughput chart/ })).not.toBeInTheDocument();
+        expect(screen.getByText('297 of 300 RPS')).toBeInTheDocument();
+        expect(FakeUPlot.instances.filter((chart) => !chart.destroyed)).toHaveLength(2);
+        expect(screen.getByRole('region', { name: 'Throughput' })).toBeInTheDocument();
+
+        first.unmount();
+        render(<LiveCharts {...props} />);
+        expect(screen.getByRole('button', { name: 'Throughput' })).toHaveAttribute(
+            'aria-expanded',
+            'false',
+        );
+    });
+
+    it('enlarges a chart into a dialog that keeps the shared zoom', async () => {
+        render(
+            <LiveCharts
+                snapshots={Array.from({ length: 40 }, (_, index) => sampleSnapshot(index + 1))}
+                durationSeconds={40}
+                emptyMessage="Nothing yet"
+            />,
+        );
+        const slider = screen.getByRole('slider', { name: 'Latency by second' });
+        fireEvent.focus(slider);
+        fireEvent.keyDown(slider, { key: 'Home' });
+        fireEvent.keyDown(slider, { key: '+' });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Enlarge the Latency chart' }));
+
+        const dialog = await screen.findByRole('dialog', { name: 'Latency' });
+        expect(dialog).toHaveTextContent('· 1s to 21s');
+        expect(FakeUPlot.instances).toHaveLength(4);
+        expect(FakeUPlot.instances.at(-1)?.scale).toEqual({ min: 1, max: 21 });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
     it('destroys the chart on unmount', () => {
@@ -428,29 +482,41 @@ describe('RunFailure', () => {
     });
 });
 
-describe('LateWarning', () => {
-    it('says how many requests went out late', () => {
+describe('LateBadge', () => {
+    it('shows a short count and explains it to screen readers', () => {
         render(
-            <LateWarning
+            <LateBadge
                 late={312}
                 requests={12_480}
             />,
         );
         expect(
-            screen.getByText(
-                '312 requests (2.5%) went out later than scheduled, so latency is understated. Try a lower target RPS.',
-            ),
+            screen.getByRole('button', {
+                name: '312 late. 312 requests (2.5%) went out later than scheduled, so latency is understated. Try a lower target RPS.',
+            }),
         ).toBeInTheDocument();
     });
 
     it('renders nothing when every request was on time', () => {
         const { container } = render(
-            <LateWarning
+            <LateBadge
                 late={0}
                 requests={100}
             />,
         );
         expect(container).toBeEmptyDOMElement();
+    });
+
+    it('sits inside the RPS card instead of adding a row', () => {
+        render(
+            <LiveStats
+                rps={98}
+                latency={null}
+                totals={{ requests: 1000, errors: 0, errorRate: 0, late: 3 }}
+                targetRps={100}
+            />,
+        );
+        expect(stat(/^RPS · target 100$/)).toContain('3 late');
     });
 });
 

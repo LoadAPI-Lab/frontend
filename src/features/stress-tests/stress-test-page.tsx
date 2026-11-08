@@ -9,7 +9,6 @@ import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 import type { ApiSpec, Endpoint } from '@/features/collections';
 import {
-    LateWarning,
     LiveCharts,
     LiveStats,
     RunFailure,
@@ -153,10 +152,6 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                             scope={summary ? 'run' : 'second'}
                         />
                         {outcome.failure ? <RunFailure reason={outcome.failure} /> : null}
-                        <LateWarning
-                            late={totals.late}
-                            requests={totals.requests}
-                        />
                         <div className="grid grid-cols-2 items-stretch gap-3">
                             <RequestCard
                                 draft={draft}
@@ -173,7 +168,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                               })
                                         : undefined
                                 }
-                                className="h-0 min-h-full"
+                                className="h-0 min-h-[max(100%,26rem)]"
                             />
                             <div className="flex min-w-0 flex-col gap-3">
                                 <LiveCharts

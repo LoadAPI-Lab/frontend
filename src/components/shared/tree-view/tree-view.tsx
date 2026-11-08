@@ -1,5 +1,5 @@
 import type { KeyboardEvent, ReactNode } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
@@ -38,6 +38,28 @@ type Row =
 
 const isParent = (node: TreeNode) => node.children !== undefined;
 
+const CLOSE_MS = 120;
+const STAGGER_MS = 12;
+const MAX_STAGGER_STEPS = 12;
+
+function motionAllowed() {
+    return (
+        typeof window.matchMedia === 'function' &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+}
+
+function isInside(id: string, ancestor: string, parentOf: ReadonlyMap<string, string | null>) {
+    let current = parentOf.get(id) ?? null;
+    while (current !== null) {
+        if (current === ancestor) {
+            return true;
+        }
+        current = parentOf.get(current) ?? null;
+    }
+    return false;
+}
+
 function flatten(
     nodes: TreeNode[],
     expanded: ReadonlySet<string>,
@@ -73,6 +95,61 @@ export function TreeView({
     const ids = items.map((item) => item.node.id);
     const elements = useRef(new Map<string, HTMLLIElement>());
     const [focusedId, setFocusedId] = useState<string | null>(null);
+    const [opening, setOpening] = useState<string | null>(null);
+    const [closing, setClosing] = useState<string | null>(null);
+    const pendingClose = useRef<{ id: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+    const parentOf = new Map(items.map((item) => [item.node.id, item.parentId]));
+
+    useEffect(
+        () => () => {
+            if (pendingClose.current) {
+                clearTimeout(pendingClose.current.timer);
+            }
+        },
+        [],
+    );
+
+    const setExpanded = (id: string, open: boolean) => {
+        const pending = pendingClose.current;
+        if (pending) {
+            clearTimeout(pending.timer);
+            pendingClose.current = null;
+            setClosing(null);
+            if (pending.id !== id || !open) {
+                onExpandedChange(pending.id, false);
+            }
+            if (pending.id === id) {
+                return;
+            }
+        }
+        if (open || !motionAllowed()) {
+            setOpening(open ? id : null);
+            onExpandedChange(id, open);
+            return;
+        }
+        setClosing(id);
+        pendingClose.current = {
+            id,
+            timer: setTimeout(() => {
+                pendingClose.current = null;
+                setClosing(null);
+                onExpandedChange(id, false);
+            }, CLOSE_MS),
+        };
+    };
+
+    const motionClass = (id: string, step: number) => {
+        if (closing && isInside(id, closing, parentOf)) {
+            return { className: 'motion-safe:animate-tree-out' };
+        }
+        if (opening && isInside(id, opening, parentOf)) {
+            return {
+                className: 'motion-safe:animate-tree-in',
+                style: { animationDelay: `${Math.min(step, MAX_STAGGER_STEPS) * STAGGER_MS}ms` },
+            };
+        }
+        return { className: undefined };
+    };
 
     let tabStop = ids[0] ?? null;
     if (selectedId && ids.includes(selectedId)) {
@@ -92,7 +169,7 @@ export function TreeView({
 
     const activate = (node: TreeNode) => {
         if (isParent(node)) {
-            onExpandedChange(node.id, !expandedIds.has(node.id));
+            setExpanded(node.id, !expandedIds.has(node.id));
         } else {
             onSelect(node);
         }
@@ -114,12 +191,12 @@ export function TreeView({
                 if (expanded) {
                     focus(node.busy ? null : node.children?.[0]?.id);
                 } else {
-                    onExpandedChange(node.id, true);
+                    setExpanded(node.id, true);
                 }
             },
             ArrowLeft: () => {
                 if (isParent(node) && expanded) {
-                    onExpandedChange(node.id, false);
+                    setExpanded(node.id, false);
                 } else {
                     focus(parentId);
                 }
@@ -134,18 +211,28 @@ export function TreeView({
         }
     };
 
+    const firstOpened = rows.findIndex(
+        (row) =>
+            row.kind === 'item' &&
+            opening !== null &&
+            isInside(row.item.node.id, opening, parentOf),
+    );
+
     return (
         <ul
             role="tree"
             aria-label={ariaLabel}
             className={className}
         >
-            {rows.map((row) => {
+            {rows.map((row, index) => {
                 if (row.kind === 'pending') {
+                    const pendingMotion =
+                        opening === row.parentId ? 'motion-safe:animate-tree-in' : undefined;
                     return (
                         <li
                             key={`${row.parentId}:pending`}
                             role="none"
+                            className={pendingMotion}
                         >
                             {row.content}
                         </li>
@@ -154,6 +241,7 @@ export function TreeView({
                 const { item } = row;
                 const { node } = item;
                 const parent = isParent(node);
+                const motion = motionClass(node.id, index - Math.max(firstOpened, 0));
                 const treeItem = (
                     <li
                         key={node.id}
@@ -178,11 +266,13 @@ export function TreeView({
                             focus(node.id);
                             activate(node);
                         }}
+                        style={motion.style}
                         className={cn(
                             'cursor-pointer select-none outline-none',
                             'focus-visible:ring-2',
                             'focus-visible:ring-accent/40',
                             node.rowClassName,
+                            motion.className,
                         )}
                     >
                         {node.content}

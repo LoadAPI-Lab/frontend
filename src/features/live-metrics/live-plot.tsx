@@ -27,6 +27,7 @@ export interface LivePlotProps {
     windowSeconds: number;
     yFloor?: number;
     height?: number;
+    fill?: boolean;
     zoom?: ZoomRange | null;
     onZoom?: (zoom: ZoomRange | null) => void;
     formatValue: (value: number) => string;
@@ -49,7 +50,9 @@ const X_INCREMENTS = [1, 2, 5, 10, 15, 30, 60, 120, 300];
 const TOOLTIP_HALF_HEIGHT = 36;
 const MIN_ZOOM_SECONDS = 4;
 const MIN_DRAG_PIXELS = 4;
-const Y_AXIS_SIZE = 40;
+const Y_AXIS_SIZE = 48;
+const RIGHT_PADDING = 18;
+const AXIS_FONT = '11px "JetBrains Mono Variable", monospace';
 const Y_INCREMENTS = [
     1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10_000, 20_000, 50_000,
 ];
@@ -232,7 +235,7 @@ function plotOptions({
                 },
             ],
         },
-        padding: [8, 6, 0, 6],
+        padding: [8, RIGHT_PADDING, 0, 6],
         scales: {
             x: { time: false, range: () => xRange() },
             y: {
@@ -245,8 +248,8 @@ function plotOptions({
         axes: [
             {
                 stroke: color('--color-fg-subtle'),
-                font: '9.5px "JetBrains Mono Variable", monospace',
-                size: 22,
+                font: AXIS_FONT,
+                size: 26,
                 gap: 6,
                 incrs: X_INCREMENTS,
                 grid: { show: false },
@@ -257,7 +260,7 @@ function plotOptions({
                 size: Y_AXIS_SIZE,
                 gap: 4,
                 stroke: color('--color-fg-subtle'),
-                font: '9.5px "JetBrains Mono Variable", monospace',
+                font: AXIS_FONT,
                 ticks: { show: false },
                 grid: { stroke: color('--color-border-strong'), width: 1 },
                 space: 28,
@@ -317,6 +320,7 @@ export function LivePlot({
     windowSeconds,
     yFloor = 10,
     height = DEFAULT_HEIGHT,
+    fill = false,
     zoom = null,
     onZoom = ignore,
     formatValue,
@@ -338,6 +342,7 @@ export function LivePlot({
         bars,
         yFloor,
         height,
+        fill,
         zoom,
         onZoom,
         formatTick,
@@ -439,7 +444,7 @@ export function LivePlot({
         const chart = new uPlot(
             plotOptions({
                 width: container.clientWidth,
-                height: initial.height,
+                height: initial.fill ? container.clientHeight || initial.height : initial.height,
                 xRange: () =>
                     latest.current.zoom ??
                     fullRangeOf(latest.current.windowSeconds, latest.current.bars),
@@ -457,6 +462,9 @@ export function LivePlot({
             container,
         );
         chartRef.current = chart;
+        if (initial.zoom) {
+            chart.setScale('x', { min: initial.zoom[0], max: initial.zoom[1] });
+        }
 
         const observer =
             typeof ResizeObserver === 'undefined'
@@ -465,7 +473,9 @@ export function LivePlot({
                       if (entry) {
                           chart.setSize({
                               width: Math.floor(entry.contentRect.width),
-                              height: initial.height,
+                              height: initial.fill
+                                  ? Math.floor(entry.contentRect.height) || initial.height
+                                  : initial.height,
                           });
                       }
                   });
@@ -483,6 +493,7 @@ export function LivePlot({
             aria-labelledby={captionId}
             className={cn(
                 'relative w-full rounded-md',
+                fill && 'flex flex-col',
                 'has-[:focus-visible]:outline-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4',
                 '[&_.u-cursor-x]:border-fg-faint',
                 className,
@@ -539,6 +550,7 @@ export function LivePlot({
             <div
                 ref={containerRef}
                 aria-hidden
+                className={fill ? 'min-h-0 flex-1 overflow-hidden' : undefined}
             />
             {hover && hover.index < count ? (
                 <div

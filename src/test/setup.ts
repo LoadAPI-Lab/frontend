@@ -24,5 +24,6 @@ afterEach(() => {
     resetMockTestRuns();
     FakeEventSource.reset();
     FakeUPlot.reset();
+    localStorage.clear();
 });
 afterAll(() => server.close());

@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -16,6 +16,7 @@ export interface StatCardProps extends Omit<ComponentProps<'div'>, 'children'> {
     value: string;
     unit?: string;
     tone?: 'default' | 'danger';
+    badge?: ReactNode;
 }
 
 export function StatCard({
@@ -23,6 +24,7 @@ export function StatCard({
     value,
     unit,
     tone = 'default',
+    badge,
     className,
     ...props
 }: StatCardProps) {
@@ -38,14 +40,23 @@ export function StatCard({
             <dt className="text-fg-muted text-label truncate">{label}</dt>
             <dd
                 className={cn(
-                    'font-mono text-2xl font-bold tabular-nums',
+                    'flex min-w-0 items-center gap-2 font-mono text-2xl font-bold tabular-nums',
                     danger ? 'text-danger' : 'text-fg',
                 )}
             >
-                {value}
-                {unit ? (
-                    <span className={cn('text-control', danger ? 'text-danger' : 'text-fg-muted')}>
-                        {unit}
+                <span>
+                    {value}
+                    {unit ? (
+                        <span
+                            className={cn('text-control', danger ? 'text-danger' : 'text-fg-muted')}
+                        >
+                            {unit}
+                        </span>
+                    ) : null}
+                </span>
+                {badge ? (
+                    <span className="ml-auto flex shrink-0 font-sans text-base font-normal">
+                        {badge}
                     </span>
                 ) : null}
             </dd>
