@@ -8,7 +8,7 @@ import { FakeUPlot } from '@/test/fake-uplot';
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
 import { LateBadge } from './late-badge';
 import { LiveChartCard, LiveCharts } from './live-charts';
-import { appendFrame, isSingleAppend, zoomAround } from './live-plot';
+import { appendFrame, isSingleAppend, lineAnimationMs, nextGap, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
 import { RunFailure } from './run-failure';
 import { RunProgress } from './run-progress';
@@ -479,6 +479,24 @@ describe('RunFailure', () => {
         expect(
             screen.getByText('The worker lost its connection to the target.', { exact: false }),
         ).toHaveTextContent('Test failed The worker lost its connection to the target.');
+    });
+});
+
+describe('line animation timing', () => {
+    it('follows the measured gap between seconds', () => {
+        expect(nextGap(1000, 1100)).toBeCloseTo(1030);
+        expect(nextGap(1000, 900)).toBeCloseTo(970);
+    });
+
+    it('ignores gaps that are not a normal tick', () => {
+        expect(nextGap(1000, 50)).toBe(1000);
+        expect(nextGap(1000, 10_000)).toBe(1000);
+    });
+
+    it('keeps each animation between 0.3 and 1.5 seconds', () => {
+        expect(lineAnimationMs(1000)).toBe(1000);
+        expect(lineAnimationMs(100)).toBe(300);
+        expect(lineAnimationMs(5000)).toBe(1500);
     });
 });
 
