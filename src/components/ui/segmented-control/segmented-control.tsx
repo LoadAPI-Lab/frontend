@@ -58,7 +58,7 @@ function Item<Value extends string>({
             value={value}
             className={cn(
                 'group text-control text-fg-muted flex h-7.5 items-center gap-1.75 rounded-md px-3.25 font-medium transition-colors outline-none',
-                'hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50',
+                'relative hover:text-fg focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50',
                 'data-pressed:bg-surface-2 data-pressed:text-fg data-pressed:font-semibold',
                 className,
             )}

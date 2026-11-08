@@ -1,12 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
+import { coreError } from '@/mocks/core-error';
 import { server } from '@/mocks/server';
 
 import { apiFetch, ApiError, errorCode } from './fetcher';
 
-const unauthorized = () =>
-    HttpResponse.json({ code: 'AUTH.UNAUTHENTICATED', message: 'Sign in' }, { status: 401 });
+const unauthorized = () => coreError(401, 'AUTH.UNAUTHENTICATED', 'Sign in');
 
 describe('apiFetch', () => {
     it('calls core’s own paths on the same origin and parses JSON', async () => {
@@ -24,15 +24,17 @@ describe('apiFetch', () => {
     it('throws ApiError with status, message, request id and code', async () => {
         server.use(
             http.get('*/v1/runs/x', () =>
-                HttpResponse.json(
-                    { code: 'TEST_RUN.NOT_FOUND', message: 'Not found' },
-                    { status: 404, headers: { 'x-request-id': 'req_123' } },
-                ),
+                coreError(404, 'TEST_RUN.NOT_FOUND', 'Test run not found', 'req_123'),
             ),
         );
         const error = await apiFetch('/v1/runs/x').catch((error_: unknown) => error_);
         expect(error).toBeInstanceOf(ApiError);
-        expect(error).toMatchObject({ status: 404, message: 'Not found', requestId: 'req_123' });
+        expect(error).toMatchObject({
+            status: 404,
+            message: 'Test run not found',
+            requestId: 'req_123',
+            code: 'TEST_RUN.NOT_FOUND',
+        });
         expect(errorCode(error)).toBe('TEST_RUN.NOT_FOUND');
     });
 
@@ -83,7 +85,11 @@ describe('apiFetch', () => {
         server.use(
             http.get('*/v1/users/me', unauthorized),
             http.post('*/v1/auth/refresh', () =>
-                HttpResponse.json({ code: 'AUTH.SESSION_INVALID' }, { status: 401 }),
+                coreError(
+                    401,
+                    'AUTH.SESSION_INVALID',
+                    'The session is invalid or has expired, sign in again',
+                ),
             ),
         );
         const error = await apiFetch('/v1/users/me').catch((error_: unknown) => error_);
@@ -104,5 +110,26 @@ describe('apiFetch', () => {
             status: 401,
         });
         expect(refreshes).toBe(0);
+    });
+
+    it('falls back to the status text and header for errors that are not from core', async () => {
+        server.use(
+            http.get(
+                '*/v1/proxy',
+                () =>
+                    new HttpResponse('Bad gateway', {
+                        status: 502,
+                        statusText: 'Bad Gateway',
+                        headers: { 'x-request-id': 'req_proxy' },
+                    }),
+            ),
+        );
+        const error = await apiFetch('/v1/proxy').catch((error_: unknown) => error_);
+        expect(error).toMatchObject({
+            status: 502,
+            message: 'Bad Gateway',
+            requestId: 'req_proxy',
+        });
+        expect(errorCode(error)).toBeUndefined();
     });
 });
