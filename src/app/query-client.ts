@@ -1,11 +1,12 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 
 import { ApiError, isUnauthorized } from '@/api/fetcher';
+import { getUsersMeQueryKey } from '@/api/generated/endpoints/users/users';
 import { toast } from '@/components/ui/toast';
 
 import { i18n } from './i18n';
 
-const SESSION_KEY = ['session'] as const;
+const SESSION_KEY = getUsersMeQueryKey();
 
 export interface QueryClientOptions {
     onSessionExpired?: () => void;

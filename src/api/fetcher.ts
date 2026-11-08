@@ -1,16 +1,26 @@
+import { z } from 'zod';
+
 import { config } from '@/config';
 
-export class ApiError extends Error {
+export class ApiError<Body = unknown> extends Error {
     constructor(
         readonly status: number,
         message: string,
         readonly requestId: string | null,
-        readonly body: unknown,
+        readonly body: Body,
+        readonly code: string | null = null,
     ) {
         super(message);
         this.name = 'ApiError';
     }
 }
+
+const coreErrorSchema = z.object({
+    error: z.object({ code: z.string(), message: z.string() }),
+    meta: z
+        .object({ request: z.object({ requestId: z.string() }).partial().optional() })
+        .optional(),
+});
 
 async function parseBody(response: Response): Promise<unknown> {
     if (response.status === 204) {
@@ -18,19 +28,6 @@ async function parseBody(response: Response): Promise<unknown> {
     }
     const type = response.headers.get('content-type') ?? '';
     return type.includes('application/json') ? response.json() : response.text();
-}
-
-function messageFrom(body: unknown, fallback: string): string {
-    if (body && typeof body === 'object' && 'message' in body) {
-        const { message } = body;
-        if (typeof message === 'string') {
-            return message;
-        }
-        if (Array.isArray(message)) {
-            return message.join(', ');
-        }
-    }
-    return fallback || 'Request failed';
 }
 
 const NO_REFRESH_PREFIXES = ['/v1/auth/', '/v1/oauth/'];
@@ -73,11 +70,14 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
 
     const body = await parseBody(response);
     if (!response.ok) {
+        const core = coreErrorSchema.safeParse(body);
+        const coreError = core.success ? core.data : null;
         throw new ApiError(
             response.status,
-            messageFrom(body, response.statusText),
-            response.headers.get('x-request-id'),
+            coreError?.error.message ?? (response.statusText || 'Request failed'),
+            coreError?.meta?.request?.requestId ?? response.headers.get('x-request-id'),
             body,
+            coreError?.error.code ?? null,
         );
     }
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
@@ -85,21 +85,14 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
 }
 
 export function errorCode(error: unknown): string | undefined {
-    if (
-        error instanceof ApiError &&
-        error.body &&
-        typeof error.body === 'object' &&
-        'code' in error.body &&
-        typeof error.body.code === 'string'
-    ) {
-        return error.body.code;
-    }
-    return undefined;
+    return error instanceof ApiError ? (error.code ?? undefined) : undefined;
 }
 
 export function isUnauthorized(error: unknown): error is ApiError {
     return error instanceof ApiError && error.status === 401;
 }
+
+export type ErrorType<Body> = ApiError<Body>;
 
 export function orvalFetch<T>(url: string, init?: RequestInit): Promise<T> {
     return apiFetch<T>(url, init);

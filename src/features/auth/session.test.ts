@@ -11,7 +11,7 @@ describe('sessionQuery', () => {
         server.use(
             http.get('*/v1/users/me', () =>
                 HttpResponse.json({
-                    id: 'u1',
+                    id: '3f6c1b2a-8d4e-4f5a-9b7c-1e2d3c4b5a69',
                     name: 'Ada Lovelace',
                     email: 'ada@example.com',
                     createdAt: '2026-11-01T10:00:00.000Z',
@@ -19,7 +19,7 @@ describe('sessionQuery', () => {
             ),
         );
         await expect(new QueryClient().fetchQuery(sessionQuery)).resolves.toMatchObject({
-            id: 'u1',
+            id: '3f6c1b2a-8d4e-4f5a-9b7c-1e2d3c4b5a69',
             name: 'Ada Lovelace',
         });
     });

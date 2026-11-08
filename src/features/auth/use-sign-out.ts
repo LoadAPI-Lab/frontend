@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
-import { apiFetch } from '@/api/fetcher';
+import { authLogout } from '@/api/generated/endpoints/auth/auth';
 
 export function useSignOut() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     return useMutation({
-        mutationFn: () => apiFetch('/v1/auth/logout', { method: 'POST' }),
+        mutationFn: () => authLogout(),
         meta: { toastOnError: false },
         onSettled: async () => {
             queryClient.clear();
