@@ -68,7 +68,24 @@ const KEY_STEPS: Record<string, number> = {
 const noop = () => null;
 const ignore = () => null;
 const roundTick = (value: number) => String(Math.round(value));
-const ANIMATION_MS = 450;
+const BAR_ANIMATION_MS = 450;
+const DEFAULT_GAP_MS = 1000;
+const MIN_LINE_ANIMATION_MS = 300;
+const MAX_LINE_ANIMATION_MS = 1500;
+const GAP_SMOOTHING = 0.3;
+
+const linear = (progress: number) => progress;
+
+export function nextGap(current: number, observed: number) {
+    if (observed < MIN_LINE_ANIMATION_MS || observed > MAX_LINE_ANIMATION_MS * 2) {
+        return current;
+    }
+    return current + (observed - current) * GAP_SMOOTHING;
+}
+
+export function lineAnimationMs(gap: number) {
+    return Math.min(Math.max(gap, MIN_LINE_ANIMATION_MS), MAX_LINE_ANIMATION_MS);
+}
 
 const easeOut = (progress: number) => 1 - (1 - progress) ** 3;
 
@@ -395,22 +412,35 @@ export function LivePlot({
         chartRef.current?.setCursor({ left: -10, top: -10 });
     };
 
+    const arrivals = useRef<{ lastAt: number | null; gap: number }>({
+        lastAt: null,
+        gap: DEFAULT_GAP_MS,
+    });
+
     useEffect(() => {
         const previous = latest.current.data;
         latest.current = { ...latest.current, data, windowSeconds };
         const chart = chartRef.current;
         const { order: drawn, bars: asBars } = latest.current;
-        if (!chart || !isSingleAppend(previous, data) || prefersReducedMotion()) {
+        const startedAt = performance.now();
+        const appended = isSingleAppend(previous, data);
+        if (appended) {
+            const { lastAt, gap } = arrivals.current;
+            arrivals.current = {
+                lastAt: startedAt,
+                gap: lastAt === null ? gap : nextGap(gap, startedAt - lastAt),
+            };
+        }
+        if (!chart || !appended || prefersReducedMotion()) {
             chart?.setData(toPlotData(data, drawn));
             return noop;
         }
-        const startedAt = performance.now();
+        const duration = asBars ? BAR_ANIMATION_MS : lineAnimationMs(arrivals.current.gap);
+        const ease = asBars ? easeOut : linear;
         let frame = 0;
         const step = (now: number) => {
-            const progress = Math.min(1, (now - startedAt) / ANIMATION_MS);
-            chart.setData(
-                toPlotData(appendFrame(previous, data, easeOut(progress), asBars), drawn),
-            );
+            const progress = Math.min(1, (now - startedAt) / duration);
+            chart.setData(toPlotData(appendFrame(previous, data, ease(progress), asBars), drawn));
             if (progress < 1) {
                 frame = requestAnimationFrame(step);
             }
