@@ -54,8 +54,10 @@ export function mockSnapshot(run: MockRun, second: number): Snapshot {
         Math.round(run.targetRps * ramp * (0.97 + wobble(second) * 0.05)),
     );
     const serverErrors = wobble(second + 7) > 0.85 ? Math.ceil(actualRps * 0.004) : 0;
+    const timeouts = wobble(second + 11) > 0.9 ? 1 : 0;
+    const late = wobble(second + 13) > 0.92 ? Math.ceil(actualRps * 0.01) : 0;
     const clientErrors = Math.round(actualRps * 0.02);
-    const ok = actualRps - serverErrors - clientErrors;
+    const ok = actualRps - serverErrors - clientErrors - timeouts;
     const base = 38 + wobble(second + 3) * 8 + ramp * 6;
     return {
         testId: run.id,
@@ -68,18 +70,24 @@ export function mockSnapshot(run: MockRun, second: number): Snapshot {
                 method: run.method,
                 url: run.url,
                 successCount: ok + clientErrors,
-                errorCount: serverErrors,
-                lateCount: 0,
+                errorCount: serverErrors + timeouts,
+                lateCount: late,
                 responseTime: {
                     p50Ms: Math.round(base),
                     p95Ms: Math.round(base * 2.8),
                     p99Ms: Math.round(base * 4.4),
+                },
+                serviceTime: {
+                    p50Ms: Math.round(base * 0.85),
+                    p95Ms: Math.round(base * 2.3),
+                    p99Ms: Math.round(base * 3.4),
                 },
                 statusCodes: {
                     '200': ok,
                     '404': clientErrors,
                     ...(serverErrors > 0 ? { '503': serverErrors } : {}),
                 },
+                ...(timeouts > 0 ? { errors: { timeout: timeouts } } : {}),
             },
         ],
     };

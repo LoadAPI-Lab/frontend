@@ -18,7 +18,7 @@ function Tab({ className, ...props }: BaseTabs.Tab.Props) {
     return (
         <BaseTabs.Tab
             className={cn(
-                'rounded-md px-3 py-1 text-sm text-fg-muted transition-colors hover:text-fg aria-selected:bg-surface-2 aria-selected:text-fg',
+                'relative rounded-md px-3 py-1 text-sm text-fg-muted transition-colors hover:text-fg focus-visible:z-10 aria-selected:bg-surface-2 aria-selected:text-fg',
                 className,
             )}
             {...props}
