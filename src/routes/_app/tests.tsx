@@ -1,17 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { z } from 'zod';
+import { useEffect } from 'react';
 
 import { ApiError } from '@/api/fetcher';
 import { apiSpecQuery } from '@/features/collections';
 import { StressTestPage } from '@/features/stress-tests';
+import { rememberTestsSearch, testsSearchSchema } from '@/lib/last-tests-search';
 
 export const Route = createFileRoute('/_app/tests')({
-    validateSearch: z.object({
-        spec: z.string().optional(),
-        endpoint: z.string().optional(),
-        run: z.string().optional(),
-    }),
+    validateSearch: testsSearchSchema,
     loaderDeps: ({ search }) => ({ spec: search.spec }),
     loader: async ({ context, deps }) => {
         if (!deps.spec) {
@@ -31,6 +28,9 @@ export const Route = createFileRoute('/_app/tests')({
         const { spec: specId, endpoint: endpointKey, run } = Route.useSearch();
         const { found } = Route.useLoaderData();
         const navigate = Route.useNavigate();
+        useEffect(() => {
+            rememberTestsSearch({ spec: specId, endpoint: endpointKey, run });
+        }, [specId, endpointKey, run]);
         const spec = useQuery({ ...apiSpecQuery(specId ?? ''), enabled: Boolean(specId) && found });
         const endpoint = spec.data?.endpoints.find((candidate) => candidate.key === endpointKey);
         const selection = spec.data && endpoint ? { spec: spec.data, endpoint } : null;

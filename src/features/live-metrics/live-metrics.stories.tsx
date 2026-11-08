@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { runningTotals } from '@/api/live';
+import { runningTotals, snapshotLatency } from '@/api/live';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
 import { LateWarning } from './late-warning';
@@ -32,6 +32,7 @@ function Panel({ seconds, live = false, troubled = false }: PanelProps) {
         };
     }, [live]);
     const totals = runningTotals(snapshots);
+    const latest = snapshots.at(-1) ?? null;
     const elapsed = snapshots.at(-1)?.elapsedSeconds ?? 0;
 
     return (
@@ -44,7 +45,9 @@ function Panel({ seconds, live = false, troubled = false }: PanelProps) {
                 />
             </div>
             <LiveStats
-                live={{ latest: snapshots.at(-1) ?? null, totals }}
+                rps={latest?.actualRps ?? null}
+                latency={latest ? snapshotLatency(latest) : null}
+                totals={totals}
                 targetRps={300}
             />
             <LateWarning

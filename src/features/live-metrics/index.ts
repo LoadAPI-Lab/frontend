@@ -8,5 +8,6 @@ export {
     type LiveChartsProps,
 } from './live-charts';
 export { LiveStats, type LiveStatsProps } from './live-stats';
+export { RunFailure, type RunFailureProps } from './run-failure';
 export { RunProgress, type RunProgressProps } from './run-progress';
 export { StatusCodesCard, type StatusCodesCardProps } from './status-codes-card';

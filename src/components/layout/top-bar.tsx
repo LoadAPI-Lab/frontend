@@ -1,8 +1,9 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LogoMark } from '@/components/ui/icons';
+import { lastTestsSearch } from '@/lib/last-tests-search';
 
 const navLink =
     'text-md flex h-8.5 items-center rounded-lg border border-transparent px-3.5 font-medium text-fg-muted transition-colors outline-none ' +
@@ -15,6 +16,7 @@ export interface TopBarProps {
 
 export function TopBar({ actions }: TopBarProps) {
     const { t } = useTranslation();
+    const testsSearch = useRouterState({ select: () => lastTestsSearch() });
     return (
         <header className="border-border-subtle flex h-14 shrink-0 items-center gap-6.5 border-b px-5">
             <Link
@@ -32,6 +34,8 @@ export function TopBar({ actions }: TopBarProps) {
             >
                 <Link
                     to="/tests"
+                    search={testsSearch}
+                    activeOptions={{ includeSearch: false }}
                     className={navLink}
                 >
                     {t('nav.stressTests')}

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { type LiveTest, snapshotLatency } from '@/api/live';
+import type { Percentiles, RunningTotals } from '@/api/live';
 import { StatCard, StatList } from '@/components/shared/stat-card';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
@@ -8,38 +8,49 @@ import { formatNumber } from '@/lib/format';
 const EMPTY = '—';
 
 export interface LiveStatsProps {
-    live: Pick<LiveTest, 'latest' | 'totals'>;
+    rps: number | null;
+    latency: Percentiles | null;
+    totals: Pick<RunningTotals, 'requests' | 'errors' | 'errorRate'>;
     targetRps: number | null;
+    scope?: 'second' | 'run';
     className?: string;
 }
 
-export function LiveStats({ live, targetRps, className }: LiveStatsProps) {
+export function LiveStats({
+    rps,
+    latency,
+    totals,
+    targetRps,
+    scope = 'second',
+    className,
+}: LiveStatsProps) {
     const { t, i18n } = useTranslation();
     const format = (value: number, digits = 0) => formatNumber(value, digits, i18n.language);
-    const { latest, totals } = live;
-    const latency = latest ? snapshotLatency(latest) : null;
     const ms = t('liveMetrics.units.ms');
+    const whole = scope === 'run';
+    const rpsLabel =
+        targetRps === null
+            ? t(whole ? 'liveMetrics.stats.avgRps' : 'liveMetrics.stats.rps')
+            : t(whole ? 'liveMetrics.stats.avgRpsTarget' : 'liveMetrics.stats.rpsTarget', {
+                  target: format(targetRps),
+              });
 
     return (
         <StatList
-            aria-label={t('liveMetrics.stats.label')}
+            aria-label={t(whole ? 'liveMetrics.stats.runLabel' : 'liveMetrics.stats.label')}
             className={cn('grid-cols-4', className)}
         >
             <StatCard
-                label={
-                    targetRps === null
-                        ? t('liveMetrics.stats.rps')
-                        : t('liveMetrics.stats.rpsTarget', { target: format(targetRps) })
-                }
-                value={latest ? format(latest.actualRps, 1) : EMPTY}
+                label={rpsLabel}
+                value={rps === null ? EMPTY : format(rps, 1)}
             />
             <StatCard
-                label={t('liveMetrics.stats.p50')}
+                label={t(whole ? 'liveMetrics.stats.p50Run' : 'liveMetrics.stats.p50')}
                 value={latency ? format(latency.p50Ms) : EMPTY}
                 unit={latency ? ms : undefined}
             />
             <StatCard
-                label={t('liveMetrics.stats.p95')}
+                label={t(whole ? 'liveMetrics.stats.p95Run' : 'liveMetrics.stats.p95')}
                 value={latency ? format(latency.p95Ms) : EMPTY}
                 unit={latency ? ms : undefined}
             />

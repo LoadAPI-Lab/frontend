@@ -68,7 +68,16 @@ const emptyNetworkErrors = (): Record<NetworkError, number> => ({
     other: 0,
 });
 
+export type RouteCounts = Pick<
+    RouteSnapshot,
+    'successCount' | 'errorCount' | 'lateCount' | 'statusCodes' | 'errors'
+>;
+
 export function runningTotals(snapshots: readonly Snapshot[]): RunningTotals {
+    return routeTotals(snapshots.flatMap((snapshot) => snapshot.targets));
+}
+
+export function routeTotals(routes: readonly RouteCounts[]): RunningTotals {
     const statuses = emptyBreakdown();
     const networkErrors = emptyNetworkErrors();
     const codes: Record<string, number> = {};
@@ -76,21 +85,19 @@ export function runningTotals(snapshots: readonly Snapshot[]): RunningTotals {
     let errors = 0;
     let late = 0;
 
-    for (const snapshot of snapshots) {
-        for (const route of snapshot.targets) {
-            requests += route.successCount + route.errorCount;
-            errors += route.errorCount;
-            late += route.lateCount;
-            for (const [code, count] of Object.entries(route.statusCodes ?? {})) {
-                codes[code] = (codes[code] ?? 0) + count;
-            }
-            for (const kind of NETWORK_ERRORS) {
-                networkErrors[kind] += route.errors?.[kind] ?? 0;
-            }
-            const grouped = groupStatusCodes(route);
-            for (const key of STATUS_KEYS) {
-                statuses[key] += grouped[key];
-            }
+    for (const route of routes) {
+        requests += route.successCount + route.errorCount;
+        errors += route.errorCount;
+        late += route.lateCount;
+        for (const [code, count] of Object.entries(route.statusCodes ?? {})) {
+            codes[code] = (codes[code] ?? 0) + count;
+        }
+        for (const kind of NETWORK_ERRORS) {
+            networkErrors[kind] += route.errors?.[kind] ?? 0;
+        }
+        const grouped = groupStatusCodes(route);
+        for (const key of STATUS_KEYS) {
+            statuses[key] += grouped[key];
         }
     }
 
