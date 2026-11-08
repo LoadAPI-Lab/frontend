@@ -52,6 +52,28 @@ describe('runningTotals', () => {
         expect(totals.errors).toBe(2);
         expect(totals.errorRate).toBeCloseTo(0.01);
         expect(totals.statuses['2xx']).toBe(198);
+        expect(totals.codes).toEqual({ '200': 198, '500': 2 });
+    });
+
+    it('sums late requests and network errors by kind', () => {
+        const totals = runningTotals([
+            snapshot({ successCount: 9, errorCount: 1, lateCount: 3, errors: { timeout: 1 } }),
+            snapshot({
+                successCount: 8,
+                errorCount: 2,
+                lateCount: 1,
+                errors: { timeout: 1, connection_refused: 1 },
+            }),
+        ]);
+        expect(totals.late).toBe(4);
+        expect(totals.networkErrors).toEqual({
+            timeout: 2,
+            connection_refused: 1,
+            connection_reset: 0,
+            dns: 0,
+            other: 0,
+        });
+        expect(totals.statuses.network).toBe(3);
     });
 
     it('returns a zero error rate when nothing ran', () => {
