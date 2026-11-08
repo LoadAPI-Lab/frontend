@@ -27,6 +27,7 @@ export interface LivePlotProps {
     windowSeconds: number;
     yFloor?: number;
     height?: number;
+    fill?: boolean;
     zoom?: ZoomRange | null;
     onZoom?: (zoom: ZoomRange | null) => void;
     formatValue: (value: number) => string;
@@ -319,6 +320,7 @@ export function LivePlot({
     windowSeconds,
     yFloor = 10,
     height = DEFAULT_HEIGHT,
+    fill = false,
     zoom = null,
     onZoom = ignore,
     formatValue,
@@ -340,6 +342,7 @@ export function LivePlot({
         bars,
         yFloor,
         height,
+        fill,
         zoom,
         onZoom,
         formatTick,
@@ -441,7 +444,7 @@ export function LivePlot({
         const chart = new uPlot(
             plotOptions({
                 width: container.clientWidth,
-                height: initial.height,
+                height: initial.fill ? container.clientHeight || initial.height : initial.height,
                 xRange: () =>
                     latest.current.zoom ??
                     fullRangeOf(latest.current.windowSeconds, latest.current.bars),
@@ -459,6 +462,9 @@ export function LivePlot({
             container,
         );
         chartRef.current = chart;
+        if (initial.zoom) {
+            chart.setScale('x', { min: initial.zoom[0], max: initial.zoom[1] });
+        }
 
         const observer =
             typeof ResizeObserver === 'undefined'
@@ -467,7 +473,9 @@ export function LivePlot({
                       if (entry) {
                           chart.setSize({
                               width: Math.floor(entry.contentRect.width),
-                              height: initial.height,
+                              height: initial.fill
+                                  ? Math.floor(entry.contentRect.height) || initial.height
+                                  : initial.height,
                           });
                       }
                   });
@@ -485,6 +493,7 @@ export function LivePlot({
             aria-labelledby={captionId}
             className={cn(
                 'relative w-full rounded-md',
+                fill && 'flex flex-col',
                 'has-[:focus-visible]:outline-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4',
                 '[&_.u-cursor-x]:border-fg-faint',
                 className,
@@ -541,6 +550,7 @@ export function LivePlot({
             <div
                 ref={containerRef}
                 aria-hidden
+                className={fill ? 'min-h-0 flex-1 overflow-hidden' : undefined}
             />
             {hover && hover.index < count ? (
                 <div

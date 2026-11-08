@@ -1,4 +1,5 @@
-import { useId, useMemo, useState } from 'react';
+import { ChevronRight, Maximize, Maximize2, Minimize2, X } from 'lucide-react';
+import { type RefObject, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -10,7 +11,10 @@ import {
     snapshotLatency,
     throughputSeries,
 } from '@/api/live';
+import { Sparkline } from '@/components/shared/sparkline';
 import { Card, CardTitle } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
+import { IconButton } from '@/components/ui/icon-button';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 
@@ -18,6 +22,16 @@ import { LivePlot, type PlotData, type PlotSeries, type ZoomRange } from './live
 
 const MIN_WINDOW_SECONDS = 10;
 const PLOT_HEIGHT = 116;
+
+const SPARK_COLUMN: Record<ChartKind, number> = { latency: 2, throughput: 1, errors: 3 };
+const latestOf = (column: readonly (number | null)[] | undefined) =>
+    column?.findLast((value) => typeof value === 'number') ?? null;
+
+const SPARK_COLOR: Record<ChartKind, string> = {
+    latency: 'text-info',
+    throughput: 'text-accent',
+    errors: 'text-danger',
+};
 
 export const CHART_KINDS = ['latency', 'throughput', 'errors'] as const;
 
@@ -49,6 +63,9 @@ export interface LiveChartCardProps {
     emptyMessage: string;
     zoom?: ZoomRange | null;
     onZoom?: (zoom: ZoomRange | null) => void;
+    collapsed?: boolean;
+    onCollapsedChange?: (collapsed: boolean) => void;
+    variant?: 'card' | 'large';
     className?: string;
 }
 
@@ -59,12 +76,22 @@ export function LiveChartCard({
     emptyMessage,
     zoom,
     onZoom,
+    collapsed,
+    onCollapsedChange,
+    variant = 'card',
     className,
 }: LiveChartCardProps) {
     const { t, i18n } = useTranslation();
     const [serviceTime, setServiceTime] = useState(false);
     const [ownZoom, setOwnZoom] = useState<ZoomRange | null>(null);
+    const [ownCollapsed, setOwnCollapsed] = useState(false);
+    const [enlarged, setEnlarged] = useState(false);
+    const [reopened, setReopened] = useState(false);
+    const sectionRef = useRef<HTMLElement>(null);
     const titleId = useId();
+    const plotId = useId();
+    const isCollapsed = collapsed ?? ownCollapsed;
+    const changeCollapsed = onCollapsedChange ?? setOwnCollapsed;
     const last = snapshots.at(-1);
     const windowSeconds = Math.max(
         durationSeconds ?? 0,
@@ -227,40 +254,82 @@ export function LiveChartCard({
     const activeZoom = zoom === undefined ? ownZoom : zoom;
     const changeZoom = onZoom ?? setOwnZoom;
     const subtitle = t(`liveMetrics.charts.subtitles.${kind}`);
+    const latestMain = latestOf(chart.data[SPARK_COLUMN[kind]]);
+    const format = (value: number) => formatNumber(value, 0, i18n.language);
+    let compactValue = '—';
+    if (latestMain !== null && kind === 'latency') {
+        compactValue = t('liveMetrics.charts.compact.latency', { value: format(latestMain) });
+    } else if (latestMain !== null && kind === 'throughput') {
+        compactValue = t('liveMetrics.charts.compact.throughput', {
+            value: format(latestMain),
+            target: format(last?.targetRps ?? 0),
+        });
+    } else if (latestMain !== null) {
+        compactValue = t('liveMetrics.charts.compact.errors', { value: format(latestMain) });
+    }
 
-    return (
-        <Card
-            aria-labelledby={titleId}
-            className={cn('flex flex-col gap-2 px-4 py-3', className)}
-        >
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
+    const large = variant === 'large';
+    const showPlot = large || !isCollapsed;
+    let subtitleText = t('liveMetrics.charts.zoomSubtitle', { subtitle });
+    if (!showPlot) {
+        subtitleText = subtitle;
+    } else if (activeZoom) {
+        subtitleText = t('liveMetrics.charts.zoomedSubtitle', {
+            subtitle,
+            from: Math.max(1, Math.ceil(activeZoom[0])),
+            to: Math.floor(activeZoom[1]),
+        });
+    }
+
+    const header = (
+        <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+                {large ? (
+                    <Dialog.Title
+                        id={titleId}
+                        className="text-lg font-bold"
+                    >
+                        {title}
+                    </Dialog.Title>
+                ) : (
                     <CardTitle
                         id={titleId}
                         className="text-md font-bold"
                     >
-                        {title}
-                    </CardTitle>
-                    <p className="text-fg-muted text-sm">
-                        {activeZoom
-                            ? t('liveMetrics.charts.zoomedSubtitle', {
-                                  subtitle,
-                                  from: Math.max(1, Math.ceil(activeZoom[0])),
-                                  to: Math.floor(activeZoom[1]),
-                              })
-                            : t('liveMetrics.charts.zoomSubtitle', { subtitle })}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    {activeZoom ? (
                         <button
                             type="button"
-                            onClick={() => changeZoom(null)}
-                            className="border-border-strong text-fg hover:bg-surface-2 focus-visible:ring-accent/40 shrink-0 rounded-md border px-2 py-0.5 text-sm transition-colors outline-none focus-visible:ring-2"
+                            aria-expanded={!isCollapsed}
+                            aria-controls={plotId}
+                            onClick={() => {
+                                setReopened(isCollapsed);
+                                changeCollapsed(!isCollapsed);
+                            }}
+                            className="hover:text-fg focus-visible:ring-accent/40 -ml-1 flex items-center gap-1.5 rounded-sm px-1 outline-none focus-visible:ring-2"
                         >
-                            {t('liveMetrics.charts.resetZoom')}
+                            <ChevronRight
+                                aria-hidden
+                                className={cn(
+                                    'text-fg-muted size-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
+                                    !isCollapsed && 'rotate-90',
+                                )}
+                            />
+                            {title}
                         </button>
-                    ) : null}
+                    </CardTitle>
+                )}
+                <p className="text-fg-muted text-sm">{subtitleText}</p>
+            </div>
+            <div className="flex items-center gap-3">
+                {activeZoom && showPlot ? (
+                    <button
+                        type="button"
+                        onClick={() => changeZoom(null)}
+                        className="border-border-strong text-fg hover:bg-surface-2 focus-visible:ring-accent/40 shrink-0 rounded-md border px-2 py-0.5 text-sm transition-colors outline-none focus-visible:ring-2"
+                    >
+                        {t('liveMetrics.charts.resetZoom')}
+                    </button>
+                ) : null}
+                {showPlot ? (
                     <ul
                         aria-label={t('liveMetrics.charts.legend', { chart: title })}
                         className="flex flex-wrap justify-end gap-x-2.5 gap-y-1"
@@ -286,46 +355,211 @@ export function LiveChartCard({
                             </li>
                         ))}
                     </ul>
-                    {kind === 'latency' ? (
-                        <button
-                            type="button"
-                            aria-pressed={serviceTime}
-                            onClick={() => setServiceTime(!serviceTime)}
-                            className="border-border-strong text-fg-muted hover:text-fg aria-pressed:bg-surface-2 aria-pressed:text-fg focus-visible:ring-accent/40 shrink-0 rounded-md border px-2 py-0.5 text-sm transition-colors outline-none focus-visible:ring-2"
-                        >
-                            {t('liveMetrics.latency.serviceTime')}
-                        </button>
-                    ) : null}
-                </div>
-            </div>
-            <div className="relative">
-                <LivePlot
-                    key={String(serviceTime)}
-                    series={chart.series}
-                    data={chart.data}
-                    values={chart.values}
-                    bars={chart.bars}
-                    yFloor={chart.yFloor}
-                    height={PLOT_HEIGHT}
-                    zoom={activeZoom}
-                    onZoom={changeZoom}
-                    formatTick={(value) => formatNumber(value, 0, i18n.language)}
-                    windowSeconds={windowSeconds}
-                    formatValue={chart.formatValue}
-                    label={chart.summary ?? emptyMessage}
-                    browseLabel={t('liveMetrics.charts.browse', { chart: title })}
-                />
-                {snapshots.length === 0 ? (
-                    <p
-                        aria-hidden
-                        className="text-fg-muted absolute inset-0 flex items-center justify-center px-6 pb-6 text-center text-sm"
-                    >
-                        {emptyMessage}
+                ) : (
+                    <p className="flex items-center gap-2.5">
+                        <Sparkline
+                            values={chart.data[SPARK_COLUMN[kind]] ?? []}
+                            className={SPARK_COLOR[kind]}
+                        />
+                        <span className="text-fg font-mono text-sm font-bold tabular-nums">
+                            {compactValue}
+                        </span>
                     </p>
+                )}
+                {kind === 'latency' && showPlot ? (
+                    <button
+                        type="button"
+                        aria-pressed={serviceTime}
+                        onClick={() => setServiceTime(!serviceTime)}
+                        className="border-border-strong text-fg-muted hover:text-fg aria-pressed:bg-surface-2 aria-pressed:text-fg focus-visible:ring-accent/40 shrink-0 rounded-md border px-2 py-0.5 text-sm transition-colors outline-none focus-visible:ring-2"
+                    >
+                        {t('liveMetrics.latency.serviceTime')}
+                    </button>
+                ) : null}
+                {large ? (
+                    <>
+                        <FullscreenToggle target={sectionRef} />
+                        <Dialog.Close
+                            render={
+                                <IconButton
+                                    variant="ghost"
+                                    size="md"
+                                    aria-label={t('liveMetrics.charts.close')}
+                                />
+                            }
+                        >
+                            <X aria-hidden />
+                        </Dialog.Close>
+                    </>
+                ) : null}
+                {!large && showPlot ? (
+                    <IconButton
+                        variant="ghost"
+                        aria-label={t('liveMetrics.charts.enlarge', { chart: title })}
+                        onClick={() => setEnlarged(true)}
+                    >
+                        <Maximize2 aria-hidden />
+                    </IconButton>
                 ) : null}
             </div>
-        </Card>
+        </div>
     );
+
+    const plot = showPlot ? (
+        <div
+            id={plotId}
+            className={cn(
+                'relative',
+                reopened && 'motion-safe:animate-tree-in',
+                large && 'min-h-0 flex-1',
+            )}
+        >
+            <LivePlot
+                key={String(serviceTime)}
+                series={chart.series}
+                data={chart.data}
+                values={chart.values}
+                bars={chart.bars}
+                yFloor={chart.yFloor}
+                height={PLOT_HEIGHT}
+                fill={large}
+                className={large ? 'h-full' : undefined}
+                zoom={activeZoom}
+                onZoom={changeZoom}
+                formatTick={(value) => formatNumber(value, 0, i18n.language)}
+                windowSeconds={windowSeconds}
+                formatValue={chart.formatValue}
+                label={chart.summary ?? emptyMessage}
+                browseLabel={t('liveMetrics.charts.browse', { chart: title })}
+            />
+            {snapshots.length === 0 ? (
+                <p
+                    aria-hidden
+                    className="text-fg-muted absolute inset-0 flex items-center justify-center px-6 pb-6 text-center text-sm"
+                >
+                    {emptyMessage}
+                </p>
+            ) : null}
+        </div>
+    ) : null;
+
+    if (large) {
+        return (
+            <section
+                ref={sectionRef}
+                aria-labelledby={titleId}
+                className={cn(
+                    'flex h-full min-h-0 flex-col gap-3 [&:fullscreen]:bg-surface-1 [&:fullscreen]:p-8',
+                    className,
+                )}
+            >
+                {header}
+                {plot}
+            </section>
+        );
+    }
+
+    return (
+        <>
+            <Card
+                aria-labelledby={titleId}
+                className={cn('flex flex-col gap-2 px-4 py-3', className)}
+            >
+                {header}
+                {plot}
+            </Card>
+            <Dialog.Root
+                open={enlarged}
+                onOpenChange={setEnlarged}
+            >
+                <Dialog.Popup className="h-[80dvh] max-h-none w-[90vw] max-w-[1600px]">
+                    {enlarged ? (
+                        <LiveChartCard
+                            kind={kind}
+                            snapshots={snapshots}
+                            durationSeconds={durationSeconds}
+                            emptyMessage={emptyMessage}
+                            zoom={activeZoom}
+                            onZoom={changeZoom}
+                            variant="large"
+                        />
+                    ) : null}
+                </Dialog.Popup>
+            </Dialog.Root>
+        </>
+    );
+}
+
+function FullscreenToggle({ target }: { target: RefObject<HTMLElement | null> }) {
+    const { t } = useTranslation();
+    const [active, setActive] = useState(false);
+
+    useEffect(() => {
+        const onChange = () => setActive(document.fullscreenElement === target.current);
+        document.addEventListener('fullscreenchange', onChange);
+        return () => document.removeEventListener('fullscreenchange', onChange);
+    }, [target]);
+
+    if (!document.fullscreenEnabled) {
+        return null;
+    }
+    return (
+        <IconButton
+            variant="ghost"
+            size="md"
+            aria-label={t(
+                active ? 'liveMetrics.charts.exitFullscreen' : 'liveMetrics.charts.fullscreen',
+            )}
+            onClick={() => {
+                if (active) {
+                    void document.exitFullscreen();
+                } else {
+                    void target.current?.requestFullscreen();
+                }
+            }}
+        >
+            {active ? <Minimize2 aria-hidden /> : <Maximize aria-hidden />}
+        </IconButton>
+    );
+}
+
+const COLLAPSED_KEY = 'routelab.charts.collapsed';
+
+const isChartKind = (value: unknown): value is ChartKind =>
+    CHART_KINDS.some((kind) => kind === value);
+
+function readCollapsed(): ReadonlySet<ChartKind> {
+    try {
+        const parsed: unknown = JSON.parse(window.localStorage.getItem(COLLAPSED_KEY) ?? '[]');
+        return new Set(Array.isArray(parsed) ? parsed.filter(isChartKind) : []);
+    } catch {
+        return new Set();
+    }
+}
+
+function writeCollapsed(kinds: ReadonlySet<ChartKind>) {
+    try {
+        window.localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...kinds]));
+    } catch {
+        return;
+    }
+}
+
+function useCollapsedCharts() {
+    const [collapsed, setCollapsed] = useState(readCollapsed);
+    const setOne = useCallback((kind: ChartKind, next: boolean) => {
+        setCollapsed((current) => {
+            const updated = new Set(current);
+            if (next) {
+                updated.add(kind);
+            } else {
+                updated.delete(kind);
+            }
+            writeCollapsed(updated);
+            return updated;
+        });
+    }, []);
+    return [collapsed, setOne] as const;
 }
 
 export interface LiveChartsProps {
@@ -344,6 +578,7 @@ export function LiveCharts({
     const { t } = useTranslation();
     const [zoom, setZoom] = useState<ZoomRange | null>(null);
     const shownZoom = snapshots.length > 0 ? zoom : null;
+    const [collapsedKinds, setCollapsedKind] = useCollapsedCharts();
 
     return (
         <div className={cn('flex flex-col gap-3', className)}>
@@ -358,6 +593,8 @@ export function LiveCharts({
                     }
                     zoom={shownZoom}
                     onZoom={setZoom}
+                    collapsed={collapsedKinds.has(kind)}
+                    onCollapsedChange={(next) => setCollapsedKind(kind, next)}
                 />
             ))}
         </div>

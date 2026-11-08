@@ -168,7 +168,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                               })
                                         : undefined
                                 }
-                                className="h-0 min-h-full"
+                                className="h-0 min-h-[max(100%,26rem)]"
                             />
                             <div className="flex min-w-0 flex-col gap-3">
                                 <LiveCharts

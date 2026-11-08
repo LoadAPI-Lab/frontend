@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -312,6 +312,56 @@ describe('LiveChartCard', () => {
         expect(screen.queryAllByRole('button', { name: 'Reset zoom' })).toHaveLength(0);
         expect(screen.getAllByText(/· drag to zoom$/)).toHaveLength(3);
         expect(FakeUPlot.instances[0]?.scale).toEqual({ min: 1, max: 40 });
+    });
+
+    it('collapses a chart card from its title and remembers it', () => {
+        const props = {
+            snapshots: [sampleSnapshot(1)],
+            durationSeconds: 60,
+            emptyMessage: 'Nothing yet',
+        };
+        const first = render(<LiveCharts {...props} />);
+        const toggle = screen.getByRole('button', { name: 'Throughput' });
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+        fireEvent.click(toggle);
+
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(screen.queryByRole('figure', { name: /^Throughput chart/ })).not.toBeInTheDocument();
+        expect(screen.getByText('297 of 300 RPS')).toBeInTheDocument();
+        expect(FakeUPlot.instances.filter((chart) => !chart.destroyed)).toHaveLength(2);
+        expect(screen.getByRole('region', { name: 'Throughput' })).toBeInTheDocument();
+
+        first.unmount();
+        render(<LiveCharts {...props} />);
+        expect(screen.getByRole('button', { name: 'Throughput' })).toHaveAttribute(
+            'aria-expanded',
+            'false',
+        );
+    });
+
+    it('enlarges a chart into a dialog that keeps the shared zoom', async () => {
+        render(
+            <LiveCharts
+                snapshots={Array.from({ length: 40 }, (_, index) => sampleSnapshot(index + 1))}
+                durationSeconds={40}
+                emptyMessage="Nothing yet"
+            />,
+        );
+        const slider = screen.getByRole('slider', { name: 'Latency by second' });
+        fireEvent.focus(slider);
+        fireEvent.keyDown(slider, { key: 'Home' });
+        fireEvent.keyDown(slider, { key: '+' });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Enlarge the Latency chart' }));
+
+        const dialog = await screen.findByRole('dialog', { name: 'Latency' });
+        expect(dialog).toHaveTextContent('· 1s to 21s');
+        expect(FakeUPlot.instances).toHaveLength(4);
+        expect(FakeUPlot.instances.at(-1)?.scale).toEqual({ min: 1, max: 21 });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
     it('destroys the chart on unmount', () => {

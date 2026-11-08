@@ -274,7 +274,16 @@
             "noData": "No data yet",
             "resetZoom": "Reset zoom",
             "zoomSubtitle": "{{subtitle}} · drag to zoom",
-            "zoomedSubtitle": "{{subtitle}} · {{from}}s to {{to}}s"
+            "zoomedSubtitle": "{{subtitle}} · {{from}}s to {{to}}s",
+            "compact": {
+                "latency": "p95 {{value}} ms",
+                "throughput": "{{value}} of {{target}} RPS",
+                "errors": "{{value}} failed/s"
+            },
+            "enlarge": "Enlarge the {{chart}} chart",
+            "close": "Close",
+            "fullscreen": "Full screen",
+            "exitFullscreen": "Exit full screen"
         },
         "throughput": {
             "actual": "Actual",
