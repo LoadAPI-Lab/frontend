@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import { ChevronRight, Folder } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/empty-state';
@@ -48,11 +48,14 @@ export interface CollectionsTreeProps {
 }
 
 function Chevron({ open, className }: { open: boolean; className?: string }) {
-    const Icon = open ? ChevronDown : ChevronRight;
     return (
-        <Icon
+        <ChevronRight
             aria-hidden
-            className={cn('text-fg-muted size-2.5 shrink-0', className)}
+            className={cn(
+                'text-fg-muted size-2.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
+                open && 'rotate-90',
+                className,
+            )}
         />
     );
 }

@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type TreeNode, TreeView } from './tree-view';
 
@@ -48,6 +48,15 @@ function Harness({ onSelect }: { onSelect: (node: TreeNode) => void }) {
 
 const item = (name: string) => screen.getByRole('treeitem', { name });
 
+function allowMotion() {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
+}
+
+afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+});
+
 describe('TreeView', () => {
     it('has a single tab stop on the first item', () => {
         render(<Harness onSelect={vi.fn<(node: TreeNode) => void>()} />);
@@ -93,5 +102,32 @@ describe('TreeView', () => {
         await userEvent.click(screen.getByText('Billing'));
         await userEvent.click(screen.getByText('GET /invoices'));
         expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'GET /invoices' }));
+    });
+
+    it('animates the children in and lets them fade out before collapsing', () => {
+        allowMotion();
+        vi.useFakeTimers();
+        render(<Harness onSelect={vi.fn<(node: TreeNode) => void>()} />);
+
+        act(() => item('Shop API').click());
+        expect(item('products')).toHaveClass('motion-safe:animate-tree-in');
+        expect(item('GET /health')).toHaveStyle({ animationDelay: '12ms' });
+
+        act(() => item('Shop API').click());
+        expect(item('products')).toHaveClass('motion-safe:animate-tree-out');
+        expect(item('Shop API')).toHaveAttribute('aria-expanded', 'true');
+
+        act(() => {
+            vi.advanceTimersByTime(120);
+        });
+        expect(screen.queryByRole('treeitem', { name: 'products' })).not.toBeInTheDocument();
+        expect(item('Shop API')).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('collapses at once when reduced motion is preferred', () => {
+        render(<Harness onSelect={vi.fn<(node: TreeNode) => void>()} />);
+        act(() => item('Shop API').click());
+        act(() => item('Shop API').click());
+        expect(screen.queryByRole('treeitem', { name: 'products' })).not.toBeInTheDocument();
     });
 });

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { type TreeNode, TreeView } from './tree-view';
 
@@ -77,5 +77,6 @@ export const Keyboard: Story = {
             'aria-selected',
             'true',
         );
+        await waitFor(() => expect(canvasElement.getAnimations({ subtree: true })).toHaveLength(0));
     },
 };
