@@ -1,7 +1,7 @@
 export class FakeUPlot {
     static instances: FakeUPlot[] = [];
 
-    static paths = { bars: () => null };
+    static paths = { bars: () => null, spline: () => null };
 
     options: unknown;
     data: unknown;
