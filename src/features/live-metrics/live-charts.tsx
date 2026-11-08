@@ -224,6 +224,9 @@ export function LiveChartCard({
     }, [kind, serviceTime, snapshots, last, t, i18n.language]);
 
     const title = t(`liveMetrics.charts.tabs.${kind}`);
+    const activeZoom = zoom === undefined ? ownZoom : zoom;
+    const changeZoom = onZoom ?? setOwnZoom;
+    const subtitle = t(`liveMetrics.charts.subtitles.${kind}`);
 
     return (
         <Card
@@ -239,10 +242,25 @@ export function LiveChartCard({
                         {title}
                     </CardTitle>
                     <p className="text-fg-muted text-sm">
-                        {t(`liveMetrics.charts.subtitles.${kind}`)}
+                        {activeZoom
+                            ? t('liveMetrics.charts.zoomedSubtitle', {
+                                  subtitle,
+                                  from: Math.max(1, Math.ceil(activeZoom[0])),
+                                  to: Math.floor(activeZoom[1]),
+                              })
+                            : t('liveMetrics.charts.zoomSubtitle', { subtitle })}
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {activeZoom ? (
+                        <button
+                            type="button"
+                            onClick={() => changeZoom(null)}
+                            className="border-border-strong text-fg hover:bg-surface-2 focus-visible:ring-accent/40 shrink-0 rounded-md border px-2 py-0.5 text-sm transition-colors outline-none focus-visible:ring-2"
+                        >
+                            {t('liveMetrics.charts.resetZoom')}
+                        </button>
+                    ) : null}
                     <ul
                         aria-label={t('liveMetrics.charts.legend', { chart: title })}
                         className="flex flex-wrap justify-end gap-x-2.5 gap-y-1"
@@ -289,8 +307,8 @@ export function LiveChartCard({
                     bars={chart.bars}
                     yFloor={chart.yFloor}
                     height={PLOT_HEIGHT}
-                    zoom={zoom === undefined ? ownZoom : zoom}
-                    onZoom={onZoom ?? setOwnZoom}
+                    zoom={activeZoom}
+                    onZoom={changeZoom}
                     formatTick={(value) => formatNumber(value, 0, i18n.language)}
                     windowSeconds={windowSeconds}
                     formatValue={chart.formatValue}
@@ -329,27 +347,6 @@ export function LiveCharts({
 
     return (
         <div className={cn('flex flex-col gap-3', className)}>
-            {snapshots.length > 0 ? (
-                <div className="text-fg-muted flex min-h-6 items-center justify-between gap-3 px-1 text-sm">
-                    <span>
-                        {shownZoom
-                            ? t('liveMetrics.charts.zoomed', {
-                                  from: Math.max(1, Math.ceil(shownZoom[0])),
-                                  to: Math.floor(shownZoom[1]),
-                              })
-                            : t('liveMetrics.charts.zoomHint')}
-                    </span>
-                    {shownZoom ? (
-                        <button
-                            type="button"
-                            onClick={() => setZoom(null)}
-                            className="border-border-strong text-fg hover:bg-surface-2 focus-visible:ring-accent/40 rounded-md border px-2 py-0.5 transition-colors outline-none focus-visible:ring-2"
-                        >
-                            {t('liveMetrics.charts.resetZoom')}
-                        </button>
-                    ) : null}
-                </div>
-            ) : null}
             {CHART_KINDS.map((kind) => (
                 <LiveChartCard
                     key={kind}

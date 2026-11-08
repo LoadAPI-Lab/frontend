@@ -49,7 +49,9 @@ const X_INCREMENTS = [1, 2, 5, 10, 15, 30, 60, 120, 300];
 const TOOLTIP_HALF_HEIGHT = 36;
 const MIN_ZOOM_SECONDS = 4;
 const MIN_DRAG_PIXELS = 4;
-const Y_AXIS_SIZE = 40;
+const Y_AXIS_SIZE = 48;
+const RIGHT_PADDING = 18;
+const AXIS_FONT = '11px "JetBrains Mono Variable", monospace';
 const Y_INCREMENTS = [
     1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10_000, 20_000, 50_000,
 ];
@@ -232,7 +234,7 @@ function plotOptions({
                 },
             ],
         },
-        padding: [8, 6, 0, 6],
+        padding: [8, RIGHT_PADDING, 0, 6],
         scales: {
             x: { time: false, range: () => xRange() },
             y: {
@@ -245,8 +247,8 @@ function plotOptions({
         axes: [
             {
                 stroke: color('--color-fg-subtle'),
-                font: '9.5px "JetBrains Mono Variable", monospace',
-                size: 22,
+                font: AXIS_FONT,
+                size: 26,
                 gap: 6,
                 incrs: X_INCREMENTS,
                 grid: { show: false },
@@ -257,7 +259,7 @@ function plotOptions({
                 size: Y_AXIS_SIZE,
                 gap: 4,
                 stroke: color('--color-fg-subtle'),
-                font: '9.5px "JetBrains Mono Variable", monospace',
+                font: AXIS_FONT,
                 ticks: { show: false },
                 grid: { stroke: color('--color-border-strong'), width: 1 },
                 space: 28,

@@ -91,7 +91,7 @@ test('a link to an unknown endpoint shows the not-found state', async ({ page })
 
 test('importing a pasted OpenAPI doc adds it to the collections', async ({ page }) => {
     await page.goto('/tests');
-    await page.getByRole('button', { name: 'Import OpenAPI / Swagger' }).click();
+    await page.getByRole('button', { name: 'Import OpenAPI doc' }).click();
     const dialog = page.getByRole('dialog', { name: 'Import an OpenAPI doc' });
     await dialog
         .getByRole('textbox', { name: 'OpenAPI document' })

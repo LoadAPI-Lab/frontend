@@ -5,12 +5,15 @@ import { StatCard, StatList } from '@/components/shared/stat-card';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 
+import { LateBadge } from './late-badge';
+
 const EMPTY = '—';
 
 export interface LiveStatsProps {
     rps: number | null;
     latency: Percentiles | null;
-    totals: Pick<RunningTotals, 'requests' | 'errors' | 'errorRate'>;
+    totals: Pick<RunningTotals, 'requests' | 'errors' | 'errorRate'> &
+        Partial<Pick<RunningTotals, 'late'>>;
     targetRps: number | null;
     scope?: 'second' | 'run';
     className?: string;
@@ -43,6 +46,14 @@ export function LiveStats({
             <StatCard
                 label={rpsLabel}
                 value={rps === null ? EMPTY : format(rps, 1)}
+                badge={
+                    totals.late ? (
+                        <LateBadge
+                            late={totals.late}
+                            requests={totals.requests}
+                        />
+                    ) : null
+                }
             />
             <StatCard
                 label={t(whole ? 'liveMetrics.stats.p50Run' : 'liveMetrics.stats.p50')}

@@ -1,4 +1,4 @@
-export { LateWarning, type LateWarningProps } from './late-warning';
+export { LateBadge, type LateBadgeProps } from './late-badge';
 export {
     CHART_KINDS,
     type ChartKind,

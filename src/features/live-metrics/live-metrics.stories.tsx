@@ -5,7 +5,6 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { runningTotals, snapshotLatency } from '@/api/live';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
-import { LateWarning } from './late-warning';
 import { LiveCharts } from './live-charts';
 import { LiveStats } from './live-stats';
 import { RunProgress } from './run-progress';
@@ -49,10 +48,6 @@ function Panel({ seconds, live = false, troubled = false }: PanelProps) {
                 latency={latest ? snapshotLatency(latest) : null}
                 totals={totals}
                 targetRps={300}
-            />
-            <LateWarning
-                late={totals.late}
-                requests={totals.requests}
             />
             <div className="ml-auto flex w-[457px] flex-col gap-3">
                 <LiveCharts
@@ -119,7 +114,9 @@ export const ErrorsWithTrouble: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await waitFor(() => expect(canvasElement.querySelector('canvas')).not.toBeNull());
-        await expect(canvas.getByText(/went out later than scheduled/)).toBeVisible();
+        const badge = canvas.getByText(/^\d+ late$/);
+        await expect(badge).toBeVisible();
+        await expect(badge).toHaveTextContent(/went out later than scheduled/);
         await expect(canvas.getByRole('rowheader', { name: 'Timeout' })).toBeVisible();
     },
 };
@@ -141,9 +138,13 @@ export const Zoomed: Story = {
         const slider = canvas.getByRole('slider', { name: 'Throughput by second' });
         slider.focus();
         await userEvent.keyboard('{Home}+');
-        await expect(canvas.getByText('Showing 1s to 31s')).toBeVisible();
-        await userEvent.click(canvas.getByRole('button', { name: 'Reset zoom' }));
-        await expect(canvas.getByText(/Drag across a chart to zoom in/)).toBeVisible();
+        await expect(canvas.getAllByText(/· 1s to 31s$/)).toHaveLength(3);
+        const [reset] = canvas.getAllByRole('button', { name: 'Reset zoom' });
+        if (reset) {
+            await userEvent.click(reset);
+        }
+        await expect(canvas.queryAllByRole('button', { name: 'Reset zoom' })).toHaveLength(0);
+        await expect(canvas.getAllByText(/· drag to zoom$/)).toHaveLength(3);
     },
 };
 

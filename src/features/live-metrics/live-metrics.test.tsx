@@ -6,7 +6,7 @@ import { runningTotals } from '@/api/live';
 import { FakeUPlot } from '@/test/fake-uplot';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
-import { LateWarning } from './late-warning';
+import { LateBadge } from './late-badge';
 import { LiveChartCard, LiveCharts } from './live-charts';
 import { appendFrame, isSingleAppend, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
@@ -298,15 +298,19 @@ describe('LiveChartCard', () => {
         fireEvent.keyDown(slider, { key: 'Home' });
         fireEvent.keyDown(slider, { key: '+' });
 
-        expect(screen.getByText('Showing 1s to 21s')).toBeInTheDocument();
+        expect(screen.getAllByText(/· 1s to 21s$/)).toHaveLength(3);
         expect(FakeUPlot.instances.map((chart) => chart.scale)).toEqual([
             { min: 1, max: 21 },
             { min: 1, max: 21 },
             { min: 1, max: 21 },
         ]);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Reset zoom' }));
-        expect(screen.getByText(/Drag across a chart to zoom in/)).toBeInTheDocument();
+        const [reset] = screen.getAllByRole('button', { name: 'Reset zoom' });
+        if (reset) {
+            fireEvent.click(reset);
+        }
+        expect(screen.queryAllByRole('button', { name: 'Reset zoom' })).toHaveLength(0);
+        expect(screen.getAllByText(/· drag to zoom$/)).toHaveLength(3);
         expect(FakeUPlot.instances[0]?.scale).toEqual({ min: 1, max: 40 });
     });
 
@@ -428,29 +432,41 @@ describe('RunFailure', () => {
     });
 });
 
-describe('LateWarning', () => {
-    it('says how many requests went out late', () => {
+describe('LateBadge', () => {
+    it('shows a short count and explains it to screen readers', () => {
         render(
-            <LateWarning
+            <LateBadge
                 late={312}
                 requests={12_480}
             />,
         );
         expect(
-            screen.getByText(
-                '312 requests (2.5%) went out later than scheduled, so latency is understated. Try a lower target RPS.',
-            ),
+            screen.getByRole('button', {
+                name: '312 late. 312 requests (2.5%) went out later than scheduled, so latency is understated. Try a lower target RPS.',
+            }),
         ).toBeInTheDocument();
     });
 
     it('renders nothing when every request was on time', () => {
         const { container } = render(
-            <LateWarning
+            <LateBadge
                 late={0}
                 requests={100}
             />,
         );
         expect(container).toBeEmptyDOMElement();
+    });
+
+    it('sits inside the RPS card instead of adding a row', () => {
+        render(
+            <LiveStats
+                rps={98}
+                latency={null}
+                totals={{ requests: 1000, errors: 0, errorRate: 0, late: 3 }}
+                targetRps={100}
+            />,
+        );
+        expect(stat(/^RPS · target 100$/)).toContain('3 late');
     });
 });
 

@@ -41,7 +41,6 @@
     "collections": {
         "title": "Collections",
         "empty": "No collections yet",
-        "import": "Import OpenAPI / Swagger",
         "importShort": "Import OpenAPI doc",
         "emptyBody": "Import an OpenAPI doc to see its endpoints here.",
         "loading": "Loading collections",
@@ -273,9 +272,9 @@
             "point": "{{second}}s: {{values}}",
             "value": "{{label}} {{value}}",
             "noData": "No data yet",
-            "zoomHint": "Drag across a chart to zoom in. Double-click to reset.",
-            "zoomed": "Showing {{from}}s to {{to}}s",
-            "resetZoom": "Reset zoom"
+            "resetZoom": "Reset zoom",
+            "zoomSubtitle": "{{subtitle}} · drag to zoom",
+            "zoomedSubtitle": "{{subtitle}} · {{from}}s to {{to}}s"
         },
         "throughput": {
             "actual": "Actual",
@@ -287,7 +286,9 @@
         },
         "late": {
             "message_one": "{{late}} request ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
-            "message_other": "{{late}} requests ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS."
+            "message_other": "{{late}} requests ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
+            "badge_one": "{{late}} late",
+            "badge_other": "{{late}} late"
         }
     },
     "runStatus": {
