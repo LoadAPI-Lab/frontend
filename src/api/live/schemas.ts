@@ -35,6 +35,22 @@ export const snapshotSchema = z.object({
     targets: z.array(routeSnapshotSchema),
 });
 
+export const RUN_STATUSES = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'STOPPED'] as const;
+
+export const runStatusSchema = z.enum(RUN_STATUSES);
+
+export const statusEventSchema = z.object({
+    status: runStatusSchema,
+    reason: z.string().optional(),
+});
+
+export type RunStatus = z.infer<typeof runStatusSchema>;
+
+const FINAL_STATUSES: ReadonlySet<RunStatus> = new Set(['COMPLETED', 'FAILED', 'STOPPED']);
+
+export const isFinalStatus = (status: RunStatus | null | undefined) =>
+    status !== null && status !== undefined && FINAL_STATUSES.has(status);
+
 export type Percentiles = z.infer<typeof percentilesSchema>;
 export type NetworkError = z.infer<typeof networkErrorSchema>;
 export type RouteSnapshot = z.infer<typeof routeSnapshotSchema>;

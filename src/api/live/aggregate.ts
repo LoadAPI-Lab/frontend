@@ -1,4 +1,9 @@
-import type { RouteSnapshot, Snapshot } from './schemas';
+import {
+    type NetworkError,
+    networkErrorSchema,
+    type RouteSnapshot,
+    type Snapshot,
+} from './schemas';
 
 export interface StatusBreakdown {
     '2xx': number;
@@ -47,18 +52,41 @@ export interface RunningTotals {
     requests: number;
     errors: number;
     errorRate: number;
+    late: number;
     statuses: StatusBreakdown;
+    codes: Record<string, number>;
+    networkErrors: Record<NetworkError, number>;
 }
+
+export const NETWORK_ERRORS = networkErrorSchema.options;
+
+const emptyNetworkErrors = (): Record<NetworkError, number> => ({
+    timeout: 0,
+    connection_refused: 0,
+    connection_reset: 0,
+    dns: 0,
+    other: 0,
+});
 
 export function runningTotals(snapshots: readonly Snapshot[]): RunningTotals {
     const statuses = emptyBreakdown();
+    const networkErrors = emptyNetworkErrors();
+    const codes: Record<string, number> = {};
     let requests = 0;
     let errors = 0;
+    let late = 0;
 
     for (const snapshot of snapshots) {
         for (const route of snapshot.targets) {
             requests += route.successCount + route.errorCount;
             errors += route.errorCount;
+            late += route.lateCount;
+            for (const [code, count] of Object.entries(route.statusCodes ?? {})) {
+                codes[code] = (codes[code] ?? 0) + count;
+            }
+            for (const kind of NETWORK_ERRORS) {
+                networkErrors[kind] += route.errors?.[kind] ?? 0;
+            }
             const grouped = groupStatusCodes(route);
             for (const key of STATUS_KEYS) {
                 statuses[key] += grouped[key];
@@ -66,5 +94,13 @@ export function runningTotals(snapshots: readonly Snapshot[]): RunningTotals {
         }
     }
 
-    return { requests, errors, errorRate: requests === 0 ? 0 : errors / requests, statuses };
+    return {
+        requests,
+        errors,
+        errorRate: requests === 0 ? 0 : errors / requests,
+        late,
+        statuses,
+        codes,
+        networkErrors,
+    };
 }

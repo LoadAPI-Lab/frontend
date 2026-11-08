@@ -1,0 +1,13 @@
+name: loadapi-frontend
+
+services:
+    frontend:
+        image: ghcr.io/loadapi-lab/frontend:${IMAGE_TAG:-dev}
+        build:
+            context: .
+        restart: unless-stopped
+        environment:
+            API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:3001}
+            API_MOCKING: ${API_MOCKING:-false}
+        ports:
+            - '127.0.0.1:${FRONTEND_PORT:-5173}:8080'
