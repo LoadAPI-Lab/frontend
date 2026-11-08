@@ -19,3 +19,18 @@ export function methodColorClass(method: string): string {
     const upper = method.toUpperCase();
     return isHttpMethod(upper) ? methodClasses[upper] : 'text-method-other';
 }
+
+const methodBackgrounds: Record<HttpMethod, string> = {
+    GET: 'bg-method-get',
+    POST: 'bg-method-post',
+    PUT: 'bg-method-put',
+    PATCH: 'bg-method-patch',
+    DELETE: 'bg-method-delete',
+    HEAD: 'bg-method-other',
+    OPTIONS: 'bg-method-other',
+};
+
+export function methodBackgroundClass(method: string): string {
+    const upper = method.toUpperCase();
+    return isHttpMethod(upper) ? methodBackgrounds[upper] : 'bg-method-other';
+}

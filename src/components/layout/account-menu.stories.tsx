@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { AccountMenu } from './account-menu';
 
@@ -21,6 +21,7 @@ export const SignOut: Story = {
         await expect(await body.findByText('maxim@example.com')).toBeInTheDocument();
         await userEvent.click(await body.findByRole('menuitem', { name: 'Sign out' }));
         await expect(args.onSignOut).toHaveBeenCalledOnce();
+        await waitFor(() => expect(body.queryByRole('menu')).toBeNull());
     },
 };
 

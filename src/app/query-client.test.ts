@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiFetch } from '@/api/fetcher';
 import { getUsersMeQueryKey } from '@/api/generated/endpoints/users/users';
 import { toastManager } from '@/components/ui/toast';
+import { coreError } from '@/mocks/core-error';
 import { server } from '@/mocks/server';
 
 import { createQueryClient } from './query-client';
@@ -15,9 +16,10 @@ describe('query client', () => {
         const add = vi.spyOn(toastManager, 'add');
         server.use(
             http.post('*/v1/test-runs', () =>
-                HttpResponse.json(
-                    { message: 'Too many test runs are in progress, try again later' },
-                    { status: 503 },
+                coreError(
+                    503,
+                    'TEST_RUN.CAPACITY_EXCEEDED',
+                    'Too many test runs are in progress, try again later',
                 ),
             ),
         );
@@ -60,9 +62,7 @@ describe('query client', () => {
         const add = vi.spyOn(toastManager, 'add');
         const onSessionExpired = vi.fn<() => void>();
         server.use(
-            http.post('*/v1/collections', () =>
-                HttpResponse.json({ code: 'AUTH.UNAUTHENTICATED' }, { status: 401 }),
-            ),
+            http.post('*/v1/collections', () => coreError(401, 'AUTH.UNAUTHENTICATED', 'Sign in')),
             http.post('*/v1/auth/refresh', () => new HttpResponse(null, { status: 401 })),
         );
         const client = createQueryClient({ onSessionExpired });
