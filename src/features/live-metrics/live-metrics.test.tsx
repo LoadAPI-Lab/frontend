@@ -8,7 +8,7 @@ import { FakeUPlot } from '@/test/fake-uplot';
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
 import { LateWarning } from './late-warning';
 import { LiveChartCard, LiveCharts } from './live-charts';
-import { zoomAround } from './live-plot';
+import { appendFrame, isSingleAppend, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
 import { RunProgress } from './run-progress';
 import { StatusCodesCard } from './status-codes-card';
@@ -344,6 +344,53 @@ describe('zoomAround', () => {
     it('never goes below four seconds and resets when zoomed all the way out', () => {
         expect(zoomAround([10, 14], [1, 61], 12, 0.5)).toEqual([10, 14]);
         expect(zoomAround([15, 45], [1, 61], 30, 2)).toBeNull();
+    });
+});
+
+describe('appendFrame', () => {
+    const previous: [number[], (number | null)[]] = [
+        [1, 2],
+        [40, 50],
+    ];
+    const next: [number[], (number | null)[]] = [
+        [1, 2, 3],
+        [40, 50, 70],
+    ];
+
+    it('slides a new line point in from the previous one', () => {
+        expect(appendFrame(previous, next, 0, false)).toEqual([
+            [1, 2, 2],
+            [40, 50, 50],
+        ]);
+        expect(appendFrame(previous, next, 0.5, false)).toEqual([
+            [1, 2, 2.5],
+            [40, 50, 60],
+        ]);
+        expect(appendFrame(previous, next, 1, false)).toEqual(next);
+    });
+
+    it('grows a new bar from zero in place', () => {
+        expect(appendFrame(previous, next, 0.5, true)).toEqual([
+            [1, 2, 3],
+            [40, 50, 35],
+        ]);
+    });
+
+    it('only animates when exactly one second was added', () => {
+        expect(isSingleAppend(previous, next)).toBe(true);
+        expect(isSingleAppend([[], []], [[1], [40]])).toBe(false);
+        expect(
+            isSingleAppend(previous, [
+                [1, 2, 3, 4],
+                [40, 50, 60, 70],
+            ]),
+        ).toBe(false);
+        expect(
+            isSingleAppend(previous, [
+                [5, 6, 7],
+                [1, 2, 3],
+            ]),
+        ).toBe(false);
     });
 });
 

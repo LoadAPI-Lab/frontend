@@ -65,6 +65,51 @@ const KEY_STEPS: Record<string, number> = {
 const noop = () => null;
 const ignore = () => null;
 const roundTick = (value: number) => String(Math.round(value));
+const ANIMATION_MS = 450;
+
+const easeOut = (progress: number) => 1 - (1 - progress) ** 3;
+
+function prefersReducedMotion() {
+    return (
+        typeof window.matchMedia !== 'function' ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+}
+
+export function isSingleAppend(previous: PlotData, next: PlotData) {
+    const before = previous[0].length;
+    return (
+        before > 0 &&
+        next[0].length === before + 1 &&
+        next[0][before - 1] === previous[0][before - 1]
+    );
+}
+
+export function appendFrame(
+    previous: PlotData,
+    next: PlotData,
+    progress: number,
+    bars: boolean,
+): PlotData {
+    const last = next[0].length - 1;
+    const lerp = (from: number | null | undefined, to: number | null | undefined) =>
+        typeof from === 'number' && typeof to === 'number' ? from + (to - from) * progress : to;
+    const [elapsed, ...columns] = next;
+    const previousColumns = previous.slice(1);
+    const frameElapsed = [...elapsed];
+    if (!bars) {
+        frameElapsed[last] = lerp(elapsed[last - 1], elapsed[last]) ?? elapsed[last] ?? 0;
+    }
+    return [
+        frameElapsed,
+        ...columns.map((column, index) => {
+            const frame = [...column];
+            const from = bars ? 0 : previousColumns[index]?.[last - 1];
+            frame[last] = lerp(from, column[last]) ?? null;
+            return frame;
+        }),
+    ];
+}
 
 function fullRangeOf(windowSeconds: number, bars: boolean): ZoomRange {
     const padding = bars ? 0.5 : 0;
@@ -152,6 +197,7 @@ function plotOptions({
     onHover,
 }: OptionsInput): uPlot.Options {
     const barPaths = bars ? uPlot.paths.bars?.({ size: [0.7, 14], gap: 1 }) : undefined;
+    const splinePaths = bars ? undefined : uPlot.paths.spline?.();
     return {
         width,
         height,
@@ -239,6 +285,7 @@ function plotOptions({
                     stroke,
                     width: line?.width ?? 1,
                     dash: line?.dash,
+                    paths: splinePaths,
                     points: { show: false },
                     spanGaps: false,
                     ...(line?.fill
@@ -344,8 +391,32 @@ export function LivePlot({
     };
 
     useEffect(() => {
+        const previous = latest.current.data;
         latest.current = { ...latest.current, data, windowSeconds };
-        chartRef.current?.setData(toPlotData(data, latest.current.order));
+        const chart = chartRef.current;
+        const { order: drawn, bars: asBars } = latest.current;
+        if (!chart || !isSingleAppend(previous, data) || prefersReducedMotion()) {
+            chart?.setData(toPlotData(data, drawn));
+            return noop;
+        }
+        const startedAt = performance.now();
+        let frame = 0;
+        const step = (now: number) => {
+            const progress = Math.min(1, (now - startedAt) / ANIMATION_MS);
+            chart.setData(
+                toPlotData(appendFrame(previous, data, easeOut(progress), asBars), drawn),
+            );
+            if (progress < 1) {
+                frame = requestAnimationFrame(step);
+            }
+        };
+        frame = requestAnimationFrame(step);
+        return () => {
+            cancelAnimationFrame(frame);
+            if (chartRef.current === chart) {
+                chart.setData(toPlotData(data, drawn));
+            }
+        };
     }, [data, windowSeconds]);
 
     useEffect(() => {
