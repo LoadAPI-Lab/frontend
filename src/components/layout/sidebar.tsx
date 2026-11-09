@@ -13,6 +13,7 @@ export interface SidebarProps {
     onCollapsedChange: (collapsed: boolean) => void;
     actions?: ReactNode;
     footer?: ReactNode;
+    rail?: ReactNode;
     children: ReactNode;
 }
 
@@ -23,6 +24,7 @@ export function Sidebar({
     onCollapsedChange,
     actions,
     footer,
+    rail,
     children,
 }: SidebarProps) {
     const { t } = useTranslation();
@@ -55,7 +57,14 @@ export function Sidebar({
             )}
         >
             {collapsed ? (
-                <div className="flex justify-center pt-2.75">{toggle}</div>
+                <div className="flex min-h-0 flex-1 flex-col items-center gap-3 pt-2.75">
+                    {toggle}
+                    {rail ? (
+                        <div className="flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto pt-2 pb-3">
+                            {rail}
+                        </div>
+                    ) : null}
+                </div>
             ) : (
                 <>
                     <div className="border-divider flex h-12 shrink-0 items-center gap-2 border-b pr-3 pl-4">

@@ -9,6 +9,7 @@ import { PlusIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
 import { lastRunFor } from '@/lib/run-memory';
 
+import { CollectionsRail } from './collections-rail';
 import { CollectionsTree } from './collections-tree';
 import { ImportDialog } from './import-dialog';
 import { specNodeId } from './spec-tree';
@@ -33,6 +34,15 @@ export function CollectionsSidebar() {
                 title={t('collections.title')}
                 collapsed={collapsed}
                 onCollapsedChange={setCollapsed}
+                rail={
+                    <CollectionsRail
+                        activeSpecId={selected?.specId ?? null}
+                        onOpen={(specId) => {
+                            setExpanded(specNodeId(specId), true);
+                            setCollapsed(false);
+                        }}
+                    />
+                }
                 actions={
                     <Tooltip.Root>
                         <Tooltip.Trigger
