@@ -141,4 +141,32 @@ describe('useRunOutcome', () => {
         hook.rerender(live('COMPLETED', 'again'));
         expect(add).toHaveBeenCalledOnce();
     });
+
+    it('refreshes the running-test check when the run starts and when it ends', async () => {
+        let listed = 0;
+        serveRun({ status: 'COMPLETED', result });
+        server.use(
+            http.get('*/v1/test-runs', () => {
+                listed += 1;
+                return HttpResponse.json({ items: [] });
+            }),
+        );
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        const invalidate = vi.spyOn(client, 'invalidateQueries');
+        function wrapper({ children }: { children: ReactNode }) {
+            return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+        }
+        const hook = renderHook((current: Live) => useRunOutcome(RUN_ID, current), {
+            wrapper,
+            initialProps: live('PENDING'),
+        });
+        expect(invalidate).not.toHaveBeenCalled();
+
+        hook.rerender(live('RUNNING'));
+        expect(invalidate).toHaveBeenCalledTimes(1);
+
+        hook.rerender(live('COMPLETED'));
+        await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(2));
+        expect(listed).toBe(0);
+    });
 });

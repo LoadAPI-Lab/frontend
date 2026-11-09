@@ -9,9 +9,19 @@ import * as zod from 'zod';
 
 
 /**
- * Validates the config, stores a PENDING run and enqueues the job.
+ * Validates the config, stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.
  * @summary Start a test run
  */
+export const testRunsStartHeaderIdempotencyKeyMax = 255;
+
+
+export const testRunsStartHeaderIdempotencyKeyRegExp = new RegExp('^[\\x21-\\x7E]+$');
+
+
+export const TestRunsStartHeader = zod.object({
+  "Idempotency-Key": zod.string().min(1).max(testRunsStartHeaderIdempotencyKeyMax).regex(testRunsStartHeaderIdempotencyKeyRegExp).optional().describe('Client-generated key that makes the start safe to retry. A repeated request with the same key and the same config returns the run created by the first one instead of starting a new run; the same key with a different config is rejected with 422. Keys are scoped per user. Omit it to always start a new run.')
+})
+
 export const testRunsStartBodyTwoConfigStepsItemExtractItemNameRegExp = new RegExp('^\\w+$');
 
 export const testRunsStartBodyTwoConfigStepsMax = 50;
@@ -58,7 +68,7 @@ export const TestRunsStartResponse = zod.object({
 })
 
 /**
- * Returns the run history, newest first, with cursor pagination. Configs and results are never included.
+ * Returns the run history, newest first, with cursor pagination. Each item is a short row: status, timestamps and failure reason; single runs add the tested request, targetRps, durationSeconds and the response time p95Ms; scenario runs add stepsCount and okCount. Secret URL query parameter values are masked. Configs and results are never included: load them with GET /v1/test-runs/:id.
  * @summary List test runs
  */
 export const testRunsListQueryLimitDefault = 20;
@@ -77,6 +87,18 @@ export const testRunsListResponseItemsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8
 export const testRunsListResponseItemsItemCreatedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsListResponseItemsItemStartedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsListResponseItemsItemFinishedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
+export const testRunsListResponseItemsItemTargetRpsMin = -9007199254740991;
+export const testRunsListResponseItemsItemTargetRpsMax = 9007199254740991;
+
+export const testRunsListResponseItemsItemDurationSecondsMin = -9007199254740991;
+export const testRunsListResponseItemsItemDurationSecondsMax = 9007199254740991;
+
+export const testRunsListResponseItemsItemStepsCountMin = -9007199254740991;
+export const testRunsListResponseItemsItemStepsCountMax = 9007199254740991;
+
+export const testRunsListResponseItemsItemOkCountMin = -9007199254740991;
+export const testRunsListResponseItemsItemOkCountMax = 9007199254740991;
+
 
 
 export const TestRunsListResponse = zod.object({
@@ -87,13 +109,22 @@ export const TestRunsListResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).regex(testRunsListResponseItemsItemCreatedAtRegExp).describe('Creation time, ISO 8601'),
   "startedAt": zod.iso.datetime({"offset":true}).regex(testRunsListResponseItemsItemStartedAtRegExp).optional().describe('Start time, ISO 8601'),
   "finishedAt": zod.iso.datetime({"offset":true}).regex(testRunsListResponseItemsItemFinishedAtRegExp).optional().describe('Finish time, ISO 8601'),
-  "reason": zod.string().optional().describe('Failure reason, present on FAILED runs')
+  "reason": zod.string().optional().describe('Failure reason, present on FAILED runs'),
+  "request": zod.object({
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
+  "url": zod.string().describe('URL template as entered by the user, secret query parameter values are masked as ***')
+}).optional().describe('Tested request, present on single runs'),
+  "targetRps": zod.int().min(testRunsListResponseItemsItemTargetRpsMin).max(testRunsListResponseItemsItemTargetRpsMax).optional().describe('Target RPS, present on single runs'),
+  "durationSeconds": zod.int().min(testRunsListResponseItemsItemDurationSecondsMin).max(testRunsListResponseItemsItemDurationSecondsMax).optional().describe('Test duration in seconds, present on single runs'),
+  "p95Ms": zod.number().optional().describe('95th percentile of the response time in ms, present on single runs whose result has it'),
+  "stepsCount": zod.int().min(testRunsListResponseItemsItemStepsCountMin).max(testRunsListResponseItemsItemStepsCountMax).optional().describe('Number of steps, present on scenario runs'),
+  "okCount": zod.int().min(testRunsListResponseItemsItemOkCountMin).max(testRunsListResponseItemsItemOkCountMax).optional().describe('Steps that succeeded, present on scenario runs with a result')
 })).describe('Test runs, newest first'),
   "nextCursor": zod.string().optional().describe('Cursor of the next page, absent on the last page')
 })
 
 /**
- * Returns the run status and final result. The config is never included.
+ * Returns the run details: status, timestamps, failure reason, the stored config and the typed final result whose shape follows the run type. Secret header values and URL query parameter values are masked in the config and in the result URLs.
  * @summary Get a test run
  */
 export const testRunsGetPathIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
@@ -107,6 +138,51 @@ export const testRunsGetResponseIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA
 export const testRunsGetResponseCreatedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsGetResponseStartedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsGetResponseFinishedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
+export const testRunsGetResponseConfigOneTargetRpsMin = -9007199254740991;
+export const testRunsGetResponseConfigOneTargetRpsMax = 9007199254740991;
+
+export const testRunsGetResponseConfigOneDurationSecondsMin = -9007199254740991;
+export const testRunsGetResponseConfigOneDurationSecondsMax = 9007199254740991;
+
+export const testRunsGetResponseConfigOneRampUpSecondsMin = -9007199254740991;
+export const testRunsGetResponseConfigOneRampUpSecondsMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetRpsMin = -9007199254740991;
+export const testRunsGetResponseResultOneTargetRpsMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemTotalRequestsMin = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemTotalRequestsMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemSuccessCountMin = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemSuccessCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemErrorCountMin = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemErrorCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemLateCountMin = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemLateCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemStatusCodesMinOne = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemStatusCodesMaxOne = 9007199254740991;
+
+export const testRunsGetResponseResultOneTargetsItemErrorsMinOne = -9007199254740991;
+export const testRunsGetResponseResultOneTargetsItemErrorsMaxOne = 9007199254740991;
+
+export const testRunsGetResponseResultTwoSummaryTotalStepsMin = -9007199254740991;
+export const testRunsGetResponseResultTwoSummaryTotalStepsMax = 9007199254740991;
+
+export const testRunsGetResponseResultTwoSummaryOkCountMin = -9007199254740991;
+export const testRunsGetResponseResultTwoSummaryOkCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultTwoSummaryFailedCountMin = -9007199254740991;
+export const testRunsGetResponseResultTwoSummaryFailedCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultTwoSummarySkippedCountMin = -9007199254740991;
+export const testRunsGetResponseResultTwoSummarySkippedCountMax = 9007199254740991;
+
+export const testRunsGetResponseResultTwoStepsItemStatusCodeMin = -9007199254740991;
+export const testRunsGetResponseResultTwoStepsItemStatusCodeMax = 9007199254740991;
+
 
 
 export const TestRunsGetResponse = zod.object({
@@ -117,7 +193,101 @@ export const TestRunsGetResponse = zod.object({
   "startedAt": zod.iso.datetime({"offset":true}).regex(testRunsGetResponseStartedAtRegExp).optional().describe('Start time, ISO 8601'),
   "finishedAt": zod.iso.datetime({"offset":true}).regex(testRunsGetResponseFinishedAtRegExp).optional().describe('Finish time, ISO 8601'),
   "reason": zod.string().optional().describe('Failure reason, present on FAILED runs'),
-  "result": zod.unknown().optional().describe('Final result, absent on FAILED runs')
+  "config": zod.union([zod.object({
+  "target": zod.object({
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
+  "url": zod.string().describe('URL template, secret query parameter values are masked as ***'),
+  "headers": zod.record(zod.string(), zod.string()).optional().describe('Request headers, secret header values are masked'),
+  "body": zod.string().optional().describe('Request body template')
+}).describe('Tested request'),
+  "targetRps": zod.int().min(testRunsGetResponseConfigOneTargetRpsMin).max(testRunsGetResponseConfigOneTargetRpsMax).describe('Target RPS after ramp-up'),
+  "durationSeconds": zod.int().min(testRunsGetResponseConfigOneDurationSecondsMin).max(testRunsGetResponseConfigOneDurationSecondsMax).describe('Test duration in seconds'),
+  "rampUpSeconds": zod.int().min(testRunsGetResponseConfigOneRampUpSecondsMin).max(testRunsGetResponseConfigOneRampUpSecondsMax).optional().describe('Ramp-up duration in seconds')
+}).describe('Single test config'),zod.object({
+  "steps": zod.array(zod.object({
+  "target": zod.object({
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
+  "url": zod.string().describe('URL template, secret query parameter values are masked as ***'),
+  "headers": zod.record(zod.string(), zod.string()).optional().describe('Request headers, secret header values are masked'),
+  "body": zod.string().optional().describe('Request body template')
+}).describe('Tested request'),
+  "extract": zod.array(zod.object({
+  "name": zod.string().describe('Variable name'),
+  "path": zod.string().describe('Path in the response body')
+})).optional().describe('Variables extracted from the response')
+})).describe('Scenario steps in execution order')
+}).describe('Scenario test config')]).describe('Stored test config. Its shape follows `type`. Secret values are masked: secret header values become *** (Authorization keeps its scheme, e.g. "Bearer ***") and secret URL query parameter values become ***. Template placeholders such as {{accessToken}} are kept. Bodies are returned as stored'),
+  "result": zod.union([zod.object({
+  "durationMs": zod.number().describe('Sending duration in ms'),
+  "targetRps": zod.int().min(testRunsGetResponseResultOneTargetRpsMin).max(testRunsGetResponseResultOneTargetRpsMax).describe('Target RPS after ramp-up'),
+  "avgRps": zod.number().describe('Average achieved RPS'),
+  "targets": zod.array(zod.object({
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
+  "url": zod.string().describe('URL as entered by the user, secret query parameter values are masked as ***'),
+  "totalRequests": zod.int().min(testRunsGetResponseResultOneTargetsItemTotalRequestsMin).max(testRunsGetResponseResultOneTargetsItemTotalRequestsMax).describe('Requests sent'),
+  "successCount": zod.int().min(testRunsGetResponseResultOneTargetsItemSuccessCountMin).max(testRunsGetResponseResultOneTargetsItemSuccessCountMax).describe('Responses with status < 400'),
+  "errorCount": zod.int().min(testRunsGetResponseResultOneTargetsItemErrorCountMin).max(testRunsGetResponseResultOneTargetsItemErrorCountMax).describe('Responses with status >= 400 plus network errors'),
+  "errorRate": zod.number().describe('errorCount / totalRequests, 0..1'),
+  "lateCount": zod.int().min(testRunsGetResponseResultOneTargetsItemLateCountMin).max(testRunsGetResponseResultOneTargetsItemLateCountMax).describe('Requests sent later than planned beyond the threshold'),
+  "responseTime": zod.object({
+  "p50Ms": zod.number().describe('50th percentile in ms'),
+  "p95Ms": zod.number().describe('95th percentile in ms'),
+  "p99Ms": zod.number().describe('99th percentile in ms')
+}).optional().describe('Time from the planned send moment, only successful responses, absent without them'),
+  "serviceTime": zod.object({
+  "p50Ms": zod.number().describe('50th percentile in ms'),
+  "p95Ms": zod.number().describe('95th percentile in ms'),
+  "p99Ms": zod.number().describe('99th percentile in ms')
+}).optional().describe('Time from the actual send moment, only successful responses, absent without them'),
+  "statusCodes": zod.record(zod.string(), zod.int().min(testRunsGetResponseResultOneTargetsItemStatusCodesMinOne).max(testRunsGetResponseResultOneTargetsItemStatusCodesMaxOne)).optional().describe('HTTP responses by status code, absent without responses'),
+  "errors": zod.record(zod.string(), zod.int().min(testRunsGetResponseResultOneTargetsItemErrorsMinOne).max(testRunsGetResponseResultOneTargetsItemErrorsMaxOne)).optional().describe('Network errors without an HTTP response by kind, absent without them')
+})).describe('Metrics per tested request')
+}).describe('Load test result'),zod.object({
+  "summary": zod.object({
+  "totalSteps": zod.int().min(testRunsGetResponseResultTwoSummaryTotalStepsMin).max(testRunsGetResponseResultTwoSummaryTotalStepsMax).describe('Steps in the scenario'),
+  "okCount": zod.int().min(testRunsGetResponseResultTwoSummaryOkCountMin).max(testRunsGetResponseResultTwoSummaryOkCountMax).describe('Steps that succeeded'),
+  "failedCount": zod.int().min(testRunsGetResponseResultTwoSummaryFailedCountMin).max(testRunsGetResponseResultTwoSummaryFailedCountMax).describe('Steps that failed'),
+  "skippedCount": zod.int().min(testRunsGetResponseResultTwoSummarySkippedCountMin).max(testRunsGetResponseResultTwoSummarySkippedCountMax).describe('Steps that were skipped'),
+  "durationMs": zod.number().describe('Scenario duration in ms')
+}).describe('Scenario totals'),
+  "steps": zod.array(zod.object({
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
+  "url": zod.string().describe('URL as entered by the user, secret query parameter values are masked as ***'),
+  "status": zod.enum(['OK', 'FAILED', 'SKIPPED']).describe('OK: status < 400 and extraction succeeded; FAILED: network error, status >= 400 or extraction failed; SKIPPED: not sent'),
+  "statusCode": zod.int().min(testRunsGetResponseResultTwoStepsItemStatusCodeMin).max(testRunsGetResponseResultTwoStepsItemStatusCodeMax).optional().describe('HTTP status code, absent without a response'),
+  "durationMs": zod.number().optional().describe('Step duration in ms, absent on skipped steps'),
+  "description": zod.string().optional().describe('Why the step failed or was skipped')
+})).describe('Step results, one per config step in execution order')
+}).describe('Scenario result')]).optional().describe('Final result, present on COMPLETED and STOPPED runs when it matches the stored shape. Its shape follows `type`: single gives the load test result, scenario gives the scenario result. Secret URL query parameter values are masked as ***')
+})
+
+/**
+ * Starts a new run with the stored config of the given run, whatever its status: stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.
+ * @summary Re-run a test run
+ */
+export const testRunsRerunPathIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+
+
+export const TestRunsRerunParams = zod.object({
+  "id": zod.uuid().regex(testRunsRerunPathIdRegExp).describe('Test run id')
+})
+
+export const testRunsRerunHeaderIdempotencyKeyMax = 255;
+
+
+export const testRunsRerunHeaderIdempotencyKeyRegExp = new RegExp('^[\\x21-\\x7E]+$');
+
+
+export const TestRunsRerunHeader = zod.object({
+  "Idempotency-Key": zod.string().min(1).max(testRunsRerunHeaderIdempotencyKeyMax).regex(testRunsRerunHeaderIdempotencyKeyRegExp).optional().describe('Client-generated key that makes the start safe to retry. A repeated request with the same key and the same config returns the run created by the first one instead of starting a new run; the same key with a different config is rejected with 422. Keys are scoped per user. Omit it to always start a new run.')
+})
+
+export const testRunsRerunResponseIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+
+
+export const TestRunsRerunResponse = zod.object({
+  "id": zod.uuid().regex(testRunsRerunResponseIdRegExp).describe('Test run id'),
+  "status": zod.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'STOPPED']).describe('Test run status')
 })
 
 /**

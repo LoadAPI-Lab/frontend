@@ -209,13 +209,19 @@ export const testRunHandlers = [
             stoppedAt: null,
         };
         runs.set(run.id, run);
-        return HttpResponse.json({ id: run.id, status: 'RUNNING' }, { status: 201 });
+        return HttpResponse.json({ id: run.id, status: 'PENDING' }, { status: 201 });
     }),
-    http.get('*/v1/test-runs', () =>
-        HttpResponse.json({
-            items: [...runs.values()].toReversed().map(runBody),
-        }),
-    ),
+    http.get('*/v1/test-runs', ({ request }) => {
+        const search = new URL(request.url).searchParams;
+        const status = search.get('status');
+        const limit = Number(search.get('limit') ?? 20);
+        const items = [...runs.values()]
+            .toReversed()
+            .map(runBody)
+            .filter((run) => !status || run.status === status)
+            .slice(0, limit);
+        return HttpResponse.json({ items });
+    }),
     http.get('*/v1/test-runs/:id', ({ params }) => {
         const run = runs.get(String(params.id));
         return run ? HttpResponse.json(runBody(run)) : notFound();
@@ -264,11 +270,23 @@ export const liveStreamHandlers = () => [
                 });
                 return status;
             };
-            if (sendStatus() !== 'RUNNING') {
+            const sendHistory = (upTo: number) => {
+                for (let past = 1; past <= upTo; past += 1) {
+                    client.send({
+                        event: 'snapshot',
+                        data: JSON.stringify(mockSnapshot(run, past)),
+                    });
+                }
+            };
+            if (statusOf(run) !== 'RUNNING') {
+                sendHistory(finishedSecond(run));
+                sendStatus();
                 client.close();
                 return;
             }
+            sendStatus();
             let second = elapsedOf(run);
+            sendHistory(Math.min(second, lastSecond(run)));
             const timer = setInterval(() => {
                 second += 1;
                 if (run.stoppedAt === null && second <= lastSecond(run)) {

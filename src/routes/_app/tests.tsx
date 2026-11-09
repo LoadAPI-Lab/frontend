@@ -6,6 +6,7 @@ import { ApiError } from '@/api/fetcher';
 import { apiSpecQuery } from '@/features/collections';
 import { StressTestPage } from '@/features/stress-tests';
 import { rememberTestsSearch, testsSearchSchema } from '@/lib/last-tests-search';
+import { rememberRun } from '@/lib/run-memory';
 
 export const Route = createFileRoute('/_app/tests')({
     validateSearch: testsSearchSchema,
@@ -42,6 +43,9 @@ export const Route = createFileRoute('/_app/tests')({
                 missing={missing}
                 runId={run}
                 onRunStarted={(id) => {
+                    if (specId && endpointKey) {
+                        rememberRun(id, { spec: specId, endpoint: endpointKey });
+                    }
                     void navigate({ search: (previous) => ({ ...previous, run: id }) });
                 }}
             />

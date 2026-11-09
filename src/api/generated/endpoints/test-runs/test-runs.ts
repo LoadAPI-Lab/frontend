@@ -66,7 +66,7 @@ export const getTestRunsStartUrl = () => {
 }
 
 /**
- * Validates the config, stores a PENDING run and enqueues the job.
+ * Validates the config, stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.
  * @summary Start a test run
  */
 export const testRunsStart = async (startTestRunDto: StartTestRunDto, options?: Parameters<typeof orvalFetch>[1]): Promise<StartTestRunResponseDto> => {
@@ -161,7 +161,7 @@ export const useTestRunsStart = <TError = ErrorType<GlobalErrorResponseOutput>,
 }
 
 /**
- * Returns the run history, newest first, with cursor pagination. Configs and results are never included.
+ * Returns the run history, newest first, with cursor pagination. Each item is a short row: status, timestamps and failure reason; single runs add the tested request, targetRps, durationSeconds and the response time p95Ms; scenario runs add stepsCount and okCount. Secret URL query parameter values are masked. Configs and results are never included: load them with GET /v1/test-runs/:id.
  * @summary List test runs
  */
 export const testRunsList = async (params?: TestRunsListParams, options?: Parameters<typeof orvalFetch>[1]): Promise<ListTestRunsResponseDto> => {
@@ -262,7 +262,7 @@ export const getTestRunsGetUrl = (id: string,) => {
 }
 
 /**
- * Returns the run status and final result. The config is never included.
+ * Returns the run details: status, timestamps, failure reason, the stored config and the typed final result whose shape follows the run type. Secret header values and URL query parameter values are masked in the config and in the result URLs.
  * @summary Get a test run
  */
 export const testRunsGet = async (id: string, options?: Parameters<typeof orvalFetch>[1]): Promise<TestRunResponseDto> => {
@@ -354,7 +354,81 @@ export function useTestRunsGet<TData = Awaited<ReturnType<typeof testRunsGet>>, 
 
 
 
-export const getTestRunsStopUrl = (id: string,) => {
+export const getTestRunsRerunUrl = (id: string,) => {
+
+
+
+
+  return `/v1/test-runs/${id}/rerun`
+}
+
+/**
+ * Starts a new run with the stored config of the given run, whatever its status: stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.
+ * @summary Re-run a test run
+ */
+export const testRunsRerun = async (id: string, options?: Parameters<typeof orvalFetch>[1]): Promise<StartTestRunResponseDto> => {
+
+  return orvalFetch<StartTestRunResponseDto>(getTestRunsRerunUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getTestRunsRerunMutationKey = () => ['testRunsRerun'] as const;
+
+export const getTestRunsRerunMutationOptions = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsRerun>>, TError,TestRunsRerunMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testRunsRerun>>, TError,TestRunsRerunMutationVariables, TContext> => {
+
+const mutationKey = getTestRunsRerunMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testRunsRerun>>, TestRunsRerunMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  testRunsRerun(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestRunsRerunMutationResult = NonNullable<Awaited<ReturnType<typeof testRunsRerun>>>
+
+    export type TestRunsRerunMutationError = ErrorType<GlobalErrorResponseOutput>
+    export type TestRunsRerunMutationVariables = {id: string}
+
+    /**
+ * @summary Re-run a test run
+ */
+export const useTestRunsRerun = <TError = ErrorType<GlobalErrorResponseOutput>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testRunsRerun>>, TError,TestRunsRerunMutationVariables, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof testRunsRerun>>,
+        TError,
+        TestRunsRerunMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTestRunsRerunMutationOptions(options), queryClient);
+    }
+    export const getTestRunsStopUrl = (id: string,) => {
 
 
 

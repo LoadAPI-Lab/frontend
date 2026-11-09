@@ -1,8 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorCode } from '@/api/fetcher';
-import { useTestRunsStart, useTestRunsStop } from '@/api/generated/endpoints/test-runs/test-runs';
+import {
+    getTestRunsListQueryKey,
+    useTestRunsStart,
+    useTestRunsStop,
+} from '@/api/generated/endpoints/test-runs/test-runs';
 import type { StartTestRunDto } from '@/api/generated/model';
 import { useLiveTest } from '@/api/live';
 import { toast } from '@/components/ui/toast';
@@ -59,17 +64,22 @@ export function useTestRunControls({ target, body, runId, onRunStarted }: TestRu
     const block = startBlock(target, body, Object.keys(issues).length === 0);
 
     const live = useLiveTest(runId, { durationSeconds: config.durationSeconds ?? undefined });
+    const queryClient = useQueryClient();
+    const refreshActiveRuns = () =>
+        void queryClient.invalidateQueries({ queryKey: getTestRunsListQueryKey() });
 
-    const stop = useTestRunsStop();
+    const stop = useTestRunsStop({ mutation: { onSettled: refreshActiveRuns } });
 
     const start = useTestRunsStart({
         mutation: {
             meta: { toastOnError: false },
             onSuccess: (created) => {
                 stop.reset();
+                refreshActiveRuns();
                 onRunStarted(created.id);
             },
             onError: (error) => {
+                refreshActiveRuns();
                 toast.error({
                     title: t('testConfig.startFailed'),
                     description:

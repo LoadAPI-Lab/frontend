@@ -1,7 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useTestRunsGet } from '@/api/generated/endpoints/test-runs/test-runs';
+import {
+    getTestRunsListQueryKey,
+    useTestRunsGet,
+} from '@/api/generated/endpoints/test-runs/test-runs';
 import type { TestRunResponseDto } from '@/api/generated/model';
 import { type LiveTest, type RunStatus, type RunSummary, summarizeRunResult } from '@/api/live';
 import { toast } from '@/components/ui/toast';
@@ -38,6 +42,14 @@ export function useRunOutcome(
     const run = runId && query.data?.id === runId ? query.data : undefined;
     const reason = live.reason ?? run?.reason ?? null;
     const failed = live.status === 'FAILED' || run?.status === 'FAILED';
+
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (runId && (live.status === 'RUNNING' || live.isFinal)) {
+            void queryClient.invalidateQueries({ queryKey: getTestRunsListQueryKey() });
+        }
+    }, [runId, live.status, live.isFinal, queryClient]);
 
     const watched = useRef<string | null>(null);
     const announced = useRef<string | null>(null);

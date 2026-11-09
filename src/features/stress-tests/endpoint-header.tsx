@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ export interface EndpointHeaderProps {
     deprecated?: boolean;
     collection: string;
     servers: { url: string; description?: string }[];
+    relativeServer?: string;
     server: string;
     onServerChange: (url: string) => void;
     status?: ReactNode;
@@ -27,12 +28,17 @@ export function EndpointHeader({
     deprecated = false,
     collection,
     servers,
+    relativeServer,
     server,
     onServerChange,
     status,
     className,
 }: EndpointHeaderProps) {
     const { t } = useTranslation();
+    const hintId = useId();
+    const relativeHint = relativeServer
+        ? t('endpointHeader.relativeServer', { path: relativeServer })
+        : undefined;
     return (
         <section
             aria-label={t('endpointHeader.label')}
@@ -109,11 +115,21 @@ export function EndpointHeader({
                         <Input
                             aria-label={t('endpointHeader.server')}
                             value={server}
-                            placeholder="https://api.example.com"
+                            placeholder={`https://api.example.com${relativeServer ?? ''}`}
+                            title={relativeHint}
+                            aria-describedby={relativeHint ? hintId : undefined}
                             className="text-label h-6 max-w-sm px-1.5 font-mono"
                             onValueChange={(value) => onServerChange(value)}
                         />
                     )}
+                    {relativeHint ? (
+                        <span
+                            id={hintId}
+                            className="sr-only"
+                        >
+                            {relativeHint}
+                        </span>
+                    ) : null}
                 </div>
             </div>
             {status}

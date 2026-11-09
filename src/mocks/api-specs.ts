@@ -5,35 +5,51 @@ import type { ApiSpec, ApiSpecSummary, Endpoint } from '@/features/collections/a
 
 import { coreError } from './core-error';
 
-type MockEndpoint = Omit<Endpoint, 'key' | 'parameters' | 'tags'> &
-    Partial<Pick<Endpoint, 'parameters' | 'tags'>>;
+type Parameter = Endpoint['parameters'][number];
+type BodyField = NonNullable<NonNullable<Endpoint['requestBody']>['fields']>[number];
 
-const endpoint = (value: MockEndpoint): Endpoint => ({
-    key: `${value.method} ${value.path}`,
-    tags: [],
-    parameters: [],
-    ...value,
-});
+type MockParameter = Omit<Parameter, 'required' | 'schema'> &
+    Partial<Pick<Parameter, 'required' | 'schema'>>;
 
-const bearer = {
+type MockEndpoint = Omit<Endpoint, 'id' | 'key' | 'parameters' | 'tags' | 'responses'> & {
+    parameters?: MockParameter[];
+    tags?: string[];
+};
+
+const endpointId = (key: string) => key.replaceAll(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const parameter = (value: MockParameter): Parameter => ({ required: false, schema: {}, ...value });
+
+const endpoint = ({ parameters = [], ...value }: MockEndpoint): Endpoint => {
+    const key = `${value.method} ${value.path}`;
+    return {
+        id: endpointId(key),
+        key,
+        tags: [],
+        responses: [{ status: '200', description: 'OK' }],
+        ...value,
+        parameters: parameters.map(parameter),
+    };
+};
+
+const bearer: MockParameter = {
     name: 'Authorization',
     in: 'header',
     required: true,
     description: 'Bearer token',
-} as const;
-const taskId = {
+};
+const taskId: MockParameter = {
     name: 'id',
     in: 'path',
     required: true,
     schema: { type: 'integer', example: 1 },
-} as const;
-type Field = { path: string; type?: string; format?: string; required?: boolean };
+};
 
-const json = (example: unknown, fields: Field[] = []) => ({
+const json = (example: unknown, fields: BodyField[] = []) => ({
     required: true,
     contentType: 'application/json',
     example: JSON.stringify(example, null, 2),
-    fields,
+    ...(fields.length > 0 ? { fields } : {}),
 });
 
 export const testServerSpec: ApiSpec = {
@@ -43,13 +59,7 @@ export const testServerSpec: ApiSpec = {
     version: '1.0.0',
     description: 'Predictable target for load tests and scenario demos.',
     createdAt: '2026-11-05T14:40:00.000Z',
-    servers: [
-        {
-            url: 'http://testserver:8080',
-            description: 'From containers in the Docker network (LoadAPI worker)',
-        },
-        { url: 'http://localhost:8080', description: 'From the host machine' },
-    ],
+    servers: [{ url: 'http://testserver:8080' }, { url: 'http://localhost:8080' }],
     endpoints: [
         endpoint({
             method: 'GET',
@@ -154,8 +164,9 @@ export const shopSpec: ApiSpec = {
     description: 'Products and orders',
     createdAt: '2026-11-05T15:02:11.304Z',
     servers: [
-        { url: 'https://api.shop.example.com/v2', description: 'Production' },
-        { url: 'http://localhost:4000/v2', description: 'Local' },
+        { url: 'https://api.shop.example.com/v2' },
+        { url: 'http://localhost:4000/v2' },
+        { url: '/v2', relative: true },
     ],
     endpoints: [
         endpoint({

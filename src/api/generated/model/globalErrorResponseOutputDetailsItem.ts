@@ -13,4 +13,16 @@ export type GlobalErrorResponseOutputDetailsItem = {
   message: string;
   /** Machine-readable code (e.g. "too_small") */
   code: string;
+  /**
+     * 1-based line in the submitted text, for syntax errors
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  line?: number;
+  /**
+     * 1-based column in the submitted text, for syntax errors
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  column?: number;
 };

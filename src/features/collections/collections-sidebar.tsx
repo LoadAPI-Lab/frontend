@@ -7,6 +7,7 @@ import { useSidebarCollapsed } from '@/components/layout/use-sidebar-collapsed';
 import { IconButton } from '@/components/ui/icon-button';
 import { PlusIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
+import { lastRunFor } from '@/lib/run-memory';
 
 import { CollectionsTree } from './collections-tree';
 import { ImportDialog } from './import-dialog';
@@ -55,7 +56,11 @@ export function CollectionsSidebar() {
                     onSelect={({ specId, endpointKey }) => {
                         void navigate({
                             to: '/tests',
-                            search: { spec: specId, endpoint: endpointKey },
+                            search: {
+                                spec: specId,
+                                endpoint: endpointKey,
+                                run: lastRunFor({ spec: specId, endpoint: endpointKey }),
+                            },
                         });
                     }}
                     onImport={openImport}

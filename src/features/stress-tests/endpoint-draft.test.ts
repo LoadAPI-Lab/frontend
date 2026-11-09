@@ -41,11 +41,11 @@ describe('draftFromEndpoint', () => {
 describe('placeholderBody', () => {
     it('uses a generator for each field type the worker can fill', () => {
         const body = placeholderBody([
-            { path: 'productId', type: 'string', format: 'uuid' },
-            { path: 'quantity', type: 'integer' },
-            { path: 'contact.email', type: 'string', format: 'email' },
-            { path: 'gift', type: 'boolean' },
-            { path: 'comment', type: 'string' },
+            { path: 'productId', type: 'string', format: 'uuid', required: true },
+            { path: 'quantity', type: 'integer', required: true },
+            { path: 'contact.email', type: 'string', format: 'email', required: false },
+            { path: 'gift', type: 'boolean', required: false },
+            { path: 'comment', type: 'string', required: false },
         ]);
         expect(body).toBe(
             [
@@ -60,5 +60,17 @@ describe('placeholderBody', () => {
                 '}',
             ].join('\n'),
         );
+    });
+
+    it('builds arrays from index segments, as core sends array items', () => {
+        const body = placeholderBody([
+            { path: 'items.0.sku', type: 'string', required: true },
+            { path: 'items.0.quantity', type: 'integer', required: true },
+            { path: 'tags.0', type: 'string', required: false },
+        ]);
+        expect(JSON.parse(body.replaceAll('{{$randomInt}}', '1'))).toEqual({
+            items: [{ sku: 'string', quantity: 1 }],
+            tags: ['string'],
+        });
     });
 });
