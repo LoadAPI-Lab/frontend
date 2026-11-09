@@ -28,7 +28,7 @@ const snapshot = (elapsedSeconds: number, actualRps: number): Snapshot => ({
     ],
 });
 
-function setup(maxPoints = 100) {
+function setup(maxPoints = 100, batchMs = 0) {
     const store = new LiveRunStore(maxPoints);
     const refresh = vi.fn<() => Promise<boolean>>().mockResolvedValue(true);
     const disconnect = streamRun(RUN, store, {
@@ -36,6 +36,7 @@ function setup(maxPoints = 100) {
         refresh,
         backoffMs: [1000, 2000, 4000],
         maxAttempts: 3,
+        batchMs,
     });
     return { store, refresh, disconnect };
 }
@@ -156,5 +157,60 @@ describe('streamRun', () => {
         source.emit('status', { status: 'EXPLODED' });
         source.emit('snapshot', { elapsedSeconds: 'soon' });
         expect(store.getState()).toMatchObject({ status: null, snapshots: [] });
+    });
+
+    it('applies a replayed history in one update', () => {
+        const { store } = setup(100, 50);
+        const listener = vi.fn<() => void>();
+        store.subscribe(listener);
+        const source = FakeEventSource.latest();
+
+        source.emit('status', { status: 'RUNNING' });
+        listener.mockClear();
+        for (let second = 1; second <= 30; second += 1) {
+            source.emit('snapshot', snapshot(second, 100));
+        }
+        expect(store.getState().snapshots).toHaveLength(0);
+
+        vi.advanceTimersByTime(50);
+
+        expect(store.getState().snapshots.map((item) => item.elapsedSeconds)).toEqual(
+            Array.from({ length: 30 }, (_, index) => index + 1),
+        );
+        expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('merges a replay with seconds already on screen without duplicates', () => {
+        const { store } = setup(100, 50);
+        const source = FakeEventSource.latest();
+        source.emit('status', { status: 'RUNNING' });
+        for (const second of [1, 2, 3]) {
+            source.emit('snapshot', snapshot(second, 100));
+        }
+        vi.advanceTimersByTime(50);
+        source.fail();
+        vi.advanceTimersByTime(1000);
+
+        const replay = FakeEventSource.latest();
+        replay.emit('status', { status: 'RUNNING' });
+        for (const second of [1, 2, 3, 4, 5]) {
+            replay.emit('snapshot', snapshot(second, 90));
+        }
+        vi.advanceTimersByTime(50);
+
+        expect(store.getState().snapshots.map((item) => item.elapsedSeconds)).toEqual([
+            1, 2, 3, 4, 5,
+        ]);
+    });
+
+    it('applies pending seconds before the final status', () => {
+        const { store } = setup(100, 50);
+        const source = FakeEventSource.latest();
+        source.emit('snapshot', snapshot(1, 100));
+        source.emit('snapshot', snapshot(2, 100));
+        source.emit('status', { status: 'COMPLETED' });
+
+        expect(store.getState().snapshots).toHaveLength(2);
+        expect(store.getState().status).toBe('COMPLETED');
     });
 });

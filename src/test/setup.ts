@@ -13,7 +13,7 @@ import { FakeUPlot } from './fake-uplot';
 
 vi.mock('uplot', async () => ({ default: (await import('./fake-uplot')).FakeUPlot }));
 
-setLiveStreamOptions({ createEventSource: (url) => new FakeEventSource(url) });
+setLiveStreamOptions({ createEventSource: (url) => new FakeEventSource(url), batchMs: 0 });
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => {
@@ -25,5 +25,6 @@ afterEach(() => {
     FakeEventSource.reset();
     FakeUPlot.reset();
     localStorage.clear();
+    sessionStorage.clear();
 });
 afterAll(() => server.close());
