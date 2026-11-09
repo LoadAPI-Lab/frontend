@@ -64,3 +64,23 @@ export function formatRunDateTime(iso: string, locale: string): string {
 export function percentChange(now: number, before: number): number | null {
     return before === 0 ? null : ((now - before) / before) * 100;
 }
+
+const MIN_TREND_WIDTH = 4;
+
+export const trendWidth = (p95Ms: number, maxP95Ms: number) =>
+    maxP95Ms > 0 ? Math.max(MIN_TREND_WIDTH, Math.round((p95Ms / maxP95Ms) * 100)) : 0;
+
+export const CHART_REPLAY_MS = 60 * 60_000;
+
+export function chartsReplayable(
+    run: { status: string; finishedAt?: string },
+    now = Date.now(),
+): boolean {
+    if (run.status === 'PENDING' || run.status === 'RUNNING') {
+        return true;
+    }
+    if (!run.finishedAt) {
+        return false;
+    }
+    return now - new Date(run.finishedAt).getTime() < CHART_REPLAY_MS;
+}

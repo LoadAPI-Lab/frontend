@@ -163,7 +163,10 @@
             "rps": "RPS",
             "p95": "p95",
             "errors": "Errors",
-            "this": "this run"
+            "this": "this run",
+            "trend": "p95 trend",
+            "note": "History keeps the final summary of each run. Per-second charts are on the Stress tests page while a run is live and for an hour after it ends.",
+            "openCharts": "Open charts"
         }
     },
     "account": {

@@ -187,6 +187,13 @@ test('a finished run shows up in History with its results', async ({ page }) => 
     await expect(page.getByText('Avg RPS')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
 
+    await page.getByRole('link', { name: 'Open charts' }).click();
+    await expect(page).toHaveURL(/\/tests\?.*run=/);
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+
     await page
         .getByRole('navigation', { name: 'Main' })
         .getByRole('link', { name: 'Stress tests' })

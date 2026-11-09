@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { dayGroup, percentChange, runHost, runPath, shortRunId } from './history-format';
+import {
+    chartsReplayable,
+    dayGroup,
+    percentChange,
+    runHost,
+    runPath,
+    shortRunId,
+    trendWidth,
+} from './history-format';
 
 const now = new Date(2026, 10, 9, 10, 0);
 
@@ -30,5 +38,35 @@ describe('run labels', () => {
     it('computes a percent change, or nothing from zero', () => {
         expect(percentChange(110, 100)).toBeCloseTo(10);
         expect(percentChange(5, 0)).toBeNull();
+    });
+});
+
+describe('trendWidth', () => {
+    it('sizes each p95 against the slowest run', () => {
+        expect(trendWidth(146, 146)).toBe(100);
+        expect(trendWidth(73, 146)).toBe(50);
+        expect(trendWidth(1, 1000)).toBe(4);
+        expect(trendWidth(0, 0)).toBe(0);
+    });
+});
+
+describe('chartsReplayable', () => {
+    const at = new Date(2026, 10, 9, 10, 0).getTime();
+
+    it('is open while a run is live and for an hour after it ends', () => {
+        expect(chartsReplayable({ status: 'RUNNING' }, at)).toBe(true);
+        expect(
+            chartsReplayable(
+                { status: 'COMPLETED', finishedAt: new Date(at - 30 * 60_000).toISOString() },
+                at,
+            ),
+        ).toBe(true);
+        expect(
+            chartsReplayable(
+                { status: 'COMPLETED', finishedAt: new Date(at - 61 * 60_000).toISOString() },
+                at,
+            ),
+        ).toBe(false);
+        expect(chartsReplayable({ status: 'STOPPED' }, at)).toBe(false);
     });
 });

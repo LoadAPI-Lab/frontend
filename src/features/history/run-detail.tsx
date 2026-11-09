@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Download, RotateCcw } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,12 +28,14 @@ import { placeOfRun, rememberRun } from '@/lib/run-memory';
 
 import { routeRuns, type RunListItem } from './history-api';
 import {
+    chartsReplayable,
     formatRunDateTime,
     percentChange,
     runHost,
     runOrigin,
     runPath,
     shortRunId,
+    trendWidth,
 } from './history-format';
 import { STATUS_TEXT } from './run-status';
 
@@ -104,6 +106,7 @@ export interface RunDetailProps {
 }
 
 const ACTIVE_POLL_MS = 2000;
+const HIGH_ERROR_RATE = 0.01;
 
 export function RunDetail({ runId, listItems, className }: RunDetailProps) {
     const { t, i18n } = useTranslation();
@@ -126,6 +129,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
         }
     }, [runFinal, queryClient]);
     const sameRoute = routeRuns(listItems, runId, ROUTE_RUNS);
+    const maxP95 = Math.max(0, ...sameRoute.map((item) => item.p95Ms ?? 0));
     const previousId = sameRoute[1]?.id;
     const routeDetails = useQueries({
         queries: sameRoute.map((item) => ({ ...getTestRunsGetQueryOptions(item.id) })),
@@ -480,12 +484,19 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                                     >
                                         {t('history.routeRuns.errors')}
                                     </th>
+                                    <th
+                                        scope="col"
+                                        className="w-28 py-1 pl-6 font-semibold"
+                                    >
+                                        {t('history.routeRuns.trend')}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {sameRoute.map((item) => {
                                     const itemSummary = summaries.get(item.id) ?? null;
                                     const current = item.id === run.id;
+                                    const errorRate = itemSummary?.totals.errorRate ?? 0;
                                     return (
                                         <tr
                                             key={item.id}
@@ -516,7 +527,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                                             <td
                                                 className={cn(
                                                     'py-1.5 text-right font-mono',
-                                                    (itemSummary?.totals.errorRate ?? 0) > 0.01
+                                                    errorRate > HIGH_ERROR_RATE
                                                         ? 'text-danger'
                                                         : 'text-fg-muted',
                                                 )}
@@ -525,11 +536,47 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                                                     ? `${format(itemSummary.totals.errorRate * 100, 1)}%`
                                                     : '—'}
                                             </td>
+                                            <td className="py-1.5 pl-6">
+                                                {item.p95Ms === undefined ? null : (
+                                                    <div
+                                                        aria-hidden
+                                                        className="bg-surface-2 h-1.5 w-full overflow-hidden rounded-full"
+                                                    >
+                                                        <div
+                                                            className={cn(
+                                                                'h-full rounded-full',
+                                                                current && 'bg-accent',
+                                                                !current &&
+                                                                    errorRate > HIGH_ERROR_RATE &&
+                                                                    'bg-danger',
+                                                                !current &&
+                                                                    errorRate <= HIGH_ERROR_RATE &&
+                                                                    'bg-fg-faint',
+                                                            )}
+                                                            style={{
+                                                                width: `${trendWidth(item.p95Ms, maxP95)}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
+                        <p className="text-fg-muted mt-auto pt-4 text-xs">
+                            {t('history.routeRuns.note')}{' '}
+                            {chartsReplayable(run) ? (
+                                <Link
+                                    to="/tests"
+                                    search={{ ...placeOfRun(run.id), run: run.id }}
+                                    className="text-accent focus-visible:ring-accent/40 rounded-sm font-semibold underline-offset-2 outline-none hover:underline focus-visible:ring-2"
+                                >
+                                    {t('history.routeRuns.openCharts')}
+                                </Link>
+                            ) : null}
+                        </p>
                     </Card>
                 ) : null}
             </div>
