@@ -1,7 +1,8 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ChevronRight, Folder } from 'lucide-react';
+import { ChevronRight, Folder, LoaderCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { useActiveRun } from '@/api/live';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { type TreeNode, TreeView } from '@/components/shared/tree-view';
@@ -78,6 +79,7 @@ export function CollectionsTree({
 }: CollectionsTreeProps) {
     const { t } = useTranslation();
     const specs = useQuery(apiSpecsQuery);
+    const runningPlace = useActiveRun().active?.place;
     const openSpecIds = (specs.data ?? [])
         .map((spec) => spec.id)
         .filter((id) => expanded.has(specNodeId(id)));
@@ -131,6 +133,7 @@ export function CollectionsTree({
 
     const endpointNode = (spec: ApiSpecSummary, endpoint: Endpoint, indent: string): TreeNode => {
         const isSelected = selected?.specId === spec.id && selected.endpointKey === endpoint.key;
+        const isRunning = runningPlace?.spec === spec.id && runningPlace.endpoint === endpoint.key;
         const { head, tail } = splitPath(endpoint.path);
         return {
             id: endpointNodeId(spec.id, endpoint.key),
@@ -163,6 +166,16 @@ export function CollectionsTree({
                         <span className="min-w-0 truncate">{tail}</span>
                     </span>
                     <span className="sr-only">{endpoint.path}</span>
+                    {isRunning ? (
+                        <>
+                            <LoaderCircle
+                                aria-hidden
+                                data-testid="endpoint-running"
+                                className="text-accent size-3 shrink-0 motion-safe:animate-spin"
+                            />
+                            <span className="sr-only">{t('collections.running')}</span>
+                        </>
+                    ) : null}
                     {endpoint.deprecated ? (
                         <>
                             {' '}

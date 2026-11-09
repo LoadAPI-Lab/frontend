@@ -2,7 +2,7 @@ import type { Endpoint } from '@/features/collections';
 import { emptyDraft, newRow, type RequestDraft } from '@/lib/request-draft';
 
 type Parameter = Endpoint['parameters'][number];
-type BodyField = NonNullable<Endpoint['requestBody']>['fields'][number];
+type BodyField = NonNullable<NonNullable<Endpoint['requestBody']>['fields']>[number];
 
 function exampleValue(parameter: Parameter): string | undefined {
     const value = parameter.schema?.example ?? parameter.schema?.default;
@@ -61,31 +61,46 @@ function placeholderFor(field: BodyField): unknown {
     if (format === 'email') {
         return '{{$randomEmail}}';
     }
-    if (field.type === 'array') {
-        return [];
-    }
-    if (field.type === 'object') {
-        return {};
-    }
     return 'string';
 }
 
-function setPath(target: Record<string, unknown>, path: string[], value: unknown) {
+type Container = Record<string, unknown> | unknown[];
+
+const isIndex = (segment: string | undefined) => segment !== undefined && /^\d+$/.test(segment);
+
+function read(target: Container, key: string): unknown {
+    return Array.isArray(target) ? target[Number(key)] : target[key];
+}
+
+function assign(target: Container, key: string, value: unknown) {
+    if (Array.isArray(target)) {
+        target[Number(key)] = value;
+    } else {
+        target[key] = value;
+    }
+}
+
+function childFor(existing: unknown, asArray: boolean): Container {
+    if (asArray) {
+        return Array.isArray(existing) ? [...existing] : [];
+    }
+    return existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? Object.fromEntries(Object.entries(existing))
+        : {};
+}
+
+function setPath(target: Container, path: readonly string[], value: unknown) {
     const [head, ...rest] = path;
-    if (!head) {
+    if (head === undefined) {
         return;
     }
     if (rest.length === 0) {
-        target[head] = value;
+        assign(target, head, value);
         return;
     }
-    const existing = target[head];
-    const child: Record<string, unknown> =
-        existing && typeof existing === 'object' && !Array.isArray(existing)
-            ? Object.fromEntries(Object.entries(existing))
-            : {};
+    const child = childFor(read(target, head), isIndex(rest[0]));
     setPath(child, rest, value);
-    target[head] = child;
+    assign(target, head, child);
 }
 
 export function placeholderBody(fields: BodyField[]): string {
@@ -98,5 +113,5 @@ export function placeholderBody(fields: BodyField[]): string {
 }
 
 export const hasBodyFields = (endpoint: Endpoint) =>
-    (endpoint.requestBody?.fields.length ?? 0) > 0 &&
+    (endpoint.requestBody?.fields?.length ?? 0) > 0 &&
     isJson(endpoint.requestBody?.contentType ?? '');

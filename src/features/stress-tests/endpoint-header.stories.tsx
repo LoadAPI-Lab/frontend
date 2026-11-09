@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { expect, within } from 'storybook/test';
 
 import { EndpointHeader, type EndpointHeaderProps } from './endpoint-header';
 
@@ -23,10 +24,7 @@ const meta = {
         path: '/tasks',
         summary: 'Create a task',
         collection: 'LoadAPI test server',
-        servers: [
-            { url: 'http://testserver:8080', description: 'From containers in the Docker network' },
-            { url: 'http://localhost:8080', description: 'From the host machine' },
-        ],
+        servers: [{ url: 'http://testserver:8080' }, { url: 'http://localhost:8080' }],
     },
 } satisfies Meta<typeof Controlled>;
 
@@ -46,4 +44,21 @@ export const OneServer: Story = {
 
 export const NoServers: Story = {
     args: { method: 'DELETE', path: '/products/{productId}', deprecated: true, servers: [] },
+};
+
+export const RelativeServerOnly: Story = {
+    args: {
+        method: 'GET',
+        path: '/products',
+        collection: 'Shop API',
+        servers: [],
+        relativeServer: '/v2',
+    },
+    play: async ({ canvasElement }) => {
+        const input = within(canvasElement).getByRole('textbox', { name: 'Base URL' });
+        await expect(input).toHaveAttribute('placeholder', 'https://api.example.com/v2');
+        await expect(input).toHaveAccessibleDescription(
+            "This doc's server is a relative path (/v2). Enter the full URL to test against.",
+        );
+    },
 };

@@ -5,6 +5,8 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
+import type { TestRunResponseDtoConfig } from './testRunResponseDtoConfig';
+import type { TestRunResponseDtoResult } from './testRunResponseDtoResult';
 import type { TestRunResponseDtoStatus } from './testRunResponseDtoStatus';
 import type { TestRunResponseDtoType } from './testRunResponseDtoType';
 
@@ -35,6 +37,8 @@ export interface TestRunResponseDto {
   finishedAt?: string;
   /** Failure reason, present on FAILED runs */
   reason?: string;
-  /** Final result, absent on FAILED runs */
-  result?: unknown;
+  /** Stored test config. Its shape follows `type`. Secret values are masked: secret header values become *** (Authorization keeps its scheme, e.g. "Bearer ***") and secret URL query parameter values become ***. Template placeholders such as {{accessToken}} are kept. Bodies are returned as stored */
+  config: TestRunResponseDtoConfig;
+  /** Final result, present on COMPLETED and STOPPED runs when it matches the stored shape. Its shape follows `type`: single gives the load test result, scenario gives the scenario result. Secret URL query parameter values are masked as *** */
+  result?: TestRunResponseDtoResult;
 }

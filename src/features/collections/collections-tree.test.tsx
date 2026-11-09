@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { rememberRun } from '@/lib/run-memory';
 import { shopSpec } from '@/mocks/api-specs';
 import { server } from '@/mocks/server';
 import { renderWithProviders } from '@/test/render';
@@ -76,5 +77,31 @@ describe('CollectionsTree', () => {
         const { onImport } = setup();
         await userEvent.click(await screen.findByRole('button', { name: 'Import OpenAPI doc' }));
         expect(onImport).toHaveBeenCalledOnce();
+    });
+
+    it('shows a spinner on the endpoint whose test is running', async () => {
+        const runId = '7c2a1f3e-9b4d-4e6a-8f1c-2d3b4a5c6e7f';
+        rememberRun(runId, { spec: shopSpec.id, endpoint: 'GET /health' });
+        server.use(
+            http.get('*/v1/test-runs', () =>
+                HttpResponse.json({
+                    items: [
+                        {
+                            id: runId,
+                            type: 'single',
+                            status: 'RUNNING',
+                            createdAt: '2026-11-08T19:00:00.000Z',
+                        },
+                    ],
+                }),
+            ),
+        );
+        setup();
+        await userEvent.click(await screen.findByText('Shop API'));
+
+        expect(
+            await screen.findByRole('treeitem', { name: 'GET /health, test running' }),
+        ).toBeVisible();
+        expect(screen.getAllByTestId('endpoint-running')).toHaveLength(1);
     });
 });

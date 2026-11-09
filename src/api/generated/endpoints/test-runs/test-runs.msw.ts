@@ -26,11 +26,12 @@ import type {
 import {
   getTestRunsGetResponseMock,
   getTestRunsListResponseMock,
+  getTestRunsRerunResponseMock,
   getTestRunsStartResponseMock,
   getTestRunsStopResponseMock
 } from './test-runs.faker';
 
-export { getTestRunsStartResponseMock, getTestRunsListResponseMock, getTestRunsGetResponseMock, getTestRunsStopResponseMock } from './test-runs.faker';
+export { getTestRunsStartResponseMock, getTestRunsListResponseMock, getTestRunsGetResponseMock, getTestRunsRerunResponseMock, getTestRunsStopResponseMock } from './test-runs.faker';
 
 
 export const getTestRunsStartMockHandler = (overrideResponse?: StartTestRunResponseDto | ((info: Parameters<HttpResponseResolver<PathParams, StartTestRunDto>>[0]) => Promise<StartTestRunResponseDto> | StartTestRunResponseDto), options?: RequestHandlerOptions) => {
@@ -69,6 +70,18 @@ export const getTestRunsGetMockHandler = (overrideResponse?: TestRunResponseDto 
   }, options)
 }
 
+export const getTestRunsRerunMockHandler = (overrideResponse?: StartTestRunResponseDto | ((info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => Promise<StartTestRunResponseDto> | StartTestRunResponseDto), options?: RequestHandlerOptions) => {
+  return http.post<{ id: string }>('*/v1/test-runs/:id/rerun', async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getTestRunsRerunResponseMock(),
+      { status: 201
+      })
+  }, options)
+}
+
 export const getTestRunsStopMockHandler = (overrideResponse?: StopTestRunResponseDto | ((info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => Promise<StopTestRunResponseDto> | StopTestRunResponseDto), options?: RequestHandlerOptions) => {
   return http.post<{ id: string }>('*/v1/test-runs/:id/stop', async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
 
@@ -94,6 +107,7 @@ export const getTestRunsMock = () => [
   getTestRunsStartMockHandler(),
   getTestRunsListMockHandler(),
   getTestRunsGetMockHandler(),
+  getTestRunsRerunMockHandler(),
   getTestRunsStopMockHandler(),
   getTestRunsWatchMockHandler()
 ]

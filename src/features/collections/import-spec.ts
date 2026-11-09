@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { ApiError, apiFetch } from '@/api/fetcher';
+import { ApiError } from '@/api/fetcher';
+import { apiSpecsImport } from '@/api/generated/endpoints/api-specs/api-specs';
 
-import { apiSpecKeys, type ApiSpec, apiSpecSchema } from './api';
+import { apiSpecKeys, type ApiSpec } from './api';
 
 export const MAX_SPEC_BYTES = 5 * 1024 * 1024;
 
@@ -76,13 +77,8 @@ export interface ImportSpecInput {
 export function useImportSpec(onImported: (spec: ApiSpec) => void) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ name, content }: ImportSpecInput) =>
-            apiSpecSchema.parse(
-                await apiFetch('/v1/api-specs', {
-                    method: 'POST',
-                    body: JSON.stringify(name ? { name, content } : { content }),
-                }),
-            ),
+        mutationFn: ({ name, content }: ImportSpecInput) =>
+            apiSpecsImport(name ? { name, content } : { content }),
         meta: { toastOnError: false },
         onSuccess: async (spec) => {
             queryClient.setQueryData(apiSpecKeys.detail(spec.id), spec);
