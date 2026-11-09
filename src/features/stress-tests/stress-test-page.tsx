@@ -22,6 +22,7 @@ import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-dr
 import { EndpointHeader } from './endpoint-header';
 import { RequestCard } from './request-card';
 import { TestConfigBar } from './test-config-bar';
+import { useRunLimits } from './use-run-limits';
 import { useRunOutcome } from './use-run-outcome';
 import { useServer } from './use-server';
 import { useTestRunControls } from './use-test-run-controls';
@@ -73,6 +74,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
     const outcome = useRunOutcome(runId, live);
     const { summary } = outcome;
     const totals = summary?.totals ?? live.totals;
+    const limits = useRunLimits(runId) ?? controls.config;
     let chartsEmpty = selection ? t('stressTests.resultsLater') : t('stressTests.pickRoute');
     if (outcome.failure) {
         chartsEmpty = t('stressTests.failedNoData');
@@ -128,7 +130,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                     elapsedSeconds={
                                         live.latest?.elapsedSeconds ?? summary?.durationSeconds ?? 0
                                     }
-                                    durationSeconds={controls.config.durationSeconds}
+                                    durationSeconds={limits.durationSeconds}
                                 />
                             ) : null
                         }
@@ -154,7 +156,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                       : null
                             }
                             totals={totals}
-                            targetRps={summary?.targetRps ?? controls.config.targetRps}
+                            targetRps={summary?.targetRps ?? limits.targetRps}
                             scope={summary ? 'run' : 'second'}
                         />
                         {outcome.failure ? <RunFailure reason={outcome.failure} /> : null}
@@ -179,7 +181,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                             <div className="flex min-w-0 flex-col gap-3">
                                 <LiveCharts
                                     snapshots={live.snapshots}
-                                    durationSeconds={controls.config.durationSeconds}
+                                    durationSeconds={limits.durationSeconds}
                                     emptyMessage={chartsEmpty}
                                 />
                                 <StatusCodesCard
