@@ -346,12 +346,13 @@ export function LiveChartCard({
                         {chart.series.map((line, index) => (
                             <li
                                 key={line.key}
-                                className="text-fg-muted flex items-center gap-1.25 text-sm"
+                                className="text-fg-muted flex items-baseline gap-1.25 text-sm"
                             >
                                 <span
                                     aria-hidden
                                     className={cn(
-                                        chart.bars ? 'size-1.75 rounded-xs' : 'h-0.5 w-2',
+                                        'shrink-0 self-center',
+                                        chart.bars ? 'size-2 rounded-[2px]' : 'h-0.5 w-2',
                                         line.swatch,
                                     )}
                                 />
