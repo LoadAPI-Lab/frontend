@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,7 +17,21 @@ import { useExpanded } from './use-expanded';
 
 export function CollectionsSidebar() {
     const { t } = useTranslation();
-    const [collapsed, setCollapsed] = useSidebarCollapsed();
+    const [savedCollapsed, setSavedCollapsed] = useSidebarCollapsed();
+    const pathname = useRouterState({ select: (state) => state.location.pathname });
+    const onHistory = pathname.startsWith('/history');
+    const [visit, setVisit] = useState({ onHistory, open: false });
+    if (visit.onHistory !== onHistory) {
+        setVisit({ onHistory, open: false });
+    }
+    const collapsed = onHistory ? !visit.open : savedCollapsed;
+    const setCollapsed = (next: boolean) => {
+        if (onHistory) {
+            setVisit({ onHistory, open: !next });
+        } else {
+            setSavedCollapsed(next);
+        }
+    };
     const navigate = useNavigate();
     const [expanded, setExpanded] = useExpanded();
     const [importing, setImporting] = useState(false);

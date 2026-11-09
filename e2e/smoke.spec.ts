@@ -185,4 +185,11 @@ test('a finished run shows up in History with its results', async ({ page }) => 
     await expect(page.getByRole('heading', { name: '/fixed', level: 2 })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Re-run test' })).toBeVisible();
     await expect(page.getByText('Avg RPS')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'Stress tests' })
+        .click();
+    await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
 });
