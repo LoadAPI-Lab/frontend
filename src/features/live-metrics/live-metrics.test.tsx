@@ -7,7 +7,7 @@ import { FakeUPlot } from '@/test/fake-uplot';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
 import { LateBadge } from './late-badge';
-import { chartWindowSeconds, LiveChartCard, LiveCharts } from './live-charts';
+import { chartWindowSeconds, LiveChartCard, LiveCharts, plottedSnapshots } from './live-charts';
 import { appendFrame, isSingleAppend, lineAnimationMs, nextGap, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
 import { RunFailure } from './run-failure';
@@ -580,5 +580,13 @@ describe('RunProgress', () => {
             />,
         );
         expect(screen.getByRole('progressbar')).toHaveAttribute('value', '100');
+    });
+});
+
+describe('plottedSnapshots', () => {
+    it('drops the trailing second core sends after the run ends', () => {
+        const ticks = [sampleSnapshot(1), sampleSnapshot(2), sampleSnapshot(3)];
+        expect(plottedSnapshots(ticks, 2).map((tick) => tick.elapsedSeconds)).toEqual([1, 2]);
+        expect(plottedSnapshots(ticks, null)).toHaveLength(3);
     });
 });
