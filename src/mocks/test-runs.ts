@@ -181,7 +181,35 @@ function runBody(run: MockRun) {
     ).toISOString();
     return status === 'FAILED'
         ? { ...base, finishedAt, reason: MOCK_FAILURE_REASON }
-        : { ...base, finishedAt, result: mockResult(run) };
+        : { ...base, finishedAt };
+}
+
+function listItem(run: MockRun) {
+    const result =
+        statusOf(run) === 'COMPLETED' || statusOf(run) === 'STOPPED' ? mockResult(run) : null;
+    return {
+        ...runBody(run),
+        request: { method: run.method, url: run.url },
+        targetRps: run.targetRps,
+        durationSeconds: run.durationSeconds,
+        ...(result?.targets[0]?.responseTime
+            ? { p95Ms: result.targets[0].responseTime.p95Ms }
+            : {}),
+    };
+}
+
+function runDetail(run: MockRun) {
+    const status = statusOf(run);
+    return {
+        ...runBody(run),
+        config: {
+            target: { method: run.method, url: run.url },
+            targetRps: run.targetRps,
+            durationSeconds: run.durationSeconds,
+            rampUpSeconds: run.rampUpSeconds,
+        },
+        ...(status === 'COMPLETED' || status === 'STOPPED' ? { result: mockResult(run) } : {}),
+    };
 }
 
 const notFound = () => coreError(404, 'TEST_RUN.NOT_FOUND', 'Test run not found');
@@ -238,17 +266,23 @@ export const testRunHandlers = [
     http.get('*/v1/test-runs', ({ request }) => {
         const search = new URL(request.url).searchParams;
         const status = search.get('status');
+        const type = search.get('type');
         const limit = Number(search.get('limit') ?? 20);
-        const items = [...runs.values()]
+        const offset = Number(search.get('cursor') ?? 0);
+        const matching = [...runs.values()]
             .toReversed()
-            .map(runBody)
-            .filter((run) => !status || run.status === status)
-            .slice(0, limit);
-        return HttpResponse.json({ items });
+            .map(listItem)
+            .filter((run) => (!status || run.status === status) && (!type || run.type === type));
+        const items = matching.slice(offset, offset + limit);
+        const next = offset + limit;
+        return HttpResponse.json({
+            items,
+            ...(next < matching.length ? { nextCursor: String(next) } : {}),
+        });
     }),
     http.get('*/v1/test-runs/:id', ({ params }) => {
         const run = runs.get(String(params.id));
-        return run ? HttpResponse.json(runBody(run)) : notFound();
+        return run ? HttpResponse.json(runDetail(run)) : notFound();
     }),
     http.post('*/v1/test-runs/:id/stop', ({ params }) => {
         const run = runs.get(String(params.id));
