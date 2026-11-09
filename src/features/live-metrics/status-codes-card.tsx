@@ -82,7 +82,7 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
                                         <span
                                             aria-hidden
                                             className={cn(
-                                                'size-1.75 shrink-0 rounded-xs',
+                                                'size-2 shrink-0 rounded-[2px]',
                                                 row.swatch,
                                             )}
                                         />

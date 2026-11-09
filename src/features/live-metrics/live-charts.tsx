@@ -26,6 +26,10 @@ export const chartWindowSeconds = (durationSeconds: number | null, lastSecond: n
     durationSeconds && durationSeconds > 0
         ? Math.max(durationSeconds, lastSecond)
         : Math.max(lastSecond, MIN_WINDOW_SECONDS);
+export const plottedSnapshots = (snapshots: readonly Snapshot[], durationSeconds: number | null) =>
+    durationSeconds && durationSeconds > 0
+        ? snapshots.filter((snapshot) => snapshot.elapsedSeconds <= durationSeconds)
+        : snapshots;
 const PLOT_HEIGHT = 116;
 
 const SPARK_COLUMN: Record<ChartKind, number> = { latency: 2, throughput: 1, errors: 3 };
@@ -76,7 +80,7 @@ export interface LiveChartCardProps {
 
 export function LiveChartCard({
     kind,
-    snapshots,
+    snapshots: allSnapshots,
     durationSeconds,
     emptyMessage,
     zoom,
@@ -87,6 +91,10 @@ export function LiveChartCard({
     className,
 }: LiveChartCardProps) {
     const { t, i18n } = useTranslation();
+    const snapshots = useMemo(
+        () => plottedSnapshots(allSnapshots, durationSeconds),
+        [allSnapshots, durationSeconds],
+    );
     const [serviceTime, setServiceTime] = useState(false);
     const [ownZoom, setOwnZoom] = useState<ZoomRange | null>(null);
     const [ownCollapsed, setOwnCollapsed] = useState(false);
@@ -338,12 +346,13 @@ export function LiveChartCard({
                         {chart.series.map((line, index) => (
                             <li
                                 key={line.key}
-                                className="text-fg-muted flex items-center gap-1.25 text-sm"
+                                className="text-fg-muted flex items-baseline gap-1.25 text-sm"
                             >
                                 <span
                                     aria-hidden
                                     className={cn(
-                                        chart.bars ? 'size-1.75 rounded-xs' : 'h-0.5 w-2',
+                                        'shrink-0 self-center',
+                                        chart.bars ? 'size-2 rounded-[2px]' : 'h-0.5 w-2',
                                         line.swatch,
                                     )}
                                 />

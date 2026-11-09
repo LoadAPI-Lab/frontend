@@ -169,3 +169,34 @@ for (const path of ['/tests', '/login']) {
         expect(serious).toEqual([]);
     });
 }
+
+test('a finished run shows up in History with its results', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('2');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByText('Test completed')).toBeVisible({ timeout: 10_000 });
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+    const runs = page.getByRole('navigation', { name: 'Test runs' });
+    await expect(runs.getByRole('link', { name: /\/fixed/ }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: '/fixed', level: 2 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Re-run test' })).toBeVisible();
+    await expect(page.getByText('Avg RPS')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Open charts' }).click();
+    await expect(page).toHaveURL(/\/tests\?.*run=/);
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'Stress tests' })
+        .click();
+    await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+});

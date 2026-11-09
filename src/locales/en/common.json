@@ -49,7 +49,8 @@
         "endpointCount_other": ", {{count}} endpoints",
         "deprecated": "Deprecated",
         "deprecatedShort": "dep.",
-        "running": ", test running"
+        "running": ", test running",
+        "openSpec": "Open {{name}}"
     },
     "stressTests": {
         "title": "Stress tests",
@@ -57,6 +58,11 @@
             "single": "Single",
             "batch": "Batch",
             "roundRobin": "Round-robin"
+        },
+        "modeHints": {
+            "single": "One endpoint at full target RPS",
+            "batch": "Several endpoints at once",
+            "roundRobin": "Endpoints take turns"
         },
         "pickRoute": "Pick a route from the collections to start a test.",
         "notFound": {
@@ -71,7 +77,109 @@
         "title": "Scenarios"
     },
     "history": {
-        "title": "History"
+        "title": "History",
+        "runs": "Runs",
+        "listLabel": "Test runs",
+        "filterLabel": "Run type",
+        "filters": {
+            "all": "All"
+        },
+        "types": {
+            "single": "Single",
+            "scenario": "Scenario",
+            "batch": "Batch",
+            "round_robin": "Round-robin"
+        },
+        "typeShort": {
+            "single": "GET",
+            "scenario": "SC",
+            "batch": "BT",
+            "round_robin": "RR"
+        },
+        "groups": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "thisWeek": "This week",
+            "earlier": "Earlier"
+        },
+        "recent": {
+            "title": "Recent runs",
+            "viewAll": "View all",
+            "loading": "Loading recent runs",
+            "empty": "No runs yet. Your finished tests will show up here.",
+            "p95": "p95 {{value}}ms"
+        },
+        "row": {
+            "single": "{{rps}} RPS · {{duration}}s · {{time}}",
+            "scenario_one": "{{count}} step · {{time}}",
+            "scenario_other": "{{count}} steps · {{time}}",
+            "p95": "{{value}}ms",
+            "p95Label": "p95",
+            "stepsLabel": "steps"
+        },
+        "totalCount_one": "{{count}} total",
+        "totalCount_other": "{{count}} total",
+        "loadedCount_one": "{{count}} loaded",
+        "loadedCount_other": "{{count}} loaded",
+        "loading": "Loading runs",
+        "loadMore": "Load more",
+        "loadingMore": "Loading…",
+        "empty": {
+            "title": "No test runs yet",
+            "body": "Runs you start show up here with their results.",
+            "action": "Start a test"
+        },
+        "pick": {
+            "title": "Pick a run",
+            "body": "Choose a run on the left to see its results."
+        },
+        "notFound": {
+            "title": "This run isn't available",
+            "body": "It may have been deleted, or the link is from another account."
+        },
+        "runId": "run {{id}}",
+        "export": "Export JSON",
+        "rerun": "Re-run test",
+        "rerunning": "Starting…",
+        "rerunFailed": "Couldn't re-run the test",
+        "ms": "{{value}}ms",
+        "pp": "{{value}}pp",
+        "seconds": "{{value}}s",
+        "stats": {
+            "avgRps": "Avg RPS",
+            "errors": "Errors"
+        },
+        "percentiles": {
+            "title": "Percentiles",
+            "vsPrevious": "this run (top) vs the previous run of this route",
+            "noPrevious": "no earlier run of this route to compare"
+        },
+        "config": {
+            "title": "Configuration",
+            "targetRps": "Target RPS",
+            "duration": "Duration",
+            "rampUp": "Ramp-up",
+            "requestsSent": "Requests sent",
+            "baseUrl": "Base URL",
+            "auth": "Auth",
+            "body": "Request body",
+            "noAuth": "None",
+            "bearer": "Bearer token",
+            "authHeader": "Authorization header"
+        },
+        "routeRuns": {
+            "title": "Runs of this route",
+            "subtitle_one": "{{route}} · last {{count}}",
+            "subtitle_other": "{{route}} · last {{count}}",
+            "date": "Date",
+            "rps": "RPS",
+            "p95": "p95",
+            "errors": "Errors",
+            "this": "this run",
+            "trend": "p95 trend",
+            "note": "History keeps the final summary of each run. Per-second charts are on the Stress tests page while a run is live and for an hour after it ends.",
+            "openCharts": "Open charts"
+        }
     },
     "account": {
         "menuLabel": ", account menu for {{name}}",

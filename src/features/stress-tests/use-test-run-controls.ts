@@ -1,11 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { errorCode } from '@/api/fetcher';
+import { ApiError, errorCode } from '@/api/fetcher';
 import {
     getTestRunsListQueryKey,
-    useTestRunsStart,
+    testRunsStart,
     useTestRunsStop,
 } from '@/api/generated/endpoints/test-runs/test-runs';
 import type { StartTestRunDto } from '@/api/generated/model';
@@ -17,6 +17,16 @@ import { unresolvedPathParam } from '@/lib/target-url';
 import { DEFAULT_CONFIG, type TestConfig, validateConfig } from './test-config';
 
 export type RunTarget = Extract<StartTestRunDto, { type: 'single' }>['config']['target'];
+
+export const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+const KEY_REUSED = 'TEST_RUN.IDEMPOTENCY_KEY_REUSED';
+
+interface StartAttempt {
+    data: StartTestRunDto;
+    key: string;
+}
+
+const withKey = (key: string) => ({ headers: { [IDEMPOTENCY_KEY_HEADER]: key } });
 
 export type RunPhase = 'idle' | 'starting' | 'running' | 'stopping';
 
@@ -70,24 +80,46 @@ export function useTestRunControls({ target, body, runId, onRunStarted }: TestRu
 
     const stop = useTestRunsStop({ mutation: { onSettled: refreshActiveRuns } });
 
-    const start = useTestRunsStart({
-        mutation: {
-            meta: { toastOnError: false },
-            onSuccess: (created) => {
-                stop.reset();
-                refreshActiveRuns();
-                onRunStarted(created.id);
-            },
-            onError: (error) => {
-                refreshActiveRuns();
-                toast.error({
-                    title: t('testConfig.startFailed'),
-                    description:
-                        errorCode(error) === 'TEST_RUN.CAPACITY_EXCEEDED'
-                            ? t('testConfig.capacityExceeded')
-                            : error.message,
-                });
-            },
+    const pendingKey = useRef<{ fingerprint: string; key: string } | null>(null);
+    const keyFor = (data: StartTestRunDto) => {
+        const fingerprint = JSON.stringify(data);
+        if (pendingKey.current?.fingerprint !== fingerprint) {
+            pendingKey.current = { fingerprint, key: crypto.randomUUID() };
+        }
+        return pendingKey.current.key;
+    };
+
+    const start = useMutation({
+        mutationFn: async ({ data, key }: StartAttempt) => {
+            try {
+                return await testRunsStart(data, withKey(key));
+            } catch (error) {
+                if (errorCode(error) !== KEY_REUSED) {
+                    throw error;
+                }
+                pendingKey.current = null;
+                return testRunsStart(data, withKey(keyFor(data)));
+            }
+        },
+        meta: { toastOnError: false },
+        onSuccess: (created) => {
+            pendingKey.current = null;
+            stop.reset();
+            refreshActiveRuns();
+            onRunStarted(created.id);
+        },
+        onError: (error) => {
+            if (error instanceof ApiError) {
+                pendingKey.current = null;
+            }
+            refreshActiveRuns();
+            toast.error({
+                title: t('testConfig.startFailed'),
+                description:
+                    errorCode(error) === 'TEST_RUN.CAPACITY_EXCEEDED'
+                        ? t('testConfig.capacityExceeded')
+                        : error.message,
+            });
         },
     });
 
@@ -113,17 +145,16 @@ export function useTestRunControls({ target, body, runId, onRunStarted }: TestRu
             if (block || !target || config.targetRps === null || config.durationSeconds === null) {
                 return;
             }
-            start.mutate({
-                data: {
-                    type: 'single',
-                    config: {
-                        target: body.trim() === '' ? target : { ...target, body },
-                        targetRps: config.targetRps,
-                        durationSeconds: config.durationSeconds,
-                        rampUpSeconds: config.rampUpSeconds ?? 0,
-                    },
+            const data: StartTestRunDto = {
+                type: 'single',
+                config: {
+                    target: body.trim() === '' ? target : { ...target, body },
+                    targetRps: config.targetRps,
+                    durationSeconds: config.durationSeconds,
+                    rampUpSeconds: config.rampUpSeconds ?? 0,
                 },
-            });
+            };
+            start.mutate({ data, key: keyFor(data) });
         },
         stop: () => {
             if (runId) {

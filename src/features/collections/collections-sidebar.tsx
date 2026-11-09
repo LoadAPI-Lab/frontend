@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +9,7 @@ import { PlusIcon } from '@/components/ui/icons';
 import { Tooltip } from '@/components/ui/tooltip';
 import { lastRunFor } from '@/lib/run-memory';
 
+import { CollectionsRail } from './collections-rail';
 import { CollectionsTree } from './collections-tree';
 import { ImportDialog } from './import-dialog';
 import { specNodeId } from './spec-tree';
@@ -16,7 +17,21 @@ import { useExpanded } from './use-expanded';
 
 export function CollectionsSidebar() {
     const { t } = useTranslation();
-    const [collapsed, setCollapsed] = useSidebarCollapsed();
+    const [savedCollapsed, setSavedCollapsed] = useSidebarCollapsed();
+    const pathname = useRouterState({ select: (state) => state.location.pathname });
+    const onHistory = pathname.startsWith('/history');
+    const [visit, setVisit] = useState({ onHistory, open: false });
+    if (visit.onHistory !== onHistory) {
+        setVisit({ onHistory, open: false });
+    }
+    const collapsed = onHistory ? !visit.open : savedCollapsed;
+    const setCollapsed = (next: boolean) => {
+        if (onHistory) {
+            setVisit({ onHistory, open: !next });
+        } else {
+            setSavedCollapsed(next);
+        }
+    };
     const navigate = useNavigate();
     const [expanded, setExpanded] = useExpanded();
     const [importing, setImporting] = useState(false);
@@ -33,6 +48,15 @@ export function CollectionsSidebar() {
                 title={t('collections.title')}
                 collapsed={collapsed}
                 onCollapsedChange={setCollapsed}
+                rail={
+                    <CollectionsRail
+                        activeSpecId={selected?.specId ?? null}
+                        onOpen={(specId) => {
+                            setExpanded(specNodeId(specId), true);
+                            setCollapsed(false);
+                        }}
+                    />
+                }
                 actions={
                     <Tooltip.Root>
                         <Tooltip.Trigger
