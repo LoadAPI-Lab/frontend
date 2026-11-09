@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 import { type ApiSpec, type Endpoint, isUsableServer } from '@/features/collections';
+import { RecentRunsCard } from '@/features/history';
 import {
     LiveCharts,
     LiveStats,
@@ -28,11 +29,22 @@ import { useServer } from './use-server';
 import { useTestRunControls } from './use-test-run-controls';
 
 const modes = [
-    { value: 'single', labelKey: 'stressTests.modes.single', enabled: true },
-    { value: 'batch', labelKey: 'stressTests.modes.batch', enabled: config.features.batch },
+    {
+        value: 'single',
+        labelKey: 'stressTests.modes.single',
+        hintKey: 'stressTests.modeHints.single',
+        enabled: true,
+    },
+    {
+        value: 'batch',
+        labelKey: 'stressTests.modes.batch',
+        hintKey: 'stressTests.modeHints.batch',
+        enabled: config.features.batch,
+    },
     {
         value: 'roundRobin',
         labelKey: 'stressTests.modes.roundRobin',
+        hintKey: 'stressTests.modeHints.roundRobin',
         enabled: config.features.roundRobin,
     },
 ] as const;
@@ -51,8 +63,13 @@ export interface StressTestPageProps {
 
 const joinUrl = (base: string, path: string) => `${base.replace(/\/+$/, '')}${path}`;
 
+type Mode = (typeof modes)[number]['value'];
+
 function Workspace({ selection, missing = false, runId, onRunStarted }: StressTestPageProps) {
     const { t } = useTranslation();
+    const [mode, setMode] = useState<Mode>('single');
+    const modeHint =
+        modes.find((candidate) => candidate.value === mode)?.hintKey ?? modes[0].hintKey;
     const [draft, setDraft] = useState<RequestDraft>(() =>
         selection ? draftFromEndpoint(selection.endpoint) : emptyDraft(),
     );
@@ -83,20 +100,36 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
     }
 
     return (
-        <Tabs.Root defaultValue="single">
+        <Tabs.Root
+            value={mode}
+            onValueChange={(next) => {
+                const found = modes.find((candidate) => candidate.value === next);
+                if (found) {
+                    setMode(found.value);
+                }
+            }}
+        >
             <div className="flex items-start justify-between gap-4">
-                <Tabs.List aria-label={t('stressTests.title')}>
-                    {modes
-                        .filter((mode) => mode.enabled)
-                        .map((mode) => (
-                            <Tabs.Tab
-                                key={mode.value}
-                                value={mode.value}
-                            >
-                                {t(mode.labelKey)}
-                            </Tabs.Tab>
-                        ))}
-                </Tabs.List>
+                <div className="flex items-center gap-3">
+                    <Tabs.List aria-label={t('stressTests.title')}>
+                        {modes
+                            .filter((candidate) => candidate.enabled)
+                            .map((candidate) => (
+                                <Tabs.Tab
+                                    key={candidate.value}
+                                    value={candidate.value}
+                                    className="group flex items-center gap-1.75"
+                                >
+                                    <span
+                                        aria-hidden
+                                        className="bg-fg-disabled group-aria-selected:bg-accent size-1.5 rounded-full"
+                                    />
+                                    {t(candidate.labelKey)}
+                                </Tabs.Tab>
+                            ))}
+                    </Tabs.List>
+                    <p className="text-fg-muted text-sm">{t(modeHint)}</p>
+                </div>
                 <TestConfigBar
                     config={controls.config}
                     onConfigChange={controls.setConfig}
@@ -188,6 +221,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                     codes={totals.codes}
                                     networkErrors={totals.networkErrors}
                                 />
+                                <RecentRunsCard />
                             </div>
                         </div>
                     </>

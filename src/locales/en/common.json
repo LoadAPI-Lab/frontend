@@ -59,6 +59,11 @@
             "batch": "Batch",
             "roundRobin": "Round-robin"
         },
+        "modeHints": {
+            "single": "One endpoint at full target RPS",
+            "batch": "Several endpoints at once",
+            "roundRobin": "Endpoints take turns"
+        },
         "pickRoute": "Pick a route from the collections to start a test.",
         "notFound": {
             "title": "This endpoint isn't in your collections",
@@ -96,6 +101,13 @@
             "yesterday": "Yesterday",
             "thisWeek": "This week",
             "earlier": "Earlier"
+        },
+        "recent": {
+            "title": "Recent runs",
+            "viewAll": "View all",
+            "loading": "Loading recent runs",
+            "empty": "No runs yet. Your finished tests will show up here.",
+            "p95": "p95 {{value}}ms"
         },
         "row": {
             "single": "{{rps}} RPS · {{duration}}s · {{time}}",

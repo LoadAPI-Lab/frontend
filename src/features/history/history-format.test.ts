@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     chartsReplayable,
     dayGroup,
+    formatRelativeTime,
     percentChange,
     runHost,
     runPath,
@@ -68,5 +69,16 @@ describe('chartsReplayable', () => {
             ),
         ).toBe(false);
         expect(chartsReplayable({ status: 'STOPPED' }, at)).toBe(false);
+    });
+});
+
+describe('formatRelativeTime', () => {
+    const at = new Date(2026, 10, 9, 10, 0).getTime();
+    const ago = (minutes: number) => new Date(at - minutes * 60_000).toISOString();
+
+    it('says how long ago a run started', () => {
+        expect(formatRelativeTime(ago(120), 'en', at)).toBe('2 hr. ago');
+        expect(formatRelativeTime(ago(24 * 60), 'en', at)).toBe('yesterday');
+        expect(formatRelativeTime(ago(3 * 24 * 60), 'en', at)).toBe('3 days ago');
     });
 });

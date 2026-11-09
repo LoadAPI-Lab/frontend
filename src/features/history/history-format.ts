@@ -84,3 +84,24 @@ export function chartsReplayable(
     }
     return now - new Date(run.finishedAt).getTime() < CHART_REPLAY_MS;
 }
+
+const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['minute', 60],
+    ['hour', 24],
+    ['day', 7],
+    ['week', 4.35],
+    ['month', 12],
+    ['year', Number.POSITIVE_INFINITY],
+];
+
+export function formatRelativeTime(iso: string, locale: string, now = Date.now()): string {
+    const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+    let value = (new Date(iso).getTime() - now) / 60_000;
+    for (const [unit, size] of RELATIVE_STEPS) {
+        if (Math.abs(value) < size) {
+            return format.format(Math.round(value), unit);
+        }
+        value /= size;
+    }
+    return format.format(Math.round(value), 'year');
+}
