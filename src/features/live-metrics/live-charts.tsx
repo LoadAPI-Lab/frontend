@@ -21,6 +21,11 @@ import { formatNumber } from '@/lib/format';
 import { LivePlot, type PlotData, type PlotSeries, type ZoomRange } from './live-plot';
 
 const MIN_WINDOW_SECONDS = 10;
+
+export const chartWindowSeconds = (durationSeconds: number | null, lastSecond: number) =>
+    durationSeconds && durationSeconds > 0
+        ? Math.max(durationSeconds, lastSecond)
+        : Math.max(lastSecond, MIN_WINDOW_SECONDS);
 const PLOT_HEIGHT = 116;
 
 const SPARK_COLUMN: Record<ChartKind, number> = { latency: 2, throughput: 1, errors: 3 };
@@ -93,11 +98,7 @@ export function LiveChartCard({
     const isCollapsed = collapsed ?? ownCollapsed;
     const changeCollapsed = onCollapsedChange ?? setOwnCollapsed;
     const last = snapshots.at(-1);
-    const windowSeconds = Math.max(
-        durationSeconds ?? 0,
-        last?.elapsedSeconds ?? 0,
-        MIN_WINDOW_SECONDS,
-    );
+    const windowSeconds = chartWindowSeconds(durationSeconds, last?.elapsedSeconds ?? 0);
 
     const chart = useMemo((): ChartConfig => {
         const format = (value: number) => formatNumber(value, 0, i18n.language);

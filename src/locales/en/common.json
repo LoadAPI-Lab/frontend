@@ -48,7 +48,8 @@
         "endpointCount_one": ", {{count}} endpoint",
         "endpointCount_other": ", {{count}} endpoints",
         "deprecated": "Deprecated",
-        "deprecatedShort": "dep."
+        "deprecatedShort": "dep.",
+        "running": ", test running"
     },
     "stressTests": {
         "title": "Stress tests",
@@ -63,7 +64,7 @@
             "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
         },
         "resultsLater": "Live results show here once the test starts.",
-        "finishedNoData": "This run has finished. Per-second charts only fill in while you watch a run live.",
+        "finishedNoData": "Per-second data for this run is no longer available. Core keeps it for an hour after a run.",
         "failedNoData": "The run failed before it sent any per-second data."
     },
     "scenarios": {
@@ -199,7 +200,8 @@
     "endpointHeader": {
         "label": "Endpoint",
         "server": "Base URL",
-        "deprecated": "Deprecated"
+        "deprecated": "Deprecated",
+        "relativeServer": "This doc's server is a relative path ({{path}}). Enter the full URL to test against."
     },
     "liveMetrics": {
         "stats": {
@@ -314,5 +316,10 @@
         "stopped": "Test stopped",
         "failed": "Test failed",
         "noReason": "The worker didn't give a reason."
+    },
+    "activeRun": {
+        "message": "A test you started is still running. Only one test can run at a time.",
+        "view": "View it",
+        "stop": "Stop it"
     }
 }

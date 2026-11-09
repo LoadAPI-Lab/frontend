@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Card } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
-import type { ApiSpec, Endpoint } from '@/features/collections';
+import { type ApiSpec, type Endpoint, isUsableServer } from '@/features/collections';
 import {
     LiveCharts,
     LiveStats,
@@ -17,6 +17,7 @@ import {
 } from '@/features/live-metrics';
 import { buildRequest, emptyDraft, pathParamNames, type RequestDraft } from '@/lib/request-draft';
 
+import { ActiveRunBanner } from './active-run-banner';
 import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
 import { RequestCard } from './request-card';
@@ -54,7 +55,10 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
     const [draft, setDraft] = useState<RequestDraft>(() =>
         selection ? draftFromEndpoint(selection.endpoint) : emptyDraft(),
     );
-    const [server, setServer] = useServer(selection?.spec.id ?? '', selection?.spec.servers ?? []);
+    const specServers = selection?.spec.servers ?? [];
+    const servers = specServers.filter(isUsableServer);
+    const relativeServer = specServers.find((candidate) => !isUsableServer(candidate));
+    const [server, setServer] = useServer(selection?.spec.id ?? '', servers);
     const endpoint = selection?.endpoint;
     const route = endpoint
         ? { method: endpoint.method, url: joinUrl(server, endpoint.path) }
@@ -105,6 +109,7 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                 value="single"
                 className="flex flex-col gap-3 pt-4"
             >
+                <ActiveRunBanner currentRunId={runId} />
                 {selection && endpoint ? (
                     <EndpointHeader
                         method={endpoint.method}
@@ -112,7 +117,8 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                         summary={endpoint.summary}
                         deprecated={endpoint.deprecated}
                         collection={selection.spec.name}
-                        servers={selection.spec.servers}
+                        servers={servers}
+                        relativeServer={relativeServer?.url}
                         server={server}
                         onServerChange={setServer}
                         status={
