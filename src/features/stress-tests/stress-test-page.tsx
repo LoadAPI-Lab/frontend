@@ -193,24 +193,27 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                             scope={summary ? 'run' : 'second'}
                         />
                         {outcome.failure ? <RunFailure reason={outcome.failure} /> : null}
-                        <div className="grid grid-cols-2 items-stretch gap-3">
-                            <RequestCard
-                                draft={draft}
-                                onDraftChange={setDraft}
-                                pathParams={route ? pathParamNames(route.url) : []}
-                                onFillPlaceholders={
-                                    endpoint && hasBodyFields(endpoint)
-                                        ? () =>
-                                              setDraft({
-                                                  ...draft,
-                                                  body: placeholderBody(
-                                                      endpoint.requestBody?.fields ?? [],
-                                                  ),
-                                              })
-                                        : undefined
-                                }
-                                className="h-0 min-h-[max(100%,26rem)]"
-                            />
+                        <div className="grid grid-cols-2 items-start gap-3">
+                            <div className="flex min-w-0 flex-col gap-3">
+                                <RequestCard
+                                    draft={draft}
+                                    onDraftChange={setDraft}
+                                    pathParams={route ? pathParamNames(route.url) : []}
+                                    onFillPlaceholders={
+                                        endpoint && hasBodyFields(endpoint)
+                                            ? () =>
+                                                  setDraft({
+                                                      ...draft,
+                                                      body: placeholderBody(
+                                                          endpoint.requestBody?.fields ?? [],
+                                                      ),
+                                                  })
+                                            : undefined
+                                    }
+                                    className="h-120"
+                                />
+                                <RecentRunsCard />
+                            </div>
                             <div className="flex min-w-0 flex-col gap-3">
                                 <LiveCharts
                                     snapshots={live.snapshots}
@@ -221,7 +224,6 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                                     codes={totals.codes}
                                     networkErrors={totals.networkErrors}
                                 />
-                                <RecentRunsCard />
                             </div>
                         </div>
                     </>
