@@ -18,8 +18,11 @@ interface MockRun {
 
 const runs = new Map<string, MockRun>();
 
+const idempotencyKeys = new Map<string, { fingerprint: string; runId: string }>();
+
 export function resetMockTestRuns() {
     runs.clear();
+    idempotencyKeys.clear();
 }
 
 const startSchema = z.object({
@@ -185,9 +188,27 @@ const notFound = () => coreError(404, 'TEST_RUN.NOT_FOUND', 'Test run not found'
 
 export const testRunHandlers = [
     http.post('*/v1/test-runs', async ({ request }) => {
-        const parsed = startSchema.safeParse(await request.json());
+        const raw: unknown = await request.json();
+        const parsed = startSchema.safeParse(raw);
         if (!parsed.success) {
             return coreError(400, 'VALIDATION.FAILED', 'The test configuration is invalid');
+        }
+        const key = request.headers.get('Idempotency-Key');
+        const fingerprint = JSON.stringify(raw);
+        const known = key ? idempotencyKeys.get(key) : undefined;
+        const knownRun = known ? runs.get(known.runId) : undefined;
+        if (known && known.fingerprint !== fingerprint) {
+            return coreError(
+                422,
+                'TEST_RUN.IDEMPOTENCY_KEY_REUSED',
+                'This idempotency key was already used for a different test config',
+            );
+        }
+        if (knownRun) {
+            return HttpResponse.json(
+                { id: knownRun.id, status: statusOf(knownRun) },
+                { status: 201 },
+            );
         }
         const active = [...runs.values()].some((run) => statusOf(run) === 'RUNNING');
         if (active) {
@@ -209,6 +230,9 @@ export const testRunHandlers = [
             stoppedAt: null,
         };
         runs.set(run.id, run);
+        if (key) {
+            idempotencyKeys.set(key, { fingerprint, runId: run.id });
+        }
         return HttpResponse.json({ id: run.id, status: 'PENDING' }, { status: 201 });
     }),
     http.get('*/v1/test-runs', ({ request }) => {
