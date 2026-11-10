@@ -26,7 +26,7 @@ import {
 } from '@/lib/request-draft';
 
 import { ActiveRunBanner } from './active-run-banner';
-import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-draft';
+import { exampleBody, rememberBody, restoredDraft } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
 import { type PastRequest, pastRequest } from './past-run';
 import { RequestCard } from './request-card';
@@ -82,18 +82,26 @@ function Workspace({ selection, past, missing = false, runId, onRunStarted }: Wo
     const [mode, setMode] = useState<Mode>('single');
     const modeHint =
         modes.find((candidate) => candidate.value === mode)?.hintKey ?? modes[0].hintKey;
+    const place = selection ? { spec: selection.spec.id, endpoint: selection.endpoint.key } : null;
     const [draft, setDraft] = useState<RequestDraft>(() => {
-        if (selection) {
-            return draftFromEndpoint(selection.endpoint);
+        if (selection && place) {
+            return restoredDraft(selection.endpoint, place);
         }
         return past ? past.draft : emptyDraft();
     });
+    const changeDraft = (next: RequestDraft) => {
+        if (selection && place && next.body !== draft.body) {
+            rememberBody(selection.endpoint, place, next.body);
+        }
+        setDraft(next);
+    };
     const [pastServer, setPastServer] = useState(past?.server ?? '');
     const specServers = selection?.spec.servers ?? [];
     const servers = specServers.filter(isUsableServer);
     const relativeServer = specServers.find((candidate) => !isUsableServer(candidate));
     const [server, setServer] = useServer(selection?.spec.id ?? '', servers);
     const endpoint = selection?.endpoint;
+    const example = endpoint ? exampleBody(endpoint) : undefined;
     let route: RequestRoute | null = null;
     if (endpoint) {
         route = { method: endpoint.method, url: joinUrl(server, endpoint.path) };
@@ -224,18 +232,12 @@ function Workspace({ selection, past, missing = false, runId, onRunStarted }: Wo
                             <div className="flex min-w-0 flex-col gap-3">
                                 <RequestCard
                                     draft={draft}
-                                    onDraftChange={setDraft}
+                                    onDraftChange={changeDraft}
                                     pathParams={route ? pathParamNames(route.url) : []}
-                                    onFillPlaceholders={
-                                        endpoint && hasBodyFields(endpoint)
-                                            ? () =>
-                                                  setDraft({
-                                                      ...draft,
-                                                      body: placeholderBody(
-                                                          endpoint.requestBody?.fields ?? [],
-                                                      ),
-                                                  })
-                                            : undefined
+                                    onFillExample={
+                                        example === undefined
+                                            ? undefined
+                                            : () => changeDraft({ ...draft, body: example })
                                     }
                                     className="h-120"
                                 />

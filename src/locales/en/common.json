@@ -296,7 +296,7 @@
             "namePlaceholder": "Name",
             "valuePlaceholder": "Value"
         },
-        "fillPlaceholders": "Fill with placeholders"
+        "fillExample": "Fill with example"
     },
     "requestAuth": {
         "type": "Auth type",
