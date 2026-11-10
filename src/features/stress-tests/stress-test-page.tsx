@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useTestRunsGet } from '@/api/generated/endpoints/test-runs/test-runs';
 import { snapshotLatency } from '@/api/live';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -16,11 +17,18 @@ import {
     RunProgress,
     StatusCodesCard,
 } from '@/features/live-metrics';
-import { buildRequest, emptyDraft, pathParamNames, type RequestDraft } from '@/lib/request-draft';
+import {
+    buildRequest,
+    emptyDraft,
+    pathParamNames,
+    type RequestDraft,
+    type RequestRoute,
+} from '@/lib/request-draft';
 
 import { ActiveRunBanner } from './active-run-banner';
 import { draftFromEndpoint, hasBodyFields, placeholderBody } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
+import { type PastRequest, pastRequest } from './past-run';
 import { RequestCard } from './request-card';
 import { TestConfigBar } from './test-config-bar';
 import { useRunLimits } from './use-run-limits';
@@ -65,34 +73,54 @@ const joinUrl = (base: string, path: string) => `${base.replace(/\/+$/, '')}${pa
 
 type Mode = (typeof modes)[number]['value'];
 
-function Workspace({ selection, missing = false, runId, onRunStarted }: StressTestPageProps) {
+interface WorkspaceProps extends StressTestPageProps {
+    past: PastRequest | null;
+}
+
+function Workspace({ selection, past, missing = false, runId, onRunStarted }: WorkspaceProps) {
     const { t } = useTranslation();
     const [mode, setMode] = useState<Mode>('single');
     const modeHint =
         modes.find((candidate) => candidate.value === mode)?.hintKey ?? modes[0].hintKey;
-    const [draft, setDraft] = useState<RequestDraft>(() =>
-        selection ? draftFromEndpoint(selection.endpoint) : emptyDraft(),
-    );
+    const [draft, setDraft] = useState<RequestDraft>(() => {
+        if (selection) {
+            return draftFromEndpoint(selection.endpoint);
+        }
+        return past ? past.draft : emptyDraft();
+    });
+    const [pastServer, setPastServer] = useState(past?.server ?? '');
     const specServers = selection?.spec.servers ?? [];
     const servers = specServers.filter(isUsableServer);
     const relativeServer = specServers.find((candidate) => !isUsableServer(candidate));
     const [server, setServer] = useServer(selection?.spec.id ?? '', servers);
     const endpoint = selection?.endpoint;
-    const route = endpoint
-        ? { method: endpoint.method, url: joinUrl(server, endpoint.path) }
-        : null;
+    let route: RequestRoute | null = null;
+    if (endpoint) {
+        route = { method: endpoint.method, url: joinUrl(server, endpoint.path) };
+    } else if (past) {
+        route = { method: past.method, url: joinUrl(pastServer, past.path) };
+    }
     const controls = useTestRunControls({
         target: route ? buildRequest(route, draft) : null,
         body: draft.body,
         runId,
         onRunStarted,
+        initialConfig: past?.config,
     });
     const { live } = controls;
     const outcome = useRunOutcome(runId, live);
     const { summary } = outcome;
     const totals = summary?.totals ?? live.totals;
     const limits = useRunLimits(runId) ?? controls.config;
-    let chartsEmpty = selection ? t('stressTests.resultsLater') : t('stressTests.pickRoute');
+    const serverLocked = controls.phase !== 'idle';
+    const progress = runId ? (
+        <RunProgress
+            status={live.status}
+            elapsedSeconds={live.latest?.elapsedSeconds ?? summary?.durationSeconds ?? 0}
+            durationSeconds={limits.durationSeconds}
+        />
+    ) : null;
+    let chartsEmpty = route ? t('stressTests.resultsLater') : t('stressTests.pickRoute');
     if (outcome.failure) {
         chartsEmpty = t('stressTests.failedNoData');
     } else if (live.isFinal) {
@@ -145,31 +173,30 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
                 className="flex flex-col gap-3 pt-4"
             >
                 <ActiveRunBanner currentRunId={runId} />
-                {selection && endpoint ? (
+                {endpoint ? (
                     <EndpointHeader
                         method={endpoint.method}
                         path={endpoint.path}
                         summary={endpoint.summary}
                         deprecated={endpoint.deprecated}
-                        collection={selection.spec.name}
-                        servers={servers}
+                        serverPlaceholder={servers[0]?.url}
                         relativeServer={relativeServer?.url}
                         server={server}
                         onServerChange={setServer}
-                        status={
-                            runId ? (
-                                <RunProgress
-                                    status={live.status}
-                                    elapsedSeconds={
-                                        live.latest?.elapsedSeconds ?? summary?.durationSeconds ?? 0
-                                    }
-                                    durationSeconds={limits.durationSeconds}
-                                />
-                            ) : null
-                        }
+                        serverLocked={serverLocked}
+                        status={progress}
+                    />
+                ) : past ? (
+                    <EndpointHeader
+                        method={past.method}
+                        path={past.path}
+                        server={pastServer}
+                        onServerChange={setPastServer}
+                        serverLocked={serverLocked}
+                        status={progress}
                     />
                 ) : null}
-                {missing ? (
+                {missing && !past ? (
                     <Card>
                         <EmptyState
                             size="compact"
@@ -235,9 +262,30 @@ function Workspace({ selection, missing = false, runId, onRunStarted }: StressTe
 
 export function StressTestPage(props: StressTestPageProps) {
     const { t } = useTranslation();
-    const key = props.selection
-        ? `${props.selection.spec.id}:${props.selection.endpoint.key}`
-        : 'none';
+    const { selection, runId, onRunStarted } = props;
+    const [ownRuns, setOwnRuns] = useState<ReadonlySet<string>>(() => new Set());
+    const [seedId, setSeedId] = useState(runId);
+    let nextSeed = runId;
+    if (runId && ownRuns.has(runId)) {
+        nextSeed = seedId;
+    }
+    if (nextSeed !== seedId) {
+        setSeedId(nextSeed);
+    }
+    const seed = useTestRunsGet(seedId ?? '', {
+        query: {
+            enabled: !selection && Boolean(seedId),
+            staleTime: Number.POSITIVE_INFINITY,
+            retry: false,
+        },
+    });
+    const past = !selection && seed.data && seed.data.id === seedId ? pastRequest(seed.data) : null;
+    let key = 'none';
+    if (selection) {
+        key = `${selection.spec.id}:${selection.endpoint.key}`;
+    } else if (past && seedId) {
+        key = `run:${seedId}`;
+    }
     return (
         <>
             <PageHeader
@@ -247,6 +295,11 @@ export function StressTestPage(props: StressTestPageProps) {
             <Workspace
                 key={key}
                 {...props}
+                past={past}
+                onRunStarted={(id) => {
+                    setOwnRuns((current) => new Set(current).add(id));
+                    onRunStarted(id);
+                }}
             />
         </>
     );

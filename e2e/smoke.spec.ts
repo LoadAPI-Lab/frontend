@@ -20,7 +20,9 @@ test('picking an endpoint in the collections tree opens it on the Tests page', a
     await expect(
         page.getByRole('heading', { name: '/products/{productId}', level: 2 }),
     ).toBeVisible();
-    await expect(page.getByText('Shop API', { exact: true }).last()).toBeVisible();
+    await expect(
+        page.getByRole('region', { name: 'Endpoint' }).getByRole('textbox', { name: 'Base URL' }),
+    ).toHaveValue('https://api.shop.example.com/v2');
     await page.reload();
     await expect(
         page.getByRole('heading', { name: '/products/{productId}', level: 2 }),
@@ -76,10 +78,14 @@ test('a started run streams live and finishes on its own', async ({ page }) => {
 
 test('a running test can be stopped', async ({ page }) => {
     await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    const baseUrl = page.getByRole('textbox', { name: 'Base URL' });
+    await expect(baseUrl).toBeEditable();
     await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(baseUrl).toBeDisabled();
     await page.getByRole('button', { name: 'Stop test' }).click();
     await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Test stopped')).toBeVisible();
+    await expect(baseUrl).toBeEditable();
 });
 
 test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {
@@ -102,6 +108,67 @@ test('importing a pasted OpenAPI doc adds it to the collections', async ({ page 
         'aria-expanded',
         'true',
     );
+});
+
+test('a saved doc can be re-imported with a new version from the keyboard', async ({ page }) => {
+    await page.goto('/tests');
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await tree.getByRole('treeitem', { name: /^Shop API/ }).focus();
+    await page.keyboard.press('Shift+F10');
+    await page.getByRole('menuitem', { name: 'Re-import…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Re-import Shop API' });
+    await dialog.getByRole('textbox', { name: 'OpenAPI document' }).fill(
+        JSON.stringify({
+            openapi: '3.0.3',
+            info: { title: 'Shop API', version: '2.2.0' },
+            paths: {
+                '/products': { get: { summary: 'List all products', tags: ['products'] } },
+                '/carts': { post: { summary: 'Create a cart', tags: ['carts'] } },
+            },
+        }),
+    );
+    await dialog.getByRole('button', { name: 'Re-import' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('Shop API re-imported')).toBeVisible();
+    await expect(page.getByText('1 added, 1 changed, 4 removed')).toBeVisible();
+    await expect(tree.getByRole('treeitem', { name: /^Shop API\b.*2 endpoints$/ })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
+    await expect(tree.getByRole('treeitem', { name: /^carts/ })).toBeVisible();
+});
+
+test('a saved doc can be renamed from its actions menu', async ({ page }) => {
+    await page.goto('/tests');
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await tree.getByRole('treeitem', { name: /^Shop API/ }).hover();
+    await page.getByLabel('Actions for Shop API').click();
+    await page.getByRole('menuitem', { name: 'Rename…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Rename Shop API' });
+    await dialog.getByRole('textbox', { name: 'Name' }).fill('Storefront');
+    await dialog.getByRole('button', { name: 'Rename' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('Renamed to Storefront')).toBeVisible();
+    await expect(tree.getByRole('treeitem', { name: /^Storefront/ })).toBeVisible();
+});
+
+test('deleting the open doc removes it and clears the Tests page', async ({ page }) => {
+    await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fhealth');
+    await expect(page.getByRole('heading', { name: '/health', level: 2 })).toBeVisible();
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    const shop = tree.getByRole('treeitem', { name: /^Shop API/ });
+    await shop.hover();
+    await page.getByLabel('Actions for Shop API').click();
+    await page.getByRole('menuitem', { name: 'Delete…' }).click();
+    const confirm = page.getByRole('alertdialog', { name: 'Delete Shop API?' });
+    await confirm.getByRole('button', { name: 'Delete' }).click();
+    await expect(confirm).toBeHidden();
+    await expect(page.getByText('Shop API deleted')).toBeVisible();
+    await expect(shop).toHaveCount(0);
+    await expect(page).not.toHaveURL(/spec=/);
+    await expect(
+        page.getByText('Pick a route from the collections to start a test.').first(),
+    ).toBeVisible();
 });
 
 test('navigates between top-level pages', async ({ page }) => {
@@ -169,6 +236,37 @@ for (const path of ['/tests', '/login']) {
         expect(serious).toEqual([]);
     });
 }
+
+test('a run opened without its doc can be changed and started again', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('2');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByText('Test completed')).toBeVisible({ timeout: 10_000 });
+    await page.evaluate('sessionStorage.clear()');
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+    await page.getByRole('link', { name: 'Open charts' }).click();
+    await expect(page).toHaveURL(/\/tests\?run=/);
+    const header = page.getByRole('region', { name: 'Endpoint' });
+    await expect(header.getByRole('heading', { name: '/fixed', level: 2 })).toBeVisible();
+    await expect(header.getByText('GET', { exact: true })).toBeVisible();
+    const baseUrl = header.getByRole('textbox', { name: 'Base URL' });
+    await expect(baseUrl).toHaveValue('http://testserver:8080');
+    await expect(page.getByRole('textbox', { name: /Duration/ })).toHaveValue('2');
+
+    const firstRun = new URL(page.url()).searchParams.get('run');
+    await baseUrl.fill('http://localhost:8080');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('1');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page).not.toHaveURL(new RegExp(`run=${firstRun}`));
+    await expect(baseUrl).toBeDisabled();
+    await expect(header.getByRole('heading', { name: '/fixed', level: 2 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 10_000 });
+    await expect(baseUrl).toHaveValue('http://localhost:8080');
+});
 
 test('a finished run shows up in History with its results', async ({ page }) => {
     await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');

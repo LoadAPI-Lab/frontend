@@ -19,14 +19,8 @@ function readAll(): Record<string, string> {
 }
 
 export function useServer(specId: string, servers: { url: string }[]) {
-    const urls = servers.map((server) => server.url);
     const [chosen, setChosen] = useState(() => readAll()[specId]);
-    let server = urls[0] ?? '';
-    if (urls.length === 0) {
-        server = chosen ?? '';
-    } else if (chosen && urls.includes(chosen)) {
-        server = chosen;
-    }
+    const server = chosen ?? servers[0]?.url ?? '';
     const setServer = (url: string) => {
         setChosen(url);
         try {

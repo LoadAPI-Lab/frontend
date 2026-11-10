@@ -1,1 +1,1 @@
-export { Dialog } from './dialog';
+export { AlertDialog, Dialog } from './dialog';

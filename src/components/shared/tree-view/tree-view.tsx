@@ -12,6 +12,8 @@ export interface TreeNode {
     pending?: ReactNode;
     rowClassName?: string;
     tooltip?: string;
+    actions?: ReactNode;
+    onOpenActions?: () => void;
 }
 
 export interface TreeViewProps {
@@ -176,6 +178,14 @@ export function TreeView({
     };
 
     const onKeyDown = (event: KeyboardEvent<HTMLLIElement>, item: VisibleItem) => {
+        const openActions = event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey);
+        if (openActions) {
+            if (item.node.onOpenActions) {
+                event.preventDefault();
+                item.node.onOpenActions();
+            }
+            return;
+        }
         const index = ids.indexOf(item.node.id);
         const { node, parentId } = item;
         const expanded = expandedIds.has(node.id);
@@ -259,6 +269,7 @@ export function TreeView({
                         aria-expanded={parent ? expandedIds.has(node.id) : undefined}
                         aria-busy={(node.busy && expandedIds.has(node.id)) || undefined}
                         aria-selected={parent ? undefined : node.id === selectedId}
+                        aria-keyshortcuts={node.onOpenActions ? 'Shift+F10' : undefined}
                         tabIndex={node.id === tabStop ? 0 : -1}
                         onFocus={() => setFocusedId(node.id)}
                         onKeyDown={(event) => onKeyDown(event, item)}
@@ -268,7 +279,7 @@ export function TreeView({
                         }}
                         style={motion.style}
                         className={cn(
-                            'cursor-pointer select-none outline-none',
+                            'group/tree-row cursor-pointer select-none outline-none',
                             'focus-visible:ring-2',
                             'focus-visible:ring-accent/40',
                             node.rowClassName,
@@ -276,6 +287,17 @@ export function TreeView({
                         )}
                     >
                         {node.content}
+                        {node.actions ? (
+                            <span
+                                role="presentation"
+                                aria-hidden
+                                className="contents"
+                                onClick={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => event.stopPropagation()}
+                            >
+                                {node.actions}
+                            </span>
+                        ) : null}
                     </li>
                 );
                 if (!node.tooltip) {

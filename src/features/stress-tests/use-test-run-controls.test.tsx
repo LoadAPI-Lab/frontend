@@ -41,6 +41,19 @@ describe('useTestRunControls', () => {
         expect(result.current.block).toEqual({ kind: 'pathParam', param: '{id}' });
     });
 
+    it('blocks Start until a secret hidden by a past run is re-entered', () => {
+        const { result } = setup({
+            target: { ...target, headers: { Authorization: 'Bearer ***' } },
+        });
+        expect(result.current.block).toEqual({ kind: 'maskedSecret', name: 'Authorization' });
+    });
+
+    it('starts from the settings it is given', () => {
+        const initialConfig = { targetRps: 250, durationSeconds: 30, rampUpSeconds: 5 };
+        const { result } = setup({ initialConfig });
+        expect(result.current.config).toEqual(initialConfig);
+    });
+
     it('blocks Start while the body is invalid', () => {
         const { result } = setup({ body: '{"title": ' });
         expect(result.current.block).toEqual({ kind: 'invalidBody' });

@@ -3,7 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Button } from '@/components/ui/button';
 
-import { Dialog } from './dialog';
+import { AlertDialog, Dialog } from './dialog';
 
 function Example() {
     return (
@@ -39,5 +39,35 @@ export const OpenAndClose: Story = {
         await waitFor(() => expect(dialog).toBeVisible());
         await userEvent.keyboard('{Escape}');
         await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    },
+};
+
+function AlertExample() {
+    return (
+        <AlertDialog.Root>
+            <AlertDialog.Trigger render={<Button variant="danger">Delete</Button>} />
+            <AlertDialog.Popup>
+                <AlertDialog.Title>Delete Shop API?</AlertDialog.Title>
+                <AlertDialog.Description>
+                    Its 5 endpoints leave the sidebar. Past runs stay in History.
+                </AlertDialog.Description>
+                <AlertDialog.Footer>
+                    <AlertDialog.Close render={<Button variant="ghost">Cancel</Button>} />
+                    <AlertDialog.Close render={<Button variant="danger">Delete</Button>} />
+                </AlertDialog.Footer>
+            </AlertDialog.Popup>
+        </AlertDialog.Root>
+    );
+}
+
+export const Alert: StoryObj<typeof AlertExample> = {
+    render: () => <AlertExample />,
+    play: async ({ canvasElement }) => {
+        const body = within(canvasElement.ownerDocument.body);
+        await userEvent.click(within(canvasElement).getByRole('button', { name: 'Delete' }));
+        const dialog = await body.findByRole('alertdialog', { name: 'Delete Shop API?' });
+        await waitFor(() => expect(dialog).toBeVisible());
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+        await waitFor(() => expect(body.queryByRole('alertdialog')).toBeNull());
     },
 };

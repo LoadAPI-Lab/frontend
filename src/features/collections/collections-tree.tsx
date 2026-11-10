@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ChevronRight, Folder, LoaderCircle } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveRun } from '@/api/live';
@@ -20,6 +21,7 @@ import {
     apiSpecsQuery,
     type Endpoint,
 } from './api';
+import { type SpecAction, SpecActions } from './spec-actions';
 import {
     endpointNodeId,
     folderNodeId,
@@ -46,6 +48,7 @@ export interface CollectionsTreeProps {
     expanded: ReadonlySet<string>;
     onExpandedChange: (id: string, open: boolean) => void;
     onImport?: () => void;
+    onSpecAction?: (action: SpecAction, spec: ApiSpecSummary) => void;
 }
 
 function Chevron({ open, className }: { open: boolean; className?: string }) {
@@ -76,8 +79,10 @@ export function CollectionsTree({
     expanded,
     onExpandedChange,
     onImport,
+    onSpecAction,
 }: CollectionsTreeProps) {
     const { t } = useTranslation();
+    const [menuFor, setMenuFor] = useState<string | null>(null);
     const specs = useQuery(apiSpecsQuery);
     const runningPlace = useActiveRun().active?.place;
     const openSpecIds = (specs.data ?? [])
@@ -249,6 +254,16 @@ export function CollectionsTree({
             ),
             busy: detail?.isPending,
             pending: <PendingRows />,
+            onOpenActions: onSpecAction ? () => setMenuFor(spec.id) : undefined,
+            actions: onSpecAction ? (
+                <SpecActions
+                    name={spec.name}
+                    open={menuFor === spec.id}
+                    onOpenChange={(menuOpen) => setMenuFor(menuOpen ? spec.id : null)}
+                    onAction={(action) => onSpecAction(action, spec)}
+                    deleteBlocked={runningPlace?.spec === spec.id}
+                />
+            ) : undefined,
             content: (
                 <>
                     <Chevron open={open} />
