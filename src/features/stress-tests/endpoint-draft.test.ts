@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { shopSpec, testServerSpec } from '@/mocks/api-specs';
 
-import { draftFromEndpoint, placeholderBody } from './endpoint-draft';
+import { draftFromEndpoint, rememberBody, restoredDraft } from './endpoint-draft';
 
 const find = (spec: typeof shopSpec, key: string) => {
     const endpoint = spec.endpoints.find((candidate) => candidate.key === key);
@@ -38,39 +38,31 @@ describe('draftFromEndpoint', () => {
     });
 });
 
-describe('placeholderBody', () => {
-    it('uses a generator for each field type the worker can fill', () => {
-        const body = placeholderBody([
-            { path: 'productId', type: 'string', format: 'uuid', required: true },
-            { path: 'quantity', type: 'integer', required: true },
-            { path: 'contact.email', type: 'string', format: 'email', required: false },
-            { path: 'gift', type: 'boolean', required: false },
-            { path: 'comment', type: 'string', required: false },
-        ]);
-        expect(body).toBe(
-            [
-                '{',
-                '  "productId": "{{$uuid}}",',
-                '  "quantity": {{$randomInt}},',
-                '  "contact": {',
-                '    "email": "{{$randomEmail}}"',
-                '  },',
-                '  "gift": true,',
-                '  "comment": "string"',
-                '}',
-            ].join('\n'),
-        );
+describe('edited bodies', () => {
+    const orders = find(shopSpec, 'POST /orders');
+    const place = { spec: shopSpec.id, endpoint: orders.key };
+
+    afterEach(() => sessionStorage.clear());
+
+    it('restores an edited body over the example', () => {
+        rememberBody(orders, place, '{"quantity": 7}');
+
+        const draft = restoredDraft(orders, place);
+
+        expect(draft.body).toBe('{"quantity": 7}');
+        expect(draft.auth).toEqual({ kind: 'bearer', token: '' });
     });
 
-    it('builds arrays from index segments, as core sends array items', () => {
-        const body = placeholderBody([
-            { path: 'items.0.sku', type: 'string', required: true },
-            { path: 'items.0.quantity', type: 'integer', required: true },
-            { path: 'tags.0', type: 'string', required: false },
-        ]);
-        expect(JSON.parse(body.replaceAll('{{$randomInt}}', '1'))).toEqual({
-            items: [{ sku: 'string', quantity: 1 }],
-            tags: ['string'],
-        });
+    it('drops the edit once the body matches the example again', () => {
+        rememberBody(orders, place, '{"quantity": 7}');
+        rememberBody(orders, place, orders.requestBody?.example ?? '');
+
+        expect(restoredDraft(orders, place).body).toBe(orders.requestBody?.example);
+    });
+
+    it('keeps an edit to an empty body', () => {
+        rememberBody(orders, place, '');
+
+        expect(restoredDraft(orders, place).body).toBe('');
     });
 });

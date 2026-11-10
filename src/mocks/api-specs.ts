@@ -214,9 +214,9 @@ export const shopSpec: ApiSpec = {
             parameters: [bearer],
             requestBody: json(
                 {
-                    productId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                    productId: '{{$uuid}}',
                     quantity: 1,
-                    comment: 'string',
+                    comment: 'example',
                 },
                 [
                     { path: 'productId', type: 'string', format: 'uuid', required: true },

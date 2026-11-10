@@ -16,7 +16,7 @@ export interface RequestCardProps {
     draft: RequestDraft;
     onDraftChange: (draft: RequestDraft) => void;
     pathParams: string[];
-    onFillPlaceholders?: () => void;
+    onFillExample?: () => void;
     className?: string;
 }
 
@@ -33,7 +33,7 @@ export function RequestCard({
     draft,
     onDraftChange,
     pathParams,
-    onFillPlaceholders,
+    onFillExample,
     className,
 }: RequestCardProps) {
     const { t } = useTranslation();
@@ -87,13 +87,13 @@ export function RequestCard({
                     </Tabs.List>
                     {tab === 'body' ? (
                         <div className="flex items-center gap-2">
-                            {onFillPlaceholders ? (
+                            {onFillExample ? (
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={onFillPlaceholders}
+                                    onClick={onFillExample}
                                 >
-                                    {t('requestCard.fillPlaceholders')}
+                                    {t('requestCard.fillExample')}
                                 </Button>
                             ) : null}
                             <span className="border-border-strong text-fg-muted rounded-sm border px-2 py-1 font-mono text-sm">

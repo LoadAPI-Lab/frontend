@@ -35,12 +35,29 @@ test('an endpoint opens with its example body and a Bearer auth tab', async ({ p
     await expect(page.getByRole('textbox', { name: 'Request body' })).toContainText(
         '"quantity": 1',
     );
-    await page.getByRole('button', { name: 'Fill with placeholders' }).click();
-    await expect(page.getByRole('textbox', { name: 'Request body' })).toContainText(
-        '{{$randomInt}}',
-    );
     await page.getByRole('tab', { name: 'Auth' }).click();
     await expect(page.getByRole('button', { name: 'Bearer token', pressed: true })).toBeVisible();
+});
+
+test('an edited body survives switching endpoints until it is reset to the example', async ({
+    page,
+}) => {
+    const orders = '/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=POST%20%2Forders';
+    await page.goto(orders);
+    await page.evaluate('sessionStorage.clear()');
+    const body = page.getByRole('textbox', { name: 'Request body' });
+    await expect(body).toContainText('"quantity": 1');
+    await body.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.insertText('{"quantity": 42}');
+    await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fhealth');
+    await expect(page.getByRole('heading', { name: '/health', level: 2 })).toBeVisible();
+    await page.goto(orders);
+    await expect(body).toContainText('"quantity": 42');
+    await page.getByRole('button', { name: 'Fill with example' }).click();
+    await expect(body).toContainText('"productId": "{{$uuid}}"');
+    await page.reload();
+    await expect(body).toContainText('"comment": "example"');
 });
 
 test('a started run streams live and finishes on its own', async ({ page }) => {
