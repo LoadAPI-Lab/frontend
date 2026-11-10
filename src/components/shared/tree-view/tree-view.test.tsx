@@ -130,4 +130,62 @@ describe('TreeView', () => {
         act(() => item('Shop API').click());
         expect(screen.queryByRole('treeitem', { name: 'products' })).not.toBeInTheDocument();
     });
+
+    it('opens the actions of a row with Shift+F10 or the Menu key', async () => {
+        const onOpenActions = vi.fn<() => void>();
+        render(
+            <TreeView
+                nodes={[
+                    { id: 'shop', content: 'Shop API', children: [], onOpenActions },
+                    leaf('x'),
+                ]}
+                aria-label="Collections"
+                expandedIds={new Set()}
+                onExpandedChange={vi.fn<(id: string, open: boolean) => void>()}
+                onSelect={vi.fn<(node: TreeNode) => void>()}
+            />,
+        );
+        expect(item('Shop API')).toHaveAttribute('aria-keyshortcuts', 'Shift+F10');
+        expect(item('x')).not.toHaveAttribute('aria-keyshortcuts');
+        await userEvent.tab();
+        await userEvent.keyboard('{Shift>}{F10}{/Shift}');
+        await userEvent.keyboard('{ContextMenu}');
+        expect(onOpenActions).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps clicks and keys inside row actions away from the row', async () => {
+        const onExpandedChange = vi.fn<(id: string, open: boolean) => void>();
+        const onAction = vi.fn<() => void>();
+        render(
+            <TreeView
+                nodes={[
+                    {
+                        id: 'shop',
+                        content: 'Shop API',
+                        children: [],
+                        actions: (
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={onAction}
+                            >
+                                More
+                            </button>
+                        ),
+                    },
+                ]}
+                aria-label="Collections"
+                expandedIds={new Set()}
+                onExpandedChange={onExpandedChange}
+                onSelect={vi.fn<(node: TreeNode) => void>()}
+            />,
+        );
+        const more = screen.getByText('More');
+        await userEvent.click(more);
+        more.focus();
+        await userEvent.keyboard('{Enter}');
+        expect(onAction).toHaveBeenCalledTimes(2);
+        expect(onExpandedChange).not.toHaveBeenCalled();
+        expect(item('Shop API')).toHaveAccessibleName('Shop API');
+    });
 });

@@ -45,6 +45,9 @@ function BlockText({ block }: { block: StartBlock }) {
     if (block.kind === 'pathParam') {
         return t('testConfig.blocked.pathParam', { param: block.param });
     }
+    if (block.kind === 'maskedSecret') {
+        return t('testConfig.blocked.maskedSecret', { name: block.name });
+    }
     if (block.kind === 'invalidBody') {
         return t('testConfig.blocked.invalidBody');
     }

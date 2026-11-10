@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/toast';
 import { isValidJsonBody } from '@/lib/json-body';
 import { unresolvedPathParam } from '@/lib/target-url';
 
+import { maskedSecret } from './past-run';
 import { DEFAULT_CONFIG, type TestConfig, validateConfig } from './test-config';
 
 export type RunTarget = Extract<StartTestRunDto, { type: 'single' }>['config']['target'];
@@ -34,6 +35,7 @@ export type StartBlock =
     | { kind: 'noTarget' }
     | { kind: 'noServer' }
     | { kind: 'pathParam'; param: string }
+    | { kind: 'maskedSecret'; name: string }
     | { kind: 'invalidBody' }
     | { kind: 'invalidConfig' };
 
@@ -44,6 +46,7 @@ export interface TestRunControlsOptions {
     body: string;
     runId: string | undefined;
     onRunStarted: (runId: string) => void;
+    initialConfig?: TestConfig;
 }
 
 function startBlock(
@@ -61,15 +64,25 @@ function startBlock(
     if (param) {
         return { kind: 'pathParam', param };
     }
+    const secret = maskedSecret(target);
+    if (secret) {
+        return { kind: 'maskedSecret', name: secret };
+    }
     if (!isValidJsonBody(body)) {
         return { kind: 'invalidBody' };
     }
     return configValid ? null : { kind: 'invalidConfig' };
 }
 
-export function useTestRunControls({ target, body, runId, onRunStarted }: TestRunControlsOptions) {
+export function useTestRunControls({
+    target,
+    body,
+    runId,
+    onRunStarted,
+    initialConfig,
+}: TestRunControlsOptions) {
     const { t } = useTranslation();
-    const [config, setConfig] = useState<TestConfig>(DEFAULT_CONFIG);
+    const [config, setConfig] = useState<TestConfig>(initialConfig ?? DEFAULT_CONFIG);
     const issues = validateConfig(config);
     const block = startBlock(target, body, Object.keys(issues).length === 0);
 

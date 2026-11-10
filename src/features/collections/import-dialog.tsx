@@ -7,12 +7,13 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import type { ApiSpec } from './api';
+import type { ApiSpecSummary } from './api';
 import {
     importIssue,
     type ImportIssue,
     MAX_SPEC_BYTES,
     offsetOf,
+    type SavedSpec,
     specBytes,
     useImportSpec,
 } from './import-spec';
@@ -20,7 +21,8 @@ import {
 export interface ImportDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onImported: (spec: ApiSpec) => void;
+    onImported: (saved: SavedSpec) => void;
+    replacing?: ApiSpecSummary;
 }
 
 function IssueMessage({ issue }: { issue: ImportIssue }) {
@@ -64,17 +66,32 @@ function IssueMessage({ issue }: { issue: ImportIssue }) {
     return <p>{issue.message}</p>;
 }
 
-export function ImportDialog({ open, onOpenChange, onImported }: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, onImported, replacing }: ImportDialogProps) {
     const { t } = useTranslation();
     const contentRef = useRef<HTMLTextAreaElement>(null);
     const [name, setName] = useState('');
     const [content, setContent] = useState('');
-    const importSpec = useImportSpec((spec) => {
+    const importSpec = useImportSpec((saved) => {
         onOpenChange(false);
         setName('');
         setContent('');
-        onImported(spec);
-    });
+        onImported(saved);
+    }, replacing);
+    const text = replacing
+        ? {
+              title: t('importSpec.reimport.title', { name: replacing.name }),
+              description: t('importSpec.reimport.description'),
+              namePlaceholder: t('importSpec.reimport.namePlaceholder', { name: replacing.name }),
+              submit: t('importSpec.reimport.submit'),
+              pending: t('importSpec.reimport.importing'),
+          }
+        : {
+              title: t('importSpec.title'),
+              description: t('importSpec.description'),
+              namePlaceholder: t('importSpec.namePlaceholder'),
+              submit: t('importSpec.submit'),
+              pending: t('importSpec.importing'),
+          };
 
     const tooLarge = specBytes(content) > MAX_SPEC_BYTES;
     let issue: ImportIssue | null = null;
@@ -110,8 +127,8 @@ export function ImportDialog({ open, onOpenChange, onImported }: ImportDialogPro
             onOpenChange={onOpenChange}
         >
             <Dialog.Popup className="w-[640px]">
-                <Dialog.Title>{t('importSpec.title')}</Dialog.Title>
-                <Dialog.Description>{t('importSpec.description')}</Dialog.Description>
+                <Dialog.Title>{text.title}</Dialog.Title>
+                <Dialog.Description>{text.description}</Dialog.Description>
                 <form
                     className="flex min-h-0 flex-col gap-4"
                     onSubmit={(event) => {
@@ -123,7 +140,7 @@ export function ImportDialog({ open, onOpenChange, onImported }: ImportDialogPro
                         <Field.Label>{t('importSpec.name')}</Field.Label>
                         <Input
                             value={name}
-                            placeholder={t('importSpec.namePlaceholder')}
+                            placeholder={text.namePlaceholder}
                             onValueChange={(value) => setName(value)}
                         />
                     </Field.Root>
@@ -158,9 +175,7 @@ export function ImportDialog({ open, onOpenChange, onImported }: ImportDialogPro
                             className="font-bold"
                             disabled={tooLarge || content.trim() === '' || importSpec.isPending}
                         >
-                            {importSpec.isPending
-                                ? t('importSpec.importing')
-                                : t('importSpec.submit')}
+                            {importSpec.isPending ? text.pending : text.submit}
                         </Button>
                     </Dialog.Footer>
                 </form>

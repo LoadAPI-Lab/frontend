@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { z } from 'zod';
 
+import { ApiSpecResponseDtoEndpointsItemMethod } from '@/api/generated/model';
 import type { ApiSpec, ApiSpecSummary, Endpoint } from '@/features/collections/api';
 
 import { coreError } from './core-error';
@@ -251,7 +252,7 @@ function syntaxError(line: number, column: number, message: string) {
     );
 }
 
-function importSpec(content: string, name: string | undefined): Response {
+function rejectSpec(content: string): Response | null {
     const text = content.trim();
     if (text.startsWith('{')) {
         try {
@@ -285,7 +286,67 @@ function importSpec(content: string, name: string | undefined): Response {
             { status: 400 },
         );
     }
-    const title = /"?title"?\s*:\s*"?([^"\n,]+)"?/.exec(text)?.[1]?.trim() ?? 'Imported API';
+    return null;
+}
+
+const titleOf = (content: string) =>
+    /"?title"?\s*:\s*"?([^"\n,]+)"?/.exec(content)?.[1]?.trim() ?? 'Imported API';
+
+const methods = Object.values(ApiSpecResponseDtoEndpointsItemMethod);
+
+const operationSchema = z.object({
+    summary: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+});
+const pathsSchema = z.object({
+    paths: z.record(z.string(), z.record(z.string(), z.unknown())),
+});
+
+function endpointsOf(content: string): Endpoint[] | null {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(content);
+    } catch {
+        return null;
+    }
+    const doc = pathsSchema.safeParse(parsed);
+    if (!doc.success) {
+        return null;
+    }
+    return Object.entries(doc.data.paths).flatMap(([path, operations]) =>
+        Object.entries(operations).flatMap(([name, operation]) => {
+            const method = methods.find((candidate) => candidate === name.toUpperCase());
+            const details = operationSchema.safeParse(operation);
+            if (!method || !details.success) {
+                return [];
+            }
+            const { summary, tags = [] } = details.data;
+            return [endpoint({ method, path, tags, ...(summary ? { summary } : {}) })];
+        }),
+    );
+}
+
+function diff(previous: Endpoint[], next: Endpoint[]) {
+    const before = new Map(previous.map((item) => [item.key, item]));
+    const after = new Set(next.map((item) => item.key));
+    return {
+        added: next.filter((item) => !before.has(item.key)).map((item) => item.key),
+        changed: next
+            .filter((item) => {
+                const old = before.get(item.key);
+                return old !== undefined && old.summary !== item.summary;
+            })
+            .map((item) => item.key),
+        removed: previous.filter((item) => !after.has(item.key)).map((item) => item.key),
+    };
+}
+
+function importSpec(content: string, name: string | undefined): Response {
+    const rejected = rejectSpec(content);
+    if (rejected) {
+        return rejected;
+    }
+    const title = titleOf(content);
     const spec: ApiSpec = {
         ...testServerSpec,
         id: crypto.randomUUID(),
@@ -296,6 +357,29 @@ function importSpec(content: string, name: string | undefined): Response {
     mockApiSpecs.unshift(spec);
     return HttpResponse.json(spec, { status: 201 });
 }
+
+function replaceSpec(id: string, content: string, name: string | undefined): Response {
+    const index = mockApiSpecs.findIndex((candidate) => candidate.id === id);
+    const previous = mockApiSpecs[index];
+    if (!previous) {
+        return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+    }
+    const rejected = rejectSpec(content);
+    if (rejected) {
+        return rejected;
+    }
+    const endpoints = endpointsOf(content.trim()) ?? previous.endpoints;
+    const spec: ApiSpec = {
+        ...previous,
+        name: name ?? previous.name,
+        title: titleOf(content),
+        endpoints,
+    };
+    mockApiSpecs.splice(index, 1, spec);
+    return HttpResponse.json({ ...spec, changes: diff(previous.endpoints, endpoints) });
+}
+
+const bodySchema = z.object({ name: z.string().optional(), content: z.string().default('') });
 
 export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
     id: spec.id,
@@ -308,10 +392,31 @@ export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
 
 export const apiSpecHandlers = [
     http.post('*/v1/api-specs', async ({ request }) => {
-        const body = z
-            .object({ name: z.string().optional(), content: z.string().default('') })
-            .parse(await request.json());
+        const body = bodySchema.parse(await request.json());
         return importSpec(body.content, body.name);
+    }),
+    http.put('*/v1/api-specs/:id', async ({ params, request }) => {
+        const body = bodySchema.parse(await request.json());
+        return replaceSpec(String(params.id), body.content, body.name);
+    }),
+    http.patch('*/v1/api-specs/:id', async ({ params, request }) => {
+        const { name } = z.object({ name: z.string().min(1).max(255) }).parse(await request.json());
+        const index = mockApiSpecs.findIndex((candidate) => candidate.id === params.id);
+        const previous = mockApiSpecs[index];
+        if (!previous) {
+            return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+        }
+        const spec = { ...previous, name };
+        mockApiSpecs.splice(index, 1, spec);
+        return HttpResponse.json(toSummary(spec));
+    }),
+    http.delete('*/v1/api-specs/:id', ({ params }) => {
+        const index = mockApiSpecs.findIndex((candidate) => candidate.id === params.id);
+        if (index === -1) {
+            return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+        }
+        mockApiSpecs.splice(index, 1);
+        return new HttpResponse(null, { status: 204 });
     }),
     http.get('*/v1/api-specs', () => HttpResponse.json(mockApiSpecs.map(toSummary))),
     http.get('*/v1/api-specs/:id', ({ params }) => {

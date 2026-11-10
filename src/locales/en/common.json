@@ -50,7 +50,37 @@
         "deprecated": "Deprecated",
         "deprecatedShort": "dep.",
         "running": ", test running",
-        "openSpec": "Open {{name}}"
+        "openSpec": "Open {{name}}",
+        "actions": {
+            "label": "Actions for {{name}}",
+            "rename": "Rename…",
+            "reimport": "Re-import…",
+            "delete": "Delete…",
+            "deleteBlocked": "Can't delete while a test runs"
+        },
+        "delete": {
+            "title": "Delete {{name}}?",
+            "body_one": "Its {{count}} endpoint leaves the sidebar. Past runs stay in History.",
+            "body_other": "Its {{count}} endpoints leave the sidebar. Past runs stay in History.",
+            "cancel": "Cancel",
+            "confirm": "Delete",
+            "deleting": "Deleting…"
+        },
+        "deleted": "{{name}} deleted",
+        "rename": {
+            "title": "Rename {{name}}",
+            "label": "Name",
+            "tooLong": "Keep the name under {{max}} characters.",
+            "cancel": "Cancel",
+            "submit": "Rename",
+            "saving": "Renaming…"
+        },
+        "renamed": "Renamed to {{name}}",
+        "reimported": {
+            "title": "{{name}} re-imported",
+            "changes": "{{added}} added, {{changed}} changed, {{removed}} removed",
+            "noChanges": "No endpoint changes"
+        }
     },
     "stressTests": {
         "title": "Stress tests",
@@ -229,6 +259,7 @@
         "blocked": {
             "noTarget": "Pick a route from the collections to start a test.",
             "pathParam": "Fill in {{param}} in the URL to start.",
+            "maskedSecret": "Re-enter {{name}} to start. Past runs hide secret values.",
             "invalidBody": "Fix the request body to start.",
             "invalidConfig": "Fix the test settings to start.",
             "noServer": "Set a base URL for this collection to start."
@@ -297,6 +328,13 @@
         "cancel": "Cancel",
         "submit": "Import",
         "importing": "Importing…",
+        "reimport": {
+            "title": "Re-import {{name}}",
+            "description": "Paste the new version of this doc. Its endpoints are replaced; past runs stay in History.",
+            "namePlaceholder": "Keeps {{name}}",
+            "submit": "Re-import",
+            "importing": "Re-importing…"
+        },
         "errors": {
             "syntax": "This isn't valid YAML or JSON.",
             "syntaxAt": "Line {{line}}, column {{column}}: {{detail}}",
