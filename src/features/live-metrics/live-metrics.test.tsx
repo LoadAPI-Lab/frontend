@@ -81,11 +81,11 @@ describe('LiveChartCard', () => {
                 kind="latency"
                 snapshots={[]}
                 durationSeconds={60}
-                emptyMessage="Live results show here once the test starts."
+                emptyMessage="Live results appear here once the test starts."
             />,
         );
         expect(
-            screen.getByRole('figure', { name: 'Live results show here once the test starts.' }),
+            screen.getByRole('figure', { name: 'Live results appear here once the test starts.' }),
         ).toBeInTheDocument();
         expect(FakeUPlot.instances).toHaveLength(1);
 
@@ -95,7 +95,7 @@ describe('LiveChartCard', () => {
                 kind="latency"
                 snapshots={snapshots}
                 durationSeconds={60}
-                emptyMessage="Live results show here once the test starts."
+                emptyMessage="Live results appear here once the test starts."
             />,
         );
 

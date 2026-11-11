@@ -41,6 +41,7 @@ export const Route = createFileRoute('/_app/tests')({
             <StressTestPage
                 selection={selection}
                 missing={missing}
+                pending={Boolean(specId) && found && spec.isPending}
                 runId={run}
                 onRunStarted={(id) => {
                     if (specId && endpointKey) {

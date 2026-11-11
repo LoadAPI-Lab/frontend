@@ -94,12 +94,22 @@
             "batch": "Several endpoints at once",
             "roundRobin": "Endpoints take turns"
         },
-        "pickRoute": "Pick a route from the collections to start a test.",
+        "noEndpoint": {
+            "label": "No endpoint selected",
+            "import": {
+                "title": "Import an OpenAPI doc to start",
+                "body": "Its endpoints show up in the sidebar. Pick one to set up a load test."
+            },
+            "pick": {
+                "title": "Pick an endpoint from the sidebar",
+                "body": "You'll edit the request here, set the load above, then start the test and watch live results."
+            }
+        },
         "notFound": {
             "title": "This endpoint isn't in your collections",
             "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
         },
-        "resultsLater": "Live results show here once the test starts.",
+        "resultsLater": "Live results appear here once the test starts.",
         "finishedNoData": "Per-second data for this run is no longer available. Core keeps it for an hour after a run.",
         "failedNoData": "The run failed before it sent any per-second data."
     },
@@ -277,7 +287,7 @@
             "rampLongerThanDuration": "Can't be longer than the duration ({{max}}s)."
         },
         "blocked": {
-            "noTarget": "Pick a route from the collections to start a test.",
+            "noTarget": "Pick an endpoint from the sidebar first.",
             "pathParam": "Fill in {{param}} in the URL to start.",
             "maskedSecret": "Re-enter {{name}} to start. Past runs hide secret values.",
             "invalidBody": "Fix the request body to start.",
@@ -459,7 +469,6 @@
             "at": "{{second}}s",
             "point": "{{second}}s: {{values}}",
             "value": "{{label}} {{value}}",
-            "noData": "No data yet",
             "resetZoom": "Reset zoom",
             "zoomSubtitle": "{{subtitle}} · drag to zoom",
             "zoomedSubtitle": "{{subtitle}} · {{from}}s to {{to}}s",

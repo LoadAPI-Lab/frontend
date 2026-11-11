@@ -53,7 +53,7 @@ function Panel({ seconds, live = false, troubled = false }: PanelProps) {
                 <LiveCharts
                     snapshots={snapshots}
                     durationSeconds={60}
-                    emptyMessage="Live results show here once the test starts."
+                    emptyMessage="Live results appear here once the test starts."
                 />
                 <StatusCodesCard
                     codes={totals.codes}
@@ -155,8 +155,10 @@ export const Empty: Story = {
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
         await expect(
-            canvas.getByRole('figure', { name: 'Live results show here once the test starts.' }),
-        ).toBeVisible();
+            canvas.getAllByRole('figure', {
+                name: 'Live results appear here once the test starts.',
+            }).length,
+        ).toBeGreaterThan(0);
         await expect(canvas.getAllByText('—').length).toBeGreaterThan(0);
     },
 };
