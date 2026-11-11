@@ -1,7 +1,14 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import {
+    type CSSProperties,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/empty-state';
@@ -12,7 +19,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 
-import { type HistoryType, historyQuery, type RunListItem } from './history-api';
+import {
+    type HistoryStatus,
+    type HistoryType,
+    historyQuery,
+    type RunListItem,
+} from './history-api';
+import { filterRuns, groupByEndpoint, type EndpointGroup, endpointKey } from './history-filter';
 import { type DayGroup, dayGroup, formatRunTime, runPath } from './history-format';
 import { STATUS_TEXT } from './run-status';
 
@@ -128,6 +141,11 @@ type RowMotion = { className?: string; style?: CSSProperties };
 
 export interface RunsListProps {
     type: HistoryType | undefined;
+    status?: HistoryStatus;
+    query?: string;
+    grouped?: boolean;
+    filtered?: boolean;
+    onClearFilters?: () => void;
     selectedId: string | undefined;
     className?: string;
 }
@@ -139,7 +157,7 @@ function RunRow({
 }: {
     run: RunListItem;
     selected: boolean;
-    motion: RowMotion;
+    motion?: RowMotion;
 }) {
     const { t, i18n } = useTranslation();
     const format = (value: number) => formatNumber(value, 0, i18n.language);
@@ -168,8 +186,8 @@ function RunRow({
 
     return (
         <li
-            className={motion.className}
-            style={motion.style}
+            className={motion?.className}
+            style={motion?.style}
         >
             <Link
                 to="/history"
@@ -217,9 +235,129 @@ function RunRow({
     );
 }
 
-export function RunsList({ type, selectedId, className }: RunsListProps) {
+function EndpointGroupItem({
+    group,
+    open,
+    onToggle,
+    selectedId,
+}: {
+    group: EndpointGroup;
+    open: boolean;
+    onToggle: () => void;
+    selectedId: string | undefined;
+}) {
+    const { t, i18n } = useTranslation();
+    const id = `history-endpoint-${group.latest.id}`;
+    const { latest } = group;
+
+    return (
+        <li className="flex flex-col gap-1">
+            <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={`${id}-runs`}
+                onClick={onToggle}
+                className="hover:bg-surface-input focus-visible:ring-accent/40 flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left outline-none focus-visible:ring-2"
+            >
+                <ChevronRight
+                    aria-hidden
+                    className={cn(
+                        'text-fg-muted -ml-1 size-3 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
+                        open && 'rotate-90',
+                    )}
+                />
+                {group.method ? (
+                    <MethodBadge
+                        method={group.method}
+                        size="md"
+                        className="w-10 shrink-0"
+                    />
+                ) : (
+                    <span className="bg-surface-2 text-fg-muted flex h-6 w-10 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold">
+                        {t(`history.typeShort.${group.type}`)}
+                    </span>
+                )}
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-fg truncate font-mono text-base">
+                        {group.path ?? t(`history.types.${group.type}`)}
+                    </span>
+                    <span className="text-fg-muted truncate text-sm">
+                        {t('history.endpointGroup.meta', {
+                            count: group.runs.length,
+                            time: formatRunTime(latest.createdAt, i18n.language),
+                        })}
+                    </span>
+                </span>
+                <span
+                    className={cn(
+                        'shrink-0 text-xs font-semibold uppercase',
+                        STATUS_TEXT[latest.status],
+                    )}
+                >
+                    {t(`runStatus.${latest.status}`)}
+                </span>
+            </button>
+            {open ? (
+                <ul
+                    id={`${id}-runs`}
+                    className="border-border ml-4 flex flex-col gap-1 border-l pl-2"
+                >
+                    {group.runs.map((run) => (
+                        <RunRow
+                            key={run.id}
+                            run={run}
+                            selected={run.id === selectedId}
+                        />
+                    ))}
+                </ul>
+            ) : null}
+        </li>
+    );
+}
+
+function EndpointGroups({
+    runs,
+    selectedId,
+}: {
+    runs: readonly RunListItem[];
+    selectedId: string | undefined;
+}) {
+    const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(() => new Map());
+    const selected = runs.find((run) => run.id === selectedId);
+    const selectedKey = selected ? endpointKey(selected) : undefined;
+    const isOpen = (key: string) => toggled.get(key) ?? key === selectedKey;
+    const toggle = (key: string) => {
+        const open = !isOpen(key);
+        setToggled((current) => new Map(current).set(key, open));
+    };
+
+    return (
+        <ul className="flex flex-col gap-1">
+            {groupByEndpoint(runs).map((group) => (
+                <EndpointGroupItem
+                    key={group.key}
+                    group={group}
+                    open={isOpen(group.key)}
+                    onToggle={() => toggle(group.key)}
+                    selectedId={selectedId}
+                />
+            ))}
+        </ul>
+    );
+}
+
+export function RunsList({
+    type,
+    status,
+    query,
+    grouped = false,
+    filtered = false,
+    onClearFilters,
+    selectedId,
+    className,
+}: RunsListProps) {
     const { t } = useTranslation();
-    const history = useInfiniteQuery(historyQuery(type));
+    const history = useInfiniteQuery(historyQuery(type, status));
     const { collapsed, closing, setOpen, rowMotion } = useAnimatedGroups();
 
     if (history.isPending) {
@@ -250,7 +388,7 @@ export function RunsList({ type, selectedId, className }: RunsListProps) {
     }
 
     const items = history.data.pages.flatMap((page) => page.items);
-    if (items.length === 0) {
+    if (items.length === 0 && !filtered) {
         return (
             <EmptyState
                 size="compact"
@@ -269,63 +407,97 @@ export function RunsList({ type, selectedId, className }: RunsListProps) {
         );
     }
 
+    const visible = filterRuns(items, query);
     const groups = GROUP_ORDER.map((group) => ({
         group,
-        runs: items.filter((item) => dayGroup(item.createdAt) === group),
+        runs: visible.filter((item) => dayGroup(item.createdAt) === group),
     })).filter(({ runs }) => runs.length > 0);
+
+    let content: ReactNode;
+    if (visible.length === 0) {
+        content = (
+            <EmptyState
+                size="compact"
+                title={t('history.noMatch.title')}
+                description={
+                    history.hasNextPage ? t('history.noMatch.bodyMore') : t('history.noMatch.body')
+                }
+                action={
+                    onClearFilters ? (
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={onClearFilters}
+                        >
+                            {t('history.noMatch.action')}
+                        </Button>
+                    ) : null
+                }
+            />
+        );
+    } else if (grouped) {
+        content = (
+            <EndpointGroups
+                runs={visible}
+                selectedId={selectedId}
+            />
+        );
+    } else {
+        content = groups.map(({ group, runs }) => (
+            <section
+                key={group}
+                aria-labelledby={`history-group-${group}`}
+                className="flex flex-col gap-1"
+            >
+                <h3
+                    id={`history-group-${group}`}
+                    className="text-fg-muted tracking-label text-xs font-semibold uppercase"
+                >
+                    <button
+                        type="button"
+                        aria-expanded={!collapsed.has(group) && closing !== group}
+                        aria-controls={`history-group-${group}-runs`}
+                        onClick={() => setOpen(group)}
+                        className="hover:text-fg focus-visible:ring-accent/40 flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left uppercase outline-none focus-visible:ring-2"
+                    >
+                        <ChevronRight
+                            aria-hidden
+                            className={cn(
+                                'size-3 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
+                                !collapsed.has(group) && closing !== group && 'rotate-90',
+                            )}
+                        />
+                        {t(`history.groups.${group}`)}
+                        <span className="text-fg-faint ml-auto font-mono font-normal normal-case">
+                            {runs.length}
+                        </span>
+                    </button>
+                </h3>
+                {collapsed.has(group) ? null : (
+                    <ul
+                        id={`history-group-${group}-runs`}
+                        className="flex flex-col gap-1"
+                    >
+                        {runs.map((run, index) => (
+                            <RunRow
+                                key={run.id}
+                                run={run}
+                                selected={run.id === selectedId}
+                                motion={rowMotion(group, index)}
+                            />
+                        ))}
+                    </ul>
+                )}
+            </section>
+        ));
+    }
 
     return (
         <nav
             aria-label={t('history.listLabel')}
             className={cn('flex flex-col gap-4', className)}
         >
-            {groups.map(({ group, runs }) => (
-                <section
-                    key={group}
-                    aria-labelledby={`history-group-${group}`}
-                    className="flex flex-col gap-1"
-                >
-                    <h3
-                        id={`history-group-${group}`}
-                        className="text-fg-muted tracking-label text-xs font-semibold uppercase"
-                    >
-                        <button
-                            type="button"
-                            aria-expanded={!collapsed.has(group) && closing !== group}
-                            aria-controls={`history-group-${group}-runs`}
-                            onClick={() => setOpen(group)}
-                            className="hover:text-fg focus-visible:ring-accent/40 flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left uppercase outline-none focus-visible:ring-2"
-                        >
-                            <ChevronRight
-                                aria-hidden
-                                className={cn(
-                                    'size-3 shrink-0 transition-transform duration-150 motion-reduce:transition-none',
-                                    !collapsed.has(group) && closing !== group && 'rotate-90',
-                                )}
-                            />
-                            {t(`history.groups.${group}`)}
-                            <span className="text-fg-faint ml-auto font-mono font-normal normal-case">
-                                {runs.length}
-                            </span>
-                        </button>
-                    </h3>
-                    {collapsed.has(group) ? null : (
-                        <ul
-                            id={`history-group-${group}-runs`}
-                            className="flex flex-col gap-1"
-                        >
-                            {runs.map((run, index) => (
-                                <RunRow
-                                    key={run.id}
-                                    run={run}
-                                    selected={run.id === selectedId}
-                                    motion={rowMotion(group, index)}
-                                />
-                            ))}
-                        </ul>
-                    )}
-                </section>
-            ))}
+            {content}
             {history.hasNextPage ? (
                 <Button
                     variant="secondary"

@@ -7,6 +7,7 @@ import {
     type Extension,
     StateEffect,
     StateField,
+    type Text,
 } from '@codemirror/state';
 import {
     Decoration,
@@ -56,23 +57,31 @@ const errorLineMark = Decoration.line({ class: 'bg-danger/10' });
 
 const setErrorLine = StateEffect.define<number | null>();
 
-const errorLineField = StateField.define<DecorationSet>({
-    create: () => Decoration.none,
-    update: (decorations, transaction) => {
-        let next = decorations.map(transaction.changes);
+interface ErrorLineState {
+    line: number | null;
+    decorations: DecorationSet;
+}
+
+const errorDecorations = (doc: Text, line: number | null) =>
+    line !== null && line >= 1 && line <= doc.lines
+        ? Decoration.set([errorLineMark.range(doc.line(line).from)])
+        : Decoration.none;
+
+const errorLineField = StateField.define<ErrorLineState>({
+    create: () => ({ line: null, decorations: Decoration.none }),
+    update: (current, transaction) => {
+        let { line } = current;
         for (const effect of transaction.effects) {
             if (effect.is(setErrorLine)) {
-                const { doc } = transaction.state;
-                const line = effect.value;
-                next =
-                    line !== null && line >= 1 && line <= doc.lines
-                        ? Decoration.set([errorLineMark.range(doc.line(line).from)])
-                        : Decoration.none;
+                line = effect.value;
             }
         }
-        return next;
+        if (line === current.line && !transaction.docChanged) {
+            return current;
+        }
+        return { line, decorations: errorDecorations(transaction.state.doc, line) };
     },
-    provide: (field) => EditorView.decorations.from(field),
+    provide: (field) => EditorView.decorations.from(field, (state) => state.decorations),
 });
 
 export function CodeEditor({
@@ -162,7 +171,7 @@ export function CodeEditor({
 
     useEffect(() => {
         view.current?.dispatch({ effects: setErrorLine.of(errorLine) });
-    }, [errorLine, value]);
+    }, [errorLine]);
 
     useImperativeHandle(
         ref,

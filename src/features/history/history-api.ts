@@ -4,20 +4,42 @@ import {
     getTestRunsListQueryKey,
     testRunsList,
 } from '@/api/generated/endpoints/test-runs/test-runs';
-import type { ListTestRunsResponseDtoItemsItem } from '@/api/generated/model';
+import { type ListTestRunsResponseDtoItemsItem, TestRunsListStatus } from '@/api/generated/model';
 
 export const HISTORY_PAGE_SIZE = 30;
 export const HISTORY_TYPES = ['single', 'scenario'] as const;
 
+export const HISTORY_STATUSES = ['completed', 'stopped', 'failed', 'running'] as const;
+
 export type HistoryType = (typeof HISTORY_TYPES)[number];
+export type HistoryStatus = (typeof HISTORY_STATUSES)[number];
 export type RunListItem = ListTestRunsResponseDtoItemsItem;
 
-export const historyQuery = (type: HistoryType | undefined) =>
+const API_STATUS: Record<HistoryStatus, TestRunsListStatus> = {
+    completed: TestRunsListStatus.COMPLETED,
+    stopped: TestRunsListStatus.STOPPED,
+    failed: TestRunsListStatus.FAILED,
+    running: TestRunsListStatus.RUNNING,
+};
+
+export const historyQuery = (type: HistoryType | undefined, status?: HistoryStatus) =>
     infiniteQueryOptions({
-        queryKey: [...getTestRunsListQueryKey({ limit: HISTORY_PAGE_SIZE, type }), 'pages'],
+        queryKey: [
+            ...getTestRunsListQueryKey({
+                limit: HISTORY_PAGE_SIZE,
+                type,
+                status: status ? API_STATUS[status] : undefined,
+            }),
+            'pages',
+        ],
         queryFn: ({ pageParam, signal }) =>
             testRunsList(
-                { limit: HISTORY_PAGE_SIZE, type, ...(pageParam ? { cursor: pageParam } : {}) },
+                {
+                    limit: HISTORY_PAGE_SIZE,
+                    type,
+                    ...(status ? { status: API_STATUS[status] } : {}),
+                    ...(pageParam ? { cursor: pageParam } : {}),
+                },
                 { signal },
             ),
         initialPageParam: '',

@@ -6,27 +6,43 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Tabs } from '@/components/ui/tabs';
 
-import { HISTORY_TYPES, type HistoryType, historyQuery } from './history-api';
+import { HISTORY_TYPES, type HistoryStatus, type HistoryType, historyQuery } from './history-api';
+import { filterRuns, normalizeQuery } from './history-filter';
+import { HistoryToolbar } from './history-toolbar';
 import { RunDetail } from './run-detail';
 import { RunsList } from './runs-list';
 
 const ALL = 'all';
 
+export interface HistoryFilters {
+    type?: HistoryType;
+    status?: HistoryStatus;
+    query?: string;
+    grouped?: boolean;
+}
+
 export interface HistoryPageProps {
-    type: HistoryType | undefined;
     runId: string | undefined;
-    onTypeChange: (type: HistoryType | undefined) => void;
+    filters: HistoryFilters;
+    onFiltersChange: (filters: HistoryFilters, options: { replace: boolean }) => void;
     onRunChange: (runId: string) => void;
 }
 
 const isHistoryType = (value: unknown): value is HistoryType =>
     HISTORY_TYPES.some((type) => type === value);
 
-export function HistoryPage({ type, runId, onTypeChange, onRunChange }: HistoryPageProps) {
+export function HistoryPage({ runId, filters, onFiltersChange, onRunChange }: HistoryPageProps) {
     const { t } = useTranslation();
-    const history = useInfiniteQuery(historyQuery(type));
+    const { type, status, query, grouped = true } = filters;
+    const history = useInfiniteQuery(historyQuery(type, status));
     const items = history.data?.pages.flatMap((page) => page.items) ?? [];
-    const firstId = items[0]?.id;
+    const visible = filterRuns(items, query);
+    const searching = normalizeQuery(query) !== '';
+    const filtered = type !== undefined || status !== undefined || searching;
+    const firstId = visible[0]?.id;
+    const changeFilters = (patch: HistoryFilters, replace = false) => {
+        onFiltersChange({ ...filters, ...patch }, { replace });
+    };
 
     useEffect(() => {
         if (!runId && firstId) {
@@ -46,16 +62,16 @@ export function HistoryPage({ type, runId, onTypeChange, onRunChange }: HistoryP
                         <h2 className="text-fg text-xl font-bold">{t('history.runs')}</h2>
                         {items.length > 0 ? (
                             <span className="text-fg-muted font-mono text-sm">
-                                {history.hasNextPage
-                                    ? t('history.loadedCount', { count: items.length })
-                                    : t('history.totalCount', { count: items.length })}
+                                {history.hasNextPage || searching
+                                    ? t('history.showing', { count: visible.length })
+                                    : t('history.totalCount', { count: visible.length })}
                             </span>
                         ) : null}
                     </div>
                     <Tabs.Root
                         value={type ?? ALL}
                         onValueChange={(value) =>
-                            onTypeChange(isHistoryType(value) ? value : undefined)
+                            changeFilters({ type: isHistoryType(value) ? value : undefined })
                         }
                     >
                         <Tabs.List
@@ -73,8 +89,21 @@ export function HistoryPage({ type, runId, onTypeChange, onRunChange }: HistoryP
                             ))}
                         </Tabs.List>
                     </Tabs.Root>
+                    <HistoryToolbar
+                        query={query}
+                        status={status}
+                        grouped={grouped}
+                        onQueryChange={(next) => changeFilters({ query: next || undefined }, true)}
+                        onStatusChange={(next) => changeFilters({ status: next ?? undefined })}
+                        onGroupedChange={(next) => changeFilters({ grouped: next })}
+                    />
                     <RunsList
                         type={type}
+                        status={status}
+                        query={query}
+                        grouped={grouped}
+                        filtered={filtered}
+                        onClearFilters={() => onFiltersChange({ grouped }, { replace: false })}
                         selectedId={runId}
                     />
                 </aside>
