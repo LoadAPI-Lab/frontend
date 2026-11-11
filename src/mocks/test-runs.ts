@@ -18,8 +18,11 @@ interface MockRun {
 
 const runs = new Map<string, MockRun>();
 
+const idempotencyKeys = new Map<string, { fingerprint: string; runId: string }>();
+
 export function resetMockTestRuns() {
     runs.clear();
+    idempotencyKeys.clear();
 }
 
 const startSchema = z.object({
@@ -178,16 +181,62 @@ function runBody(run: MockRun) {
     ).toISOString();
     return status === 'FAILED'
         ? { ...base, finishedAt, reason: MOCK_FAILURE_REASON }
-        : { ...base, finishedAt, result: mockResult(run) };
+        : { ...base, finishedAt };
+}
+
+function listItem(run: MockRun) {
+    const result =
+        statusOf(run) === 'COMPLETED' || statusOf(run) === 'STOPPED' ? mockResult(run) : null;
+    return {
+        ...runBody(run),
+        request: { method: run.method, url: run.url },
+        targetRps: run.targetRps,
+        durationSeconds: run.durationSeconds,
+        ...(result?.targets[0]?.responseTime
+            ? { p95Ms: result.targets[0].responseTime.p95Ms }
+            : {}),
+    };
+}
+
+function runDetail(run: MockRun) {
+    const status = statusOf(run);
+    return {
+        ...runBody(run),
+        config: {
+            target: { method: run.method, url: run.url },
+            targetRps: run.targetRps,
+            durationSeconds: run.durationSeconds,
+            rampUpSeconds: run.rampUpSeconds,
+        },
+        ...(status === 'COMPLETED' || status === 'STOPPED' ? { result: mockResult(run) } : {}),
+    };
 }
 
 const notFound = () => coreError(404, 'TEST_RUN.NOT_FOUND', 'Test run not found');
 
 export const testRunHandlers = [
     http.post('*/v1/test-runs', async ({ request }) => {
-        const parsed = startSchema.safeParse(await request.json());
+        const raw: unknown = await request.json();
+        const parsed = startSchema.safeParse(raw);
         if (!parsed.success) {
             return coreError(400, 'VALIDATION.FAILED', 'The test configuration is invalid');
+        }
+        const key = request.headers.get('Idempotency-Key');
+        const fingerprint = JSON.stringify(raw);
+        const known = key ? idempotencyKeys.get(key) : undefined;
+        const knownRun = known ? runs.get(known.runId) : undefined;
+        if (known && known.fingerprint !== fingerprint) {
+            return coreError(
+                422,
+                'TEST_RUN.IDEMPOTENCY_KEY_REUSED',
+                'This idempotency key was already used for a different test config',
+            );
+        }
+        if (knownRun) {
+            return HttpResponse.json(
+                { id: knownRun.id, status: statusOf(knownRun) },
+                { status: 201 },
+            );
         }
         const active = [...runs.values()].some((run) => statusOf(run) === 'RUNNING');
         if (active) {
@@ -209,16 +258,31 @@ export const testRunHandlers = [
             stoppedAt: null,
         };
         runs.set(run.id, run);
-        return HttpResponse.json({ id: run.id, status: 'RUNNING' }, { status: 201 });
+        if (key) {
+            idempotencyKeys.set(key, { fingerprint, runId: run.id });
+        }
+        return HttpResponse.json({ id: run.id, status: 'PENDING' }, { status: 201 });
     }),
-    http.get('*/v1/test-runs', () =>
-        HttpResponse.json({
-            items: [...runs.values()].toReversed().map(runBody),
-        }),
-    ),
+    http.get('*/v1/test-runs', ({ request }) => {
+        const search = new URL(request.url).searchParams;
+        const status = search.get('status');
+        const type = search.get('type');
+        const limit = Number(search.get('limit') ?? 20);
+        const offset = Number(search.get('cursor') ?? 0);
+        const matching = [...runs.values()]
+            .toReversed()
+            .map(listItem)
+            .filter((run) => (!status || run.status === status) && (!type || run.type === type));
+        const items = matching.slice(offset, offset + limit);
+        const next = offset + limit;
+        return HttpResponse.json({
+            items,
+            ...(next < matching.length ? { nextCursor: String(next) } : {}),
+        });
+    }),
     http.get('*/v1/test-runs/:id', ({ params }) => {
         const run = runs.get(String(params.id));
-        return run ? HttpResponse.json(runBody(run)) : notFound();
+        return run ? HttpResponse.json(runDetail(run)) : notFound();
     }),
     http.post('*/v1/test-runs/:id/stop', ({ params }) => {
         const run = runs.get(String(params.id));
@@ -264,11 +328,23 @@ export const liveStreamHandlers = () => [
                 });
                 return status;
             };
-            if (sendStatus() !== 'RUNNING') {
+            const sendHistory = (upTo: number) => {
+                for (let past = 1; past <= upTo; past += 1) {
+                    client.send({
+                        event: 'snapshot',
+                        data: JSON.stringify(mockSnapshot(run, past)),
+                    });
+                }
+            };
+            if (statusOf(run) !== 'RUNNING') {
+                sendHistory(finishedSecond(run));
+                sendStatus();
                 client.close();
                 return;
             }
+            sendStatus();
             let second = elapsedOf(run);
+            sendHistory(Math.min(second, lastSecond(run)));
             const timer = setInterval(() => {
                 second += 1;
                 if (run.stoppedAt === null && second <= lastSecond(run)) {

@@ -40,7 +40,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "timestamp": "2026-11-09T09:19:17.857Z",
                                             "service": "core"
                                         }
                                     }
@@ -73,7 +73,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "timestamp": "2026-11-09T09:19:17.857Z",
                                             "service": "core"
                                         }
                                     }
@@ -106,7 +106,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:31.968Z",
+                                            "timestamp": "2026-11-09T09:19:17.856Z",
                                             "service": "core"
                                         }
                                     }
@@ -122,9 +122,22 @@
         },
         "/v1/test-runs": {
             "post": {
-                "description": "Validates the config, stores a PENDING run and enqueues the job.",
+                "description": "Validates the config, stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.",
                 "operationId": "TestRunsController_start_v1",
-                "parameters": [],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "Client-generated key that makes the start safe to retry. A repeated request with the same key and the same config returns the run created by the first one instead of starting a new run; the same key with a different config is rejected with 422. Keys are scoped per user. Omit it to always start a new run.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "pattern": "^[\\x21-\\x7E]+$"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -135,7 +148,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "The test run was created and enqueued",
+                        "description": "The test run was created and enqueued, or the run previously started with the same Idempotency-Key",
                         "content": {
                             "application/json": {
                                 "schema": { "$ref": "#/components/schemas/StartTestRunResponseDto" }
@@ -167,7 +180,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -200,7 +213,40 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "This idempotency key was already used for a different test config",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "TEST_RUN.IDEMPOTENCY_KEY_REUSED",
+                                            "message": "This idempotency key was already used for a different test config",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -233,7 +279,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -266,7 +312,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -280,7 +326,7 @@
                 "tags": ["Test runs"]
             },
             "get": {
-                "description": "Returns the run history, newest first, with cursor pagination. Configs and results are never included.",
+                "description": "Returns the run history, newest first, with cursor pagination. Each item is a short row: status, timestamps and failure reason; single runs add the tested request, targetRps, durationSeconds and the response time p95Ms; scenario runs add stepsCount and okCount. Secret URL query parameter values are masked. Configs and results are never included: load them with GET /v1/test-runs/:id.",
                 "operationId": "TestRunsController_list_v1",
                 "parameters": [
                     {
@@ -352,7 +398,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -385,7 +431,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -418,7 +464,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -434,7 +480,7 @@
         },
         "/v1/test-runs/{id}": {
             "get": {
-                "description": "Returns the run status and final result. The config is never included.",
+                "description": "Returns the run details: status, timestamps, failure reason, the stored config and the typed final result whose shape follows the run type. Secret header values and URL query parameter values are masked in the config and in the result URLs.",
                 "operationId": "TestRunsController_get_v1",
                 "parameters": [
                     {
@@ -483,7 +529,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -516,7 +562,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -549,7 +595,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -582,7 +628,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -593,6 +639,248 @@
                 },
                 "security": [{ "access_token": [] }],
                 "summary": "Get a test run",
+                "tags": ["Test runs"]
+            }
+        },
+        "/v1/test-runs/{id}/rerun": {
+            "post": {
+                "description": "Starts a new run with the stored config of the given run, whatever its status: stores a PENDING run and enqueues the job. With an Idempotency-Key that the user already used for the same config, returns that run instead of starting a new one.",
+                "operationId": "TestRunsController_rerun_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Test run id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "Client-generated key that makes the start safe to retry. A repeated request with the same key and the same config returns the run created by the first one instead of starting a new run; the same key with a different config is rejected with 422. Keys are scoped per user. Omit it to always start a new run.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "pattern": "^[\\x21-\\x7E]+$"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The new test run was created and enqueued, or the run previously started with the same Idempotency-Key",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/StartTestRunResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Test run not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "NOT_FOUND",
+                                            "message": "Test run not found",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "This idempotency key was already used for a different test config",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "TEST_RUN.IDEMPOTENCY_KEY_REUSED",
+                                            "message": "This idempotency key was already used for a different test config",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Too many test runs are in progress, or the test job could not be enqueued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "SERVICE_UNAVAILABLE",
+                                            "message": "Too many test runs are in progress, or the test job could not be enqueued",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Re-run a test run",
                 "tags": ["Test runs"]
             }
         },
@@ -647,7 +935,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -680,7 +968,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -713,7 +1001,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -746,7 +1034,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -779,7 +1067,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -836,7 +1124,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -869,7 +1157,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -902,7 +1190,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.980Z",
                                             "service": "core"
                                         }
                                     }
@@ -935,7 +1223,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.031Z",
+                                            "timestamp": "2026-11-09T09:19:17.981Z",
                                             "service": "core"
                                         }
                                     }
@@ -988,7 +1276,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "timestamp": "2026-11-09T09:19:17.950Z",
                                             "service": "core"
                                         }
                                     }
@@ -1021,7 +1309,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "timestamp": "2026-11-09T09:19:17.950Z",
                                             "service": "core"
                                         }
                                     }
@@ -1054,7 +1342,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.007Z",
+                                            "timestamp": "2026-11-09T09:19:17.950Z",
                                             "service": "core"
                                         }
                                     }
@@ -1100,7 +1388,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1133,7 +1421,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1166,7 +1454,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1212,7 +1500,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1245,7 +1533,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1278,7 +1566,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.020Z",
+                                            "timestamp": "2026-11-09T09:19:17.963Z",
                                             "service": "core"
                                         }
                                     }
@@ -1333,7 +1621,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1366,7 +1654,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1426,7 +1714,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1459,7 +1747,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1519,7 +1807,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1552,7 +1840,7 @@
                                                 "method": "POST",
                                                 "ip": "127.0.0.1"
                                             },
-                                            "timestamp": "2026-11-04T23:23:32.022Z",
+                                            "timestamp": "2026-11-09T09:19:17.965Z",
                                             "service": "core"
                                         }
                                     }
@@ -1564,6 +1852,962 @@
                 "security": [{ "access_token": [] }],
                 "summary": "Finish OAuth sign-in",
                 "tags": ["OAuth"]
+            }
+        },
+        "/v1/api-specs": {
+            "post": {
+                "description": "Validates an OpenAPI 3.0 or 3.1 document given as YAML or JSON text, resolves internal $ref values, normalizes it into servers and endpoints and stores it for the current user. External references are never resolved. The source text is never returned.",
+                "operationId": "ApiSpecsController_import_v1",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/ImportApiSpecDto" }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The spec was imported",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ApiSpecResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION_FAILED: the request body failed validation. API_SPEC.INVALID_SYNTAX: The document is not valid YAML or JSON, one detail with line and column. API_SPEC.UNSUPPORTED_VERSION: Only OpenAPI 3.0.x and 3.1.x documents are supported. API_SPEC.INVALID: The document is not a valid OpenAPI document, one detail per problem with a dot path; external $ref values are rejected.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.INVALID_SYNTAX",
+                                            "message": "VALIDATION_FAILED: the request body failed validation. API_SPEC.INVALID_SYNTAX: The document is not valid YAML or JSON, one detail with line and column. API_SPEC.UNSUPPORTED_VERSION: Only OpenAPI 3.0.x and 3.1.x documents are supported. API_SPEC.INVALID: The document is not a valid OpenAPI document, one detail per problem with a dot path; external $ref values are rejected.",
+                                            "retryable": false
+                                        },
+                                        "details": [
+                                            {
+                                                "field": "content",
+                                                "message": "Nested mappings are not allowed in compact mappings",
+                                                "code": "yaml_syntax",
+                                                "line": 3,
+                                                "column": 10
+                                            }
+                                        ],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.939Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "API_SPEC.TOO_LARGE: The document exceeds the maximum size of 5 MiB. Request bodies above 6 MiB are rejected before parsing with status 413 and code HTTP_EXCEPTION.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.TOO_LARGE",
+                                            "message": "API_SPEC.TOO_LARGE: The document exceeds the maximum size of 5 MiB. Request bodies above 6 MiB are rejected before parsing with status 413 and code HTTP_EXCEPTION.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.939Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Import an OpenAPI document",
+                "tags": ["API specs"]
+            },
+            "get": {
+                "description": "Returns summaries of the specs of the current user, newest first, without pagination.",
+                "operationId": "ApiSpecsController_list_v1",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "The spec summaries",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ApiSpecListResponseDto" }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "List API specs",
+                "tags": ["API specs"]
+            }
+        },
+        "/v1/api-specs/{id}": {
+            "get": {
+                "description": "Returns the normalized spec with servers and endpoints. The source text is never included.",
+                "operationId": "ApiSpecsController_get_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "API spec id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The spec",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ApiSpecResponseDto" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.NOT_FOUND",
+                                            "message": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Get an API spec",
+                "tags": ["API specs"]
+            },
+            "patch": {
+                "description": "Changes the display name and returns the spec summary.",
+                "operationId": "ApiSpecsController_rename_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "API spec id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/RenameApiSpecDto" }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The renamed spec",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSpecSummaryResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.NOT_FOUND",
+                                            "message": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Rename an API spec",
+                "tags": ["API specs"]
+            },
+            "put": {
+                "description": "Validates and normalizes a new OpenAPI 3.0 or 3.1 document with the same rules as import and replaces the stored document, servers and endpoints. The id and import time stay the same; the display name changes only when given. On any error nothing is saved and the previous version stays. Returns the spec with a summary of added, changed and removed endpoints; an endpoint counts as changed when its parameters, request body or responses differ. The source text is never returned.",
+                "operationId": "ApiSpecsController_updateContent_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "API spec id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/UpdateApiSpecContentDto" }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The spec content was replaced",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdatedApiSpecResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "VALIDATION_FAILED: the request body failed validation. API_SPEC.INVALID_SYNTAX: The document is not valid YAML or JSON, one detail with line and column. API_SPEC.UNSUPPORTED_VERSION: Only OpenAPI 3.0.x and 3.1.x documents are supported. API_SPEC.INVALID: The document is not a valid OpenAPI document, one detail per problem with a dot path; external $ref values are rejected.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.INVALID_SYNTAX",
+                                            "message": "VALIDATION_FAILED: the request body failed validation. API_SPEC.INVALID_SYNTAX: The document is not valid YAML or JSON, one detail with line and column. API_SPEC.UNSUPPORTED_VERSION: Only OpenAPI 3.0.x and 3.1.x documents are supported. API_SPEC.INVALID: The document is not a valid OpenAPI document, one detail per problem with a dot path; external $ref values are rejected.",
+                                            "retryable": false
+                                        },
+                                        "details": [
+                                            {
+                                                "field": "content",
+                                                "message": "Nested mappings are not allowed in compact mappings",
+                                                "code": "yaml_syntax",
+                                                "line": 3,
+                                                "column": 10
+                                            }
+                                        ],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.NOT_FOUND",
+                                            "message": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "API_SPEC.TOO_LARGE: The document exceeds the maximum size of 5 MiB. Request bodies above 6 MiB are rejected before parsing with status 413 and code HTTP_EXCEPTION.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.TOO_LARGE",
+                                            "message": "API_SPEC.TOO_LARGE: The document exceeds the maximum size of 5 MiB. Request bodies above 6 MiB are rejected before parsing with status 413 and code HTTP_EXCEPTION.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Replace the content of an API spec",
+                "tags": ["API specs"]
+            },
+            "delete": {
+                "description": "Deletes the spec of the current user.",
+                "operationId": "ApiSpecsController_delete_v1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "API spec id",
+                        "schema": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": { "description": "The spec was deleted" },
+                    "400": {
+                        "description": "Input data failed validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "VALIDATION_FAILED",
+                                            "message": "Input data failed validation",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "AUTH.UNAUTHENTICATED",
+                                            "message": "Authentication is required",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "API_SPEC.NOT_FOUND",
+                                            "message": "API_SPEC.NOT_FOUND: API spec not found. Also returned for specs of other users.",
+                                            "retryable": false
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "A critical server-side error occurred",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/GlobalErrorResponse_Output"
+                                        }
+                                    ],
+                                    "example": {
+                                        "success": false,
+                                        "error": {
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "message": "A critical server-side error occurred",
+                                            "retryable": true
+                                        },
+                                        "details": [],
+                                        "meta": {
+                                            "request": {
+                                                "requestId": "req-clj1abc230000jk78",
+                                                "path": "/v1/...",
+                                                "method": "POST",
+                                                "ip": "127.0.0.1"
+                                            },
+                                            "timestamp": "2026-11-09T09:19:17.940Z",
+                                            "service": "core"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "access_token": [] }],
+                "summary": "Delete an API spec",
+                "tags": ["API specs"]
             }
         }
     },
@@ -1770,6 +3014,58 @@
                                 "reason": {
                                     "description": "Failure reason, present on FAILED runs",
                                     "type": "string"
+                                },
+                                "request": {
+                                    "type": "object",
+                                    "properties": {
+                                        "method": {
+                                            "type": "string",
+                                            "enum": [
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "PATCH",
+                                                "DELETE",
+                                                "HEAD",
+                                                "OPTIONS"
+                                            ],
+                                            "description": "HTTP method"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "description": "URL template as entered by the user, secret query parameter values are masked as ***"
+                                        }
+                                    },
+                                    "required": ["method", "url"],
+                                    "description": "Tested request, present on single runs"
+                                },
+                                "targetRps": {
+                                    "description": "Target RPS, present on single runs",
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                },
+                                "durationSeconds": {
+                                    "description": "Test duration in seconds, present on single runs",
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                },
+                                "p95Ms": {
+                                    "description": "95th percentile of the response time in ms, present on single runs whose result has it",
+                                    "type": "number"
+                                },
+                                "stepsCount": {
+                                    "description": "Number of steps, present on scenario runs",
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                },
+                                "okCount": {
+                                    "description": "Steps that succeeded, present on scenario runs with a result",
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
                                 }
                             },
                             "required": ["id", "type", "status", "createdAt"]
@@ -1824,9 +3120,380 @@
                         "description": "Failure reason, present on FAILED runs",
                         "type": "string"
                     },
-                    "result": { "description": "Final result, absent on FAILED runs" }
+                    "config": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "target": {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "GET",
+                                                    "POST",
+                                                    "PUT",
+                                                    "PATCH",
+                                                    "DELETE",
+                                                    "HEAD",
+                                                    "OPTIONS"
+                                                ],
+                                                "description": "HTTP method"
+                                            },
+                                            "url": {
+                                                "type": "string",
+                                                "description": "URL template, secret query parameter values are masked as ***"
+                                            },
+                                            "headers": {
+                                                "description": "Request headers, secret header values are masked",
+                                                "type": "object",
+                                                "additionalProperties": { "type": "string" }
+                                            },
+                                            "body": {
+                                                "description": "Request body template",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["method", "url"],
+                                        "description": "Tested request"
+                                    },
+                                    "targetRps": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                        "description": "Target RPS after ramp-up"
+                                    },
+                                    "durationSeconds": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                        "description": "Test duration in seconds"
+                                    },
+                                    "rampUpSeconds": {
+                                        "description": "Ramp-up duration in seconds",
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                    }
+                                },
+                                "required": ["target", "targetRps", "durationSeconds"],
+                                "description": "Single test config"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "steps": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "target": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "method": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE",
+                                                                "HEAD",
+                                                                "OPTIONS"
+                                                            ],
+                                                            "description": "HTTP method"
+                                                        },
+                                                        "url": {
+                                                            "type": "string",
+                                                            "description": "URL template, secret query parameter values are masked as ***"
+                                                        },
+                                                        "headers": {
+                                                            "description": "Request headers, secret header values are masked",
+                                                            "type": "object",
+                                                            "additionalProperties": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "body": {
+                                                            "description": "Request body template",
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": ["method", "url"],
+                                                    "description": "Tested request"
+                                                },
+                                                "extract": {
+                                                    "description": "Variables extracted from the response",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Variable name"
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "description": "Path in the response body"
+                                                            }
+                                                        },
+                                                        "required": ["name", "path"]
+                                                    }
+                                                }
+                                            },
+                                            "required": ["target"]
+                                        },
+                                        "description": "Scenario steps in execution order"
+                                    }
+                                },
+                                "required": ["steps"],
+                                "description": "Scenario test config"
+                            }
+                        ],
+                        "description": "Stored test config. Its shape follows `type`. Secret values are masked: secret header values become *** (Authorization keeps its scheme, e.g. \"Bearer ***\") and secret URL query parameter values become ***. Template placeholders such as {{accessToken}} are kept. Bodies are returned as stored"
+                    },
+                    "result": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "durationMs": {
+                                        "type": "number",
+                                        "description": "Sending duration in ms"
+                                    },
+                                    "targetRps": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                        "description": "Target RPS after ramp-up"
+                                    },
+                                    "avgRps": {
+                                        "type": "number",
+                                        "description": "Average achieved RPS"
+                                    },
+                                    "targets": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "method": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "GET",
+                                                        "POST",
+                                                        "PUT",
+                                                        "PATCH",
+                                                        "DELETE",
+                                                        "HEAD",
+                                                        "OPTIONS"
+                                                    ],
+                                                    "description": "HTTP method"
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "description": "URL as entered by the user, secret query parameter values are masked as ***"
+                                                },
+                                                "totalRequests": {
+                                                    "type": "integer",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991,
+                                                    "description": "Requests sent"
+                                                },
+                                                "successCount": {
+                                                    "type": "integer",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991,
+                                                    "description": "Responses with status < 400"
+                                                },
+                                                "errorCount": {
+                                                    "type": "integer",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991,
+                                                    "description": "Responses with status >= 400 plus network errors"
+                                                },
+                                                "errorRate": {
+                                                    "type": "number",
+                                                    "description": "errorCount / totalRequests, 0..1"
+                                                },
+                                                "lateCount": {
+                                                    "type": "integer",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991,
+                                                    "description": "Requests sent later than planned beyond the threshold"
+                                                },
+                                                "responseTime": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "p50Ms": {
+                                                            "type": "number",
+                                                            "description": "50th percentile in ms"
+                                                        },
+                                                        "p95Ms": {
+                                                            "type": "number",
+                                                            "description": "95th percentile in ms"
+                                                        },
+                                                        "p99Ms": {
+                                                            "type": "number",
+                                                            "description": "99th percentile in ms"
+                                                        }
+                                                    },
+                                                    "required": ["p50Ms", "p95Ms", "p99Ms"],
+                                                    "description": "Time from the planned send moment, only successful responses, absent without them"
+                                                },
+                                                "serviceTime": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "p50Ms": {
+                                                            "type": "number",
+                                                            "description": "50th percentile in ms"
+                                                        },
+                                                        "p95Ms": {
+                                                            "type": "number",
+                                                            "description": "95th percentile in ms"
+                                                        },
+                                                        "p99Ms": {
+                                                            "type": "number",
+                                                            "description": "99th percentile in ms"
+                                                        }
+                                                    },
+                                                    "required": ["p50Ms", "p95Ms", "p99Ms"],
+                                                    "description": "Time from the actual send moment, only successful responses, absent without them"
+                                                },
+                                                "statusCodes": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer",
+                                                        "minimum": -9007199254740991,
+                                                        "maximum": 9007199254740991
+                                                    },
+                                                    "description": "HTTP responses by status code, absent without responses"
+                                                },
+                                                "errors": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer",
+                                                        "minimum": -9007199254740991,
+                                                        "maximum": 9007199254740991
+                                                    },
+                                                    "description": "Network errors without an HTTP response by kind, absent without them"
+                                                }
+                                            },
+                                            "required": [
+                                                "method",
+                                                "url",
+                                                "totalRequests",
+                                                "successCount",
+                                                "errorCount",
+                                                "errorRate",
+                                                "lateCount"
+                                            ]
+                                        },
+                                        "description": "Metrics per tested request"
+                                    }
+                                },
+                                "required": ["durationMs", "targetRps", "avgRps", "targets"],
+                                "description": "Load test result"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "summary": {
+                                        "type": "object",
+                                        "properties": {
+                                            "totalSteps": {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991,
+                                                "description": "Steps in the scenario"
+                                            },
+                                            "okCount": {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991,
+                                                "description": "Steps that succeeded"
+                                            },
+                                            "failedCount": {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991,
+                                                "description": "Steps that failed"
+                                            },
+                                            "skippedCount": {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991,
+                                                "description": "Steps that were skipped"
+                                            },
+                                            "durationMs": {
+                                                "type": "number",
+                                                "description": "Scenario duration in ms"
+                                            }
+                                        },
+                                        "required": [
+                                            "totalSteps",
+                                            "okCount",
+                                            "failedCount",
+                                            "skippedCount",
+                                            "durationMs"
+                                        ],
+                                        "description": "Scenario totals"
+                                    },
+                                    "steps": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "method": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "GET",
+                                                        "POST",
+                                                        "PUT",
+                                                        "PATCH",
+                                                        "DELETE",
+                                                        "HEAD",
+                                                        "OPTIONS"
+                                                    ],
+                                                    "description": "HTTP method"
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "description": "URL as entered by the user, secret query parameter values are masked as ***"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": ["OK", "FAILED", "SKIPPED"],
+                                                    "description": "OK: status < 400 and extraction succeeded; FAILED: network error, status >= 400 or extraction failed; SKIPPED: not sent"
+                                                },
+                                                "statusCode": {
+                                                    "description": "HTTP status code, absent without a response",
+                                                    "type": "integer",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                },
+                                                "durationMs": {
+                                                    "description": "Step duration in ms, absent on skipped steps",
+                                                    "type": "number"
+                                                },
+                                                "description": {
+                                                    "description": "Why the step failed or was skipped",
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": ["method", "url", "status"]
+                                        },
+                                        "description": "Step results, one per config step in execution order"
+                                    }
+                                },
+                                "required": ["summary", "steps"],
+                                "description": "Scenario result"
+                            }
+                        ],
+                        "description": "Final result, present on COMPLETED and STOPPED runs when it matches the stored shape. Its shape follows `type`: single gives the load test result, scenario gives the scenario result. Secret URL query parameter values are masked as ***"
+                    }
                 },
-                "required": ["id", "type", "status", "createdAt"]
+                "required": ["id", "type", "status", "createdAt", "config"]
             },
             "StopTestRunResponseDto": {
                 "type": "object",
@@ -1893,10 +3560,587 @@
                 },
                 "description": "OAuth providers configured on the server"
             },
+            "ImportApiSpecDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Display name of the spec, defaults to the document title cut to 255 characters",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "OpenAPI 3.0 or 3.1 document as YAML or JSON text, up to 5 MiB"
+                    }
+                },
+                "required": ["content"]
+            },
+            "ApiSpecResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "API spec id"
+                    },
+                    "name": { "type": "string", "description": "Display name" },
+                    "title": { "type": "string", "description": "Document title" },
+                    "version": { "type": "string", "description": "Document version" },
+                    "description": { "description": "Document description", "type": "string" },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "description": "Import time, ISO 8601"
+                    },
+                    "servers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "description": "Server URL with variables replaced by their defaults"
+                                },
+                                "relative": {
+                                    "description": "Present when the URL is not absolute http(s)",
+                                    "type": "boolean",
+                                    "enum": [true]
+                                },
+                                "template": {
+                                    "description": "Original URL template, present when it had variables",
+                                    "type": "string"
+                                },
+                                "variables": {
+                                    "description": "Server variables, present when the URL had variables",
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "default": {
+                                                "type": "string",
+                                                "description": "Default value"
+                                            },
+                                            "enum": {
+                                                "description": "Allowed values",
+                                                "type": "array",
+                                                "items": { "type": "string" }
+                                            },
+                                            "description": {
+                                                "description": "Variable description",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["default"]
+                                    }
+                                }
+                            },
+                            "required": ["url"]
+                        },
+                        "description": "Servers in document order"
+                    },
+                    "endpoints": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Stable endpoint id derived from the key"
+                                },
+                                "key": { "type": "string", "description": "\"METHOD path\"" },
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "GET",
+                                        "PUT",
+                                        "POST",
+                                        "DELETE",
+                                        "OPTIONS",
+                                        "HEAD",
+                                        "PATCH"
+                                    ],
+                                    "description": "HTTP method"
+                                },
+                                "path": { "type": "string", "description": "Path template" },
+                                "summary": { "type": "string" },
+                                "description": { "type": "string" },
+                                "tags": { "type": "array", "items": { "type": "string" } },
+                                "deprecated": {
+                                    "description": "Present only when the operation is deprecated",
+                                    "type": "boolean",
+                                    "enum": [true]
+                                },
+                                "parameters": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Parameter name"
+                                            },
+                                            "in": {
+                                                "type": "string",
+                                                "enum": ["path", "query", "header", "cookie"],
+                                                "description": "Parameter location"
+                                            },
+                                            "required": {
+                                                "type": "boolean",
+                                                "description": "Whether the parameter is required"
+                                            },
+                                            "description": {
+                                                "description": "Parameter description",
+                                                "type": "string"
+                                            },
+                                            "schema": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": { "type": "string" },
+                                                    "format": { "type": "string" },
+                                                    "enum": { "type": "array", "items": {} },
+                                                    "default": {},
+                                                    "example": {}
+                                                },
+                                                "description": "Shallow parameter schema"
+                                            },
+                                            "example": {
+                                                "description": "Example value as text",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["name", "in", "required", "schema"]
+                                    }
+                                },
+                                "requestBody": {
+                                    "type": "object",
+                                    "properties": {
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether the body is required"
+                                        },
+                                        "contentType": {
+                                            "type": "string",
+                                            "description": "Chosen media type, JSON preferred"
+                                        },
+                                        "example": {
+                                            "description": "Example body as text, present when the spec gives one",
+                                            "type": "string"
+                                        },
+                                        "fields": {
+                                            "description": "Leaf fields of a JSON or form body, present when there is at least one",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "path": {
+                                                        "type": "string",
+                                                        "description": "Field path: property names joined with dots, array items as index 0"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "string",
+                                                            "integer",
+                                                            "number",
+                                                            "boolean"
+                                                        ],
+                                                        "description": "Primitive type of the field"
+                                                    },
+                                                    "format": {
+                                                        "description": "Schema format, e.g. uuid, email, date-time",
+                                                        "type": "string"
+                                                    },
+                                                    "required": {
+                                                        "type": "boolean",
+                                                        "description": "Whether the parent object lists the field as required"
+                                                    }
+                                                },
+                                                "required": ["path", "type", "required"]
+                                            }
+                                        }
+                                    },
+                                    "required": ["required", "contentType"]
+                                },
+                                "responses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {
+                                                "type": "string",
+                                                "description": "Status code or \"default\""
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "Response description"
+                                            }
+                                        },
+                                        "required": ["status", "description"]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "key",
+                                "method",
+                                "path",
+                                "tags",
+                                "parameters",
+                                "responses"
+                            ]
+                        },
+                        "description": "Endpoints in document order"
+                    }
+                },
+                "required": ["id", "name", "title", "version", "createdAt", "servers", "endpoints"]
+            },
+            "ApiSpecListResponseDto": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "description": "API spec id"
+                        },
+                        "name": { "type": "string", "description": "Display name" },
+                        "title": { "type": "string", "description": "Document title" },
+                        "version": { "type": "string", "description": "Document version" },
+                        "endpointsCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "description": "Number of endpoints"
+                        },
+                        "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                            "description": "Import time, ISO 8601"
+                        }
+                    },
+                    "required": ["id", "name", "title", "version", "endpointsCount", "createdAt"]
+                },
+                "description": "API specs, newest first"
+            },
+            "RenameApiSpecDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "Display name of the spec"
+                    }
+                },
+                "required": ["name"]
+            },
+            "ApiSpecSummaryResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "API spec id"
+                    },
+                    "name": { "type": "string", "description": "Display name" },
+                    "title": { "type": "string", "description": "Document title" },
+                    "version": { "type": "string", "description": "Document version" },
+                    "endpointsCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Number of endpoints"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "description": "Import time, ISO 8601"
+                    }
+                },
+                "required": ["id", "name", "title", "version", "endpointsCount", "createdAt"]
+            },
+            "UpdateApiSpecContentDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "New display name of the spec, the current name is kept when omitted",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "OpenAPI 3.0 or 3.1 document as YAML or JSON text, up to 5 MiB"
+                    }
+                },
+                "required": ["content"]
+            },
+            "UpdatedApiSpecResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "API spec id"
+                    },
+                    "name": { "type": "string", "description": "Display name" },
+                    "title": { "type": "string", "description": "Document title" },
+                    "version": { "type": "string", "description": "Document version" },
+                    "description": { "description": "Document description", "type": "string" },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "description": "Import time, ISO 8601"
+                    },
+                    "servers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "description": "Server URL with variables replaced by their defaults"
+                                },
+                                "relative": {
+                                    "description": "Present when the URL is not absolute http(s)",
+                                    "type": "boolean",
+                                    "enum": [true]
+                                },
+                                "template": {
+                                    "description": "Original URL template, present when it had variables",
+                                    "type": "string"
+                                },
+                                "variables": {
+                                    "description": "Server variables, present when the URL had variables",
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "default": {
+                                                "type": "string",
+                                                "description": "Default value"
+                                            },
+                                            "enum": {
+                                                "description": "Allowed values",
+                                                "type": "array",
+                                                "items": { "type": "string" }
+                                            },
+                                            "description": {
+                                                "description": "Variable description",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["default"]
+                                    }
+                                }
+                            },
+                            "required": ["url"]
+                        },
+                        "description": "Servers in document order"
+                    },
+                    "endpoints": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Stable endpoint id derived from the key"
+                                },
+                                "key": { "type": "string", "description": "\"METHOD path\"" },
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "GET",
+                                        "PUT",
+                                        "POST",
+                                        "DELETE",
+                                        "OPTIONS",
+                                        "HEAD",
+                                        "PATCH"
+                                    ],
+                                    "description": "HTTP method"
+                                },
+                                "path": { "type": "string", "description": "Path template" },
+                                "summary": { "type": "string" },
+                                "description": { "type": "string" },
+                                "tags": { "type": "array", "items": { "type": "string" } },
+                                "deprecated": {
+                                    "description": "Present only when the operation is deprecated",
+                                    "type": "boolean",
+                                    "enum": [true]
+                                },
+                                "parameters": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Parameter name"
+                                            },
+                                            "in": {
+                                                "type": "string",
+                                                "enum": ["path", "query", "header", "cookie"],
+                                                "description": "Parameter location"
+                                            },
+                                            "required": {
+                                                "type": "boolean",
+                                                "description": "Whether the parameter is required"
+                                            },
+                                            "description": {
+                                                "description": "Parameter description",
+                                                "type": "string"
+                                            },
+                                            "schema": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": { "type": "string" },
+                                                    "format": { "type": "string" },
+                                                    "enum": { "type": "array", "items": {} },
+                                                    "default": {},
+                                                    "example": {}
+                                                },
+                                                "description": "Shallow parameter schema"
+                                            },
+                                            "example": {
+                                                "description": "Example value as text",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["name", "in", "required", "schema"]
+                                    }
+                                },
+                                "requestBody": {
+                                    "type": "object",
+                                    "properties": {
+                                        "required": {
+                                            "type": "boolean",
+                                            "description": "Whether the body is required"
+                                        },
+                                        "contentType": {
+                                            "type": "string",
+                                            "description": "Chosen media type, JSON preferred"
+                                        },
+                                        "example": {
+                                            "description": "Example body as text, present when the spec gives one",
+                                            "type": "string"
+                                        },
+                                        "fields": {
+                                            "description": "Leaf fields of a JSON or form body, present when there is at least one",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "path": {
+                                                        "type": "string",
+                                                        "description": "Field path: property names joined with dots, array items as index 0"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "string",
+                                                            "integer",
+                                                            "number",
+                                                            "boolean"
+                                                        ],
+                                                        "description": "Primitive type of the field"
+                                                    },
+                                                    "format": {
+                                                        "description": "Schema format, e.g. uuid, email, date-time",
+                                                        "type": "string"
+                                                    },
+                                                    "required": {
+                                                        "type": "boolean",
+                                                        "description": "Whether the parent object lists the field as required"
+                                                    }
+                                                },
+                                                "required": ["path", "type", "required"]
+                                            }
+                                        }
+                                    },
+                                    "required": ["required", "contentType"]
+                                },
+                                "responses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {
+                                                "type": "string",
+                                                "description": "Status code or \"default\""
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "Response description"
+                                            }
+                                        },
+                                        "required": ["status", "description"]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "key",
+                                "method",
+                                "path",
+                                "tags",
+                                "parameters",
+                                "responses"
+                            ]
+                        },
+                        "description": "Endpoints in document order"
+                    },
+                    "changes": {
+                        "type": "object",
+                        "properties": {
+                            "added": {
+                                "type": "array",
+                                "items": { "type": "string" },
+                                "description": "Keys of endpoints only in the new version, in new document order"
+                            },
+                            "changed": {
+                                "type": "array",
+                                "items": { "type": "string" },
+                                "description": "Keys of endpoints whose parameters, request body or responses changed, in new document order"
+                            },
+                            "removed": {
+                                "type": "array",
+                                "items": { "type": "string" },
+                                "description": "Keys of endpoints only in the previous version, in previous document order"
+                            }
+                        },
+                        "required": ["added", "changed", "removed"],
+                        "description": "Endpoint changes compared with the previous version, keys are \"METHOD path\""
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "title",
+                    "version",
+                    "createdAt",
+                    "servers",
+                    "endpoints",
+                    "changes"
+                ]
+            },
             "GlobalErrorResponse_Output": {
                 "type": "object",
                 "properties": {
-                    "success": { "type": "boolean", "default": false, "const": false },
+                    "success": { "type": "boolean", "default": false, "enum": [false] },
                     "error": {
                         "type": "object",
                         "properties": {
@@ -1926,6 +4170,20 @@
                                 "code": {
                                     "type": "string",
                                     "description": "Machine-readable code (e.g. \"too_small\")"
+                                },
+                                "line": {
+                                    "description": "1-based line in the submitted text, for syntax errors",
+                                    "type": "integer",
+                                    "exclusiveMinimum": true,
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0
+                                },
+                                "column": {
+                                    "description": "1-based column in the submitted text, for syntax errors",
+                                    "type": "integer",
+                                    "exclusiveMinimum": true,
+                                    "maximum": 9007199254740991,
+                                    "minimum": 0
                                 }
                             },
                             "required": ["field", "message", "code"],

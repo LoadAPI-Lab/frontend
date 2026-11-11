@@ -2,7 +2,7 @@ import { refreshSession } from '@/api/fetcher';
 import { config } from '@/config';
 
 import type { LiveConnection, LiveRunStore } from './live-store';
-import { isFinalStatus, snapshotSchema, statusEventSchema } from './schemas';
+import { isFinalStatus, type Snapshot, snapshotSchema, statusEventSchema } from './schemas';
 
 export interface EventSourceLike {
     addEventListener(type: string, listener: (event: MessageEvent<string>) => void): void;
@@ -14,10 +14,12 @@ export interface StreamOptions {
     refresh?: () => Promise<boolean>;
     backoffMs?: readonly number[];
     maxAttempts?: number;
+    batchMs?: number;
 }
 
 export const DEFAULT_BACKOFF_MS = [1000, 2000, 4000, 8000, 10_000] as const;
 export const DEFAULT_MAX_ATTEMPTS = 8;
+export const DEFAULT_BATCH_MS = 50;
 
 export const metricsUrl = (runId: string) =>
     `${config.apiBase}/v1/test-runs/${encodeURIComponent(runId)}/metrics`;
@@ -40,7 +42,30 @@ export function streamRun(
         refresh = refreshSession,
         backoffMs = DEFAULT_BACKOFF_MS,
         maxAttempts = DEFAULT_MAX_ATTEMPTS,
+        batchMs = DEFAULT_BATCH_MS,
     } = options;
+
+    let pending: Snapshot[] = [];
+    let batchTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const flushSnapshots = () => {
+        clearTimeout(batchTimer);
+        batchTimer = undefined;
+        if (pending.length > 0) {
+            const batch = pending;
+            pending = [];
+            store.addSnapshots(batch);
+        }
+    };
+
+    const queueSnapshot = (snapshot: Snapshot) => {
+        if (batchMs <= 0) {
+            store.addSnapshot(snapshot);
+            return;
+        }
+        pending.push(snapshot);
+        batchTimer ??= setTimeout(flushSnapshots, batchMs);
+    };
 
     let source: EventSourceLike | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -51,6 +76,7 @@ export function streamRun(
     const finish = (connection: LiveConnection) => {
         stopped = true;
         clearTimeout(timer);
+        flushSnapshots();
         source?.close();
         store.setConnection(connection);
     };
@@ -86,6 +112,7 @@ export function streamRun(
                 return;
             }
             markReceived();
+            flushSnapshots();
             store.setStatus(parsed.data.status, parsed.data.reason);
             if (isFinalStatus(parsed.data.status)) {
                 finish('closed');
@@ -96,7 +123,7 @@ export function streamRun(
             const parsed = snapshotSchema.safeParse(parseJson(event.data));
             if (parsed.success) {
                 markReceived();
-                store.addSnapshot(parsed.data);
+                queueSnapshot(parsed.data);
             }
         });
 
@@ -130,6 +157,7 @@ export function streamRun(
     return () => {
         stopped = true;
         clearTimeout(timer);
+        flushSnapshots();
         source?.close();
     };
 }

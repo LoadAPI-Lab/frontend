@@ -1,6 +1,6 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { json } from '@codemirror/lang-json';
-import { HighlightStyle, syntaxHighlighting, syntaxTree } from '@codemirror/language';
+import { syntaxTree } from '@codemirror/language';
 import {
     type EditorState,
     type Extension,
@@ -21,47 +21,10 @@ import {
     ViewPlugin,
     type ViewUpdate,
 } from '@codemirror/view';
-import { tags } from '@lezer/highlight';
 
+import { codeTheme } from '@/components/shared/code-editor/theme';
 import { isInsideString, TEXT_GENERATORS, type BodyIssue } from '@/lib/json-body';
 import { findPlaceholders, GENERATORS, type Generator, generatorToken } from '@/lib/placeholders';
-
-const highlight = HighlightStyle.define([
-    { tag: tags.propertyName, class: 'text-syntax-key' },
-    { tag: tags.string, class: 'text-syntax-string' },
-    { tag: [tags.number, tags.bool, tags.null], class: 'text-syntax-number' },
-]);
-
-const theme = EditorView.theme(
-    {
-        '&': {
-            height: '100%',
-            backgroundColor: 'transparent',
-            color: 'var(--color-fg-muted)',
-            fontSize: 'var(--text-md)',
-        },
-        '&.cm-focused': { outline: 'none' },
-        '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '25px', padding: '12px 0' },
-        '.cm-content': { padding: '0', caretColor: 'var(--color-accent)' },
-        '.cm-line': { padding: '0 16px 0 0' },
-        '.cm-gutters': {
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: 'var(--color-fg-muted)',
-        },
-        '.cm-lineNumbers .cm-gutterElement': {
-            minWidth: '48px',
-            padding: '0 16px',
-            textAlign: 'right',
-        },
-        '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--color-accent)' },
-        '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
-            backgroundColor: 'color-mix(in oklab, var(--color-accent) 18%, transparent)',
-        },
-        '.cm-placeholder': { color: 'var(--color-fg-muted)' },
-    },
-    { dark: true },
-);
 
 const pill = Decoration.mark({
     class: 'bg-accent text-accent-fg! [&_*]:text-accent-fg! rounded-[4px] px-1.25 font-semibold',
@@ -173,8 +136,7 @@ export function editorExtensions({
         history(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         json(),
-        syntaxHighlighting(highlight),
-        theme,
+        codeTheme,
         pillPlugin,
         placeholderLines,
         issueField,

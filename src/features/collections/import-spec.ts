@@ -1,9 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { ApiError, apiFetch } from '@/api/fetcher';
+import { ApiError } from '@/api/fetcher';
+import {
+    apiSpecsDelete,
+    apiSpecsImport,
+    apiSpecsRename,
+    apiSpecsUpdateContent,
+} from '@/api/generated/endpoints/api-specs/api-specs';
+import type { UpdatedApiSpecResponseDtoChanges } from '@/api/generated/model';
 
-import { apiSpecKeys, type ApiSpec, apiSpecSchema } from './api';
+import { apiSpecKeys, type ApiSpec, type ApiSpecSummary, apiSpecsQuery } from './api';
+
+export type SpecChanges = UpdatedApiSpecResponseDtoChanges;
 
 export const MAX_SPEC_BYTES = 5 * 1024 * 1024;
 
@@ -13,6 +22,8 @@ export type ImportIssue =
     | { kind: 'syntax'; line: number | null; column: number | null; detail: string | null }
     | { kind: 'invalid'; problems: { field: string; message: string }[] }
     | { kind: 'unsupportedVersion' }
+    | { kind: 'notObject' }
+    | { kind: 'missingPaths' }
     | { kind: 'tooLarge' }
     | { kind: 'other'; message: string };
 
@@ -73,21 +84,69 @@ export interface ImportSpecInput {
     content: string;
 }
 
-export function useImportSpec(onImported: (spec: ApiSpec) => void) {
+export interface SavedSpec {
+    spec: ApiSpec;
+    changes: SpecChanges | null;
+}
+
+async function saveSpec(
+    { name, content }: ImportSpecInput,
+    replacing: ApiSpecSummary | undefined,
+): Promise<SavedSpec> {
+    const body = name ? { name, content } : { content };
+    if (!replacing) {
+        return { spec: await apiSpecsImport(body), changes: null };
+    }
+    const { changes, ...spec } = await apiSpecsUpdateContent(replacing.id, body);
+    return { spec, changes };
+}
+
+export function useImportSpec(onImported: (saved: SavedSpec) => void, replacing?: ApiSpecSummary) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ name, content }: ImportSpecInput) =>
-            apiSpecSchema.parse(
-                await apiFetch('/v1/api-specs', {
-                    method: 'POST',
-                    body: JSON.stringify(name ? { name, content } : { content }),
-                }),
-            ),
+        mutationFn: (input: ImportSpecInput) => saveSpec(input, replacing),
         meta: { toastOnError: false },
-        onSuccess: async (spec) => {
-            queryClient.setQueryData(apiSpecKeys.detail(spec.id), spec);
+        onSuccess: async (saved) => {
+            queryClient.setQueryData(apiSpecKeys.detail(saved.spec.id), saved.spec);
             await queryClient.invalidateQueries({ queryKey: apiSpecKeys.all, exact: true });
-            onImported(spec);
+            onImported(saved);
+        },
+    });
+}
+
+export function useDeleteSpec(onDeleted: (spec: ApiSpecSummary) => void) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (spec: ApiSpecSummary) => {
+            await apiSpecsDelete(spec.id);
+            return spec;
+        },
+        onSuccess: async (spec) => {
+            queryClient.setQueryData(apiSpecsQuery.queryKey, (specs) =>
+                specs?.filter((candidate) => candidate.id !== spec.id),
+            );
+            queryClient.removeQueries({ queryKey: apiSpecKeys.detail(spec.id), exact: true });
+            onDeleted(spec);
+            await queryClient.invalidateQueries({ queryKey: apiSpecKeys.all, exact: true });
+        },
+    });
+}
+
+export const MAX_SPEC_NAME = 255;
+
+export function useRenameSpec(onRenamed: (spec: ApiSpecSummary) => void) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, name }: { id: string; name: string }) => apiSpecsRename(id, { name }),
+        onSuccess: async (renamed) => {
+            queryClient.setQueryData(apiSpecsQuery.queryKey, (specs) =>
+                specs?.map((spec) => (spec.id === renamed.id ? { ...spec, ...renamed } : spec)),
+            );
+            queryClient.setQueryData(apiSpecKeys.detail(renamed.id), (spec?: ApiSpec) =>
+                spec ? { ...spec, name: renamed.name } : spec,
+            );
+            onRenamed(renamed);
+            await queryClient.invalidateQueries({ queryKey: apiSpecKeys.all, exact: true });
         },
     });
 }

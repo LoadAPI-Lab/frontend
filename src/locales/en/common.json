@@ -48,7 +48,39 @@
         "endpointCount_one": ", {{count}} endpoint",
         "endpointCount_other": ", {{count}} endpoints",
         "deprecated": "Deprecated",
-        "deprecatedShort": "dep."
+        "deprecatedShort": "dep.",
+        "running": ", test running",
+        "openSpec": "Open {{name}}",
+        "actions": {
+            "label": "Actions for {{name}}",
+            "rename": "Rename…",
+            "reimport": "Re-import…",
+            "delete": "Delete…",
+            "deleteBlocked": "Can't delete while a test runs"
+        },
+        "delete": {
+            "title": "Delete {{name}}?",
+            "body_one": "Its {{count}} endpoint leaves the sidebar. Past runs stay in History.",
+            "body_other": "Its {{count}} endpoints leave the sidebar. Past runs stay in History.",
+            "cancel": "Cancel",
+            "confirm": "Delete",
+            "deleting": "Deleting…"
+        },
+        "deleted": "{{name}} deleted",
+        "rename": {
+            "title": "Rename {{name}}",
+            "label": "Name",
+            "tooLong": "Keep the name under {{max}} characters.",
+            "cancel": "Cancel",
+            "submit": "Rename",
+            "saving": "Renaming…"
+        },
+        "renamed": "Renamed to {{name}}",
+        "reimported": {
+            "title": "{{name}} re-imported",
+            "changes": "{{added}} added, {{changed}} changed, {{removed}} removed",
+            "noChanges": "No endpoint changes"
+        }
     },
     "stressTests": {
         "title": "Stress tests",
@@ -57,20 +89,147 @@
             "batch": "Batch",
             "roundRobin": "Round-robin"
         },
+        "modeHints": {
+            "single": "One endpoint at full target RPS",
+            "batch": "Several endpoints at once",
+            "roundRobin": "Endpoints take turns"
+        },
         "pickRoute": "Pick a route from the collections to start a test.",
         "notFound": {
             "title": "This endpoint isn't in your collections",
             "body": "It may have been deleted, or the link is from another account. Pick an endpoint from the sidebar."
         },
         "resultsLater": "Live results show here once the test starts.",
-        "finishedNoData": "This run has finished. Per-second charts only fill in while you watch a run live.",
+        "finishedNoData": "Per-second data for this run is no longer available. Core keeps it for an hour after a run.",
         "failedNoData": "The run failed before it sent any per-second data."
     },
     "scenarios": {
         "title": "Scenarios"
     },
     "history": {
-        "title": "History"
+        "title": "History",
+        "runs": "Runs",
+        "listLabel": "Test runs",
+        "filterLabel": "Run type",
+        "search": {
+            "label": "Search runs",
+            "placeholder": "Search by endpoint",
+            "clear": "Clear search"
+        },
+        "statusFilter": {
+            "label": "Status",
+            "all": "All statuses"
+        },
+        "groupByEndpoint": "Group by endpoint",
+        "endpointGroup": {
+            "meta_one": "{{count}} run · latest {{time}}",
+            "meta_other": "{{count}} runs · latest {{time}}"
+        },
+        "filters": {
+            "all": "All"
+        },
+        "types": {
+            "single": "Single",
+            "scenario": "Scenario",
+            "batch": "Batch",
+            "round_robin": "Round-robin"
+        },
+        "typeShort": {
+            "single": "GET",
+            "scenario": "SC",
+            "batch": "BT",
+            "round_robin": "RR"
+        },
+        "groups": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "thisWeek": "This week",
+            "earlier": "Earlier"
+        },
+        "recent": {
+            "title": "Recent runs",
+            "viewAll": "View all",
+            "loading": "Loading recent runs",
+            "empty": "No runs yet. Your finished tests will show up here.",
+            "p95": "p95 {{value}}ms"
+        },
+        "row": {
+            "single": "{{rps}} RPS · {{duration}}s · {{time}}",
+            "scenario_one": "{{count}} step · {{time}}",
+            "scenario_other": "{{count}} steps · {{time}}",
+            "p95": "{{value}}ms",
+            "p95Label": "p95",
+            "stepsLabel": "steps"
+        },
+        "totalCount_one": "{{count}} total",
+        "totalCount_other": "{{count}} total",
+        "showing_one": "Showing {{count}}",
+        "showing_other": "Showing {{count}}",
+        "loading": "Loading runs",
+        "loadMore": "Load more",
+        "loadingMore": "Loading…",
+        "empty": {
+            "title": "No test runs yet",
+            "body": "Runs you start show up here with their results.",
+            "action": "Start a test"
+        },
+        "noMatch": {
+            "title": "No runs match",
+            "body": "Try another search or status.",
+            "bodyMore": "Try another search or status, or load more runs.",
+            "action": "Clear filters"
+        },
+        "pick": {
+            "title": "Pick a run",
+            "body": "Choose a run on the left to see its results."
+        },
+        "notFound": {
+            "title": "This run isn't available",
+            "body": "It may have been deleted, or the link is from another account."
+        },
+        "runId": "run {{id}}",
+        "export": "Export JSON",
+        "rerun": "Re-run test",
+        "rerunning": "Starting…",
+        "rerunFailed": "Couldn't re-run the test",
+        "ms": "{{value}}ms",
+        "pp": "{{value}}pp",
+        "seconds": "{{value}}s",
+        "stats": {
+            "avgRps": "Avg RPS",
+            "errors": "Errors"
+        },
+        "percentiles": {
+            "title": "Percentiles",
+            "vsPrevious": "this run (top) vs the previous run of this route",
+            "noPrevious": "no earlier run of this route to compare"
+        },
+        "config": {
+            "title": "Configuration",
+            "targetRps": "Target RPS",
+            "duration": "Duration",
+            "rampUp": "Ramp-up",
+            "requestsSent": "Requests sent",
+            "baseUrl": "Base URL",
+            "auth": "Auth",
+            "body": "Request body",
+            "noAuth": "None",
+            "bearer": "Bearer token",
+            "authHeader": "Authorization header"
+        },
+        "routeRuns": {
+            "title": "Runs of this route",
+            "subtitle_one": "{{route}} · last {{count}}",
+            "subtitle_other": "{{route}} · last {{count}}",
+            "date": "Date",
+            "rps": "RPS",
+            "p95": "p95",
+            "errors": "Errors",
+            "this": "this run",
+            "trend": "p95 trend",
+            "note": "History keeps the final summary of each run. Per-second charts are on the Stress tests page while a run is live and for an hour after it ends.",
+            "openCharts": "Open charts"
+        }
     },
     "account": {
         "menuLabel": ", account menu for {{name}}",
@@ -120,6 +279,7 @@
         "blocked": {
             "noTarget": "Pick a route from the collections to start a test.",
             "pathParam": "Fill in {{param}} in the URL to start.",
+            "maskedSecret": "Re-enter {{name}} to start. Past runs hide secret values.",
             "invalidBody": "Fix the request body to start.",
             "invalidConfig": "Fix the test settings to start.",
             "noServer": "Set a base URL for this collection to start."
@@ -156,7 +316,7 @@
             "namePlaceholder": "Name",
             "valuePlaceholder": "Value"
         },
-        "fillPlaceholders": "Fill with placeholders"
+        "fillExample": "Fill with example"
     },
     "requestAuth": {
         "type": "Auth type",
@@ -180,26 +340,54 @@
     },
     "importSpec": {
         "title": "Import an OpenAPI doc",
-        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON. Its endpoints appear in the sidebar.",
+        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON, or load it from a file. Its endpoints appear in the sidebar.",
         "name": "Name (optional)",
         "namePlaceholder": "Uses the doc's title",
         "content": "OpenAPI document",
         "contentPlaceholder": "openapi: 3.0.3\ninfo:\n  title: My API\n  version: 1.0.0\npaths: …",
+        "file": {
+            "choose": "Choose file",
+            "input": "OpenAPI file",
+            "hint": "Drop a .json, .yaml or .yml file here, or paste the document.",
+            "drop": "Drop the file to load it",
+            "errors": {
+                "wrongType": "{{name}} isn't a .json, .yaml or .yml file.",
+                "tooLarge": "{{name}} is over 5 MB, the import limit.",
+                "unreadable": "Couldn't read {{name}}. Try again or paste the document."
+            }
+        },
+        "preview": {
+            "summary": "OpenAPI {{version}} · {{endpoints}} · {{tags}}",
+            "endpoints_one": "{{count}} endpoint",
+            "endpoints_other": "{{count}} endpoints",
+            "tags_one": "{{count}} tag",
+            "tags_other": "{{count}} tags"
+        },
         "cancel": "Cancel",
         "submit": "Import",
         "importing": "Importing…",
+        "reimport": {
+            "title": "Re-import {{name}}",
+            "description": "Paste or load the new version of this doc. Its endpoints are replaced; past runs stay in History.",
+            "namePlaceholder": "Keeps {{name}}",
+            "submit": "Re-import",
+            "importing": "Re-importing…"
+        },
         "errors": {
             "syntax": "This isn't valid YAML or JSON.",
             "syntaxAt": "Line {{line}}, column {{column}}: {{detail}}",
             "invalid": "This isn't a valid OpenAPI document:",
             "unsupportedVersion": "Only OpenAPI 3.0 and 3.1 are supported. Convert Swagger 2.0 docs first.",
+            "notObject": "The document must be an object with openapi, info and paths.",
+            "missingPaths": "The document needs a paths object.",
             "tooLarge": "This doc is over 5 MB, the import limit."
         }
     },
     "endpointHeader": {
         "label": "Endpoint",
         "server": "Base URL",
-        "deprecated": "Deprecated"
+        "deprecated": "Deprecated",
+        "relativeServer": "This doc's server is a relative path ({{path}}). Enter the full URL to test against."
     },
     "liveMetrics": {
         "stats": {
@@ -314,5 +502,10 @@
         "stopped": "Test stopped",
         "failed": "Test failed",
         "noReason": "The worker didn't give a reason."
+    },
+    "activeRun": {
+        "message": "A test you started is still running. Only one test can run at a time.",
+        "view": "View it",
+        "stop": "Stop it"
     }
 }

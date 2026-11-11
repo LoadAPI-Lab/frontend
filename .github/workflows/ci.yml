@@ -72,7 +72,7 @@ jobs:
               run: pnpm install --frozen-lockfile
 
             - name: Install Playwright browser
-              run: pnpm exec playwright install --with-deps chromium
+              run: pnpm exec playwright install chromium
 
             - name: Storybook tests (interactions + a11y)
               run: pnpm test:storybook
@@ -82,7 +82,7 @@ jobs:
 
             - name: Upload Playwright report
               if: failure()
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: playwright-report
                   path: playwright-report/

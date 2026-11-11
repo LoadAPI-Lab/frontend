@@ -1,80 +1,38 @@
 import { queryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
 
-import { apiFetch } from '@/api/fetcher';
-import { HTTP_METHODS } from '@/lib/http-method';
+import {
+    apiSpecsGet,
+    apiSpecsList,
+    getApiSpecsGetQueryKey,
+    getApiSpecsListQueryKey,
+} from '@/api/generated/endpoints/api-specs/api-specs';
+import type {
+    ApiSpecResponseDto,
+    ApiSpecResponseDtoEndpointsItem,
+    ApiSpecResponseDtoServersItem,
+    ApiSpecSummaryResponseDto,
+} from '@/api/generated/model';
 
-export const apiSpecSummarySchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    title: z.string().optional(),
-    version: z.string().optional(),
-    endpointsCount: z.number(),
-    createdAt: z.string(),
-});
-
-const parameterSchema = z.object({
-    name: z.string(),
-    in: z.enum(['path', 'query', 'header', 'cookie']),
-    required: z.boolean().optional(),
-    description: z.string().optional(),
-    schema: z.record(z.string(), z.unknown()).optional(),
-});
-
-export const endpointSchema = z.object({
-    key: z.string(),
-    method: z.enum(HTTP_METHODS),
-    path: z.string(),
-    summary: z.string().optional(),
-    tags: z.array(z.string()).default([]),
-    deprecated: z.boolean().optional(),
-    parameters: z.array(parameterSchema).default([]),
-    requestBody: z
-        .object({
-            required: z.boolean().optional(),
-            contentType: z.string(),
-            example: z.string().optional(),
-            fields: z
-                .array(
-                    z.object({
-                        path: z.string(),
-                        type: z.string().optional(),
-                        format: z.string().optional(),
-                        required: z.boolean().optional(),
-                    }),
-                )
-                .default([]),
-        })
-        .optional(),
-});
-
-export const apiSpecSchema = apiSpecSummarySchema.omit({ endpointsCount: true }).extend({
-    description: z.string().optional(),
-    servers: z.array(z.object({ url: z.string(), description: z.string().optional() })).default([]),
-    endpoints: z.array(endpointSchema),
-});
-
-export type ApiSpecSummary = z.infer<typeof apiSpecSummarySchema>;
-export type ApiSpec = z.infer<typeof apiSpecSchema>;
-export type Endpoint = z.infer<typeof endpointSchema>;
+export type ApiSpecSummary = ApiSpecSummaryResponseDto;
+export type ApiSpec = ApiSpecResponseDto;
+export type Endpoint = ApiSpecResponseDtoEndpointsItem;
+export type ApiSpecServer = ApiSpecResponseDtoServersItem;
 
 export const apiSpecKeys = {
-    all: ['api-specs'] as const,
-    detail: (id: string) => ['api-specs', id] as const,
+    all: getApiSpecsListQueryKey(),
+    detail: (id: string) => getApiSpecsGetQueryKey(id),
 };
 
 export const apiSpecsQuery = queryOptions({
     queryKey: apiSpecKeys.all,
-    queryFn: async ({ signal }) =>
-        z.array(apiSpecSummarySchema).parse(await apiFetch('/v1/api-specs', { signal })),
+    queryFn: ({ signal }) => apiSpecsList({ signal }),
 });
 
 export const apiSpecQuery = (id: string) =>
     queryOptions({
         queryKey: apiSpecKeys.detail(id),
-        queryFn: async ({ signal }) =>
-            apiSpecSchema.parse(
-                await apiFetch(`/v1/api-specs/${encodeURIComponent(id)}`, { signal }),
-            ),
+        queryFn: ({ signal }) => apiSpecsGet(id, { signal }),
         staleTime: 5 * 60_000,
     });
+
+export const isUsableServer = (server: ApiSpecServer) => server.relative !== true;

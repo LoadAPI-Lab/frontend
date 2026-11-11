@@ -5,6 +5,7 @@
  * LoadAPI control plane
  * OpenAPI spec version: 0.1.0
  */
+import type { ListTestRunsResponseDtoItemsItemRequest } from './listTestRunsResponseDtoItemsItemRequest';
 import type { ListTestRunsResponseDtoItemsItemStatus } from './listTestRunsResponseDtoItemsItemStatus';
 import type { ListTestRunsResponseDtoItemsItemType } from './listTestRunsResponseDtoItemsItemType';
 
@@ -35,4 +36,32 @@ export type ListTestRunsResponseDtoItemsItem = {
   finishedAt?: string;
   /** Failure reason, present on FAILED runs */
   reason?: string;
+  /** Tested request, present on single runs */
+  request?: ListTestRunsResponseDtoItemsItemRequest;
+  /**
+     * Target RPS, present on single runs
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  targetRps?: number;
+  /**
+     * Test duration in seconds, present on single runs
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  durationSeconds?: number;
+  /** 95th percentile of the response time in ms, present on single runs whose result has it */
+  p95Ms?: number;
+  /**
+     * Number of steps, present on scenario runs
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  stepsCount?: number;
+  /**
+     * Steps that succeeded, present on scenario runs with a result
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  okCount?: number;
 };

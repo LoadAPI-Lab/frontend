@@ -45,6 +45,22 @@ export class LiveRunStore {
         this.set({ snapshots: [...kept, snapshot].slice(-this.maxPoints) });
     }
 
+    addSnapshots(snapshots: readonly Snapshot[]) {
+        if (snapshots.length === 0) {
+            return;
+        }
+        const bySecond = new Map(
+            this.state.snapshots.map((snapshot) => [snapshot.elapsedSeconds, snapshot]),
+        );
+        for (const snapshot of snapshots) {
+            bySecond.set(snapshot.elapsedSeconds, snapshot);
+        }
+        const merged = [...bySecond.values()]
+            .toSorted((first, second) => first.elapsedSeconds - second.elapsedSeconds)
+            .slice(-this.maxPoints);
+        this.set({ snapshots: merged });
+    }
+
     private set(changes: Partial<LiveState>) {
         this.state = { ...this.state, ...changes };
         for (const listener of this.listeners) {

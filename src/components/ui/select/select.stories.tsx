@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Field } from '@/components/ui/field';
 
@@ -58,6 +58,7 @@ export const Default: Story = {
         const body = within(canvasElement.ownerDocument.body);
         await userEvent.click(await body.findByRole('option', { name: 'Failed' }));
         await expect(canvas.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Failed');
+        await waitFor(() => expect(body.queryByRole('listbox')).not.toBeInTheDocument());
     },
 };
 

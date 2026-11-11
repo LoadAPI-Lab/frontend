@@ -1,39 +1,57 @@
 import { http, HttpResponse } from 'msw';
+import { parse } from 'yaml';
 import { z } from 'zod';
 
+import { ApiSpecResponseDtoEndpointsItemMethod } from '@/api/generated/model';
 import type { ApiSpec, ApiSpecSummary, Endpoint } from '@/features/collections/api';
 
 import { coreError } from './core-error';
 
-type MockEndpoint = Omit<Endpoint, 'key' | 'parameters' | 'tags'> &
-    Partial<Pick<Endpoint, 'parameters' | 'tags'>>;
+type Parameter = Endpoint['parameters'][number];
+type BodyField = NonNullable<NonNullable<Endpoint['requestBody']>['fields']>[number];
 
-const endpoint = (value: MockEndpoint): Endpoint => ({
-    key: `${value.method} ${value.path}`,
-    tags: [],
-    parameters: [],
-    ...value,
-});
+type MockParameter = Omit<Parameter, 'required' | 'schema'> &
+    Partial<Pick<Parameter, 'required' | 'schema'>>;
 
-const bearer = {
+type MockEndpoint = Omit<Endpoint, 'id' | 'key' | 'parameters' | 'tags' | 'responses'> & {
+    parameters?: MockParameter[];
+    tags?: string[];
+};
+
+const endpointId = (key: string) => key.replaceAll(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const parameter = (value: MockParameter): Parameter => ({ required: false, schema: {}, ...value });
+
+const endpoint = ({ parameters = [], ...value }: MockEndpoint): Endpoint => {
+    const key = `${value.method} ${value.path}`;
+    return {
+        id: endpointId(key),
+        key,
+        tags: [],
+        responses: [{ status: '200', description: 'OK' }],
+        ...value,
+        parameters: parameters.map(parameter),
+    };
+};
+
+const bearer: MockParameter = {
     name: 'Authorization',
     in: 'header',
     required: true,
     description: 'Bearer token',
-} as const;
-const taskId = {
+};
+const taskId: MockParameter = {
     name: 'id',
     in: 'path',
     required: true,
     schema: { type: 'integer', example: 1 },
-} as const;
-type Field = { path: string; type?: string; format?: string; required?: boolean };
+};
 
-const json = (example: unknown, fields: Field[] = []) => ({
+const json = (example: unknown, fields: BodyField[] = []) => ({
     required: true,
     contentType: 'application/json',
     example: JSON.stringify(example, null, 2),
-    fields,
+    ...(fields.length > 0 ? { fields } : {}),
 });
 
 export const testServerSpec: ApiSpec = {
@@ -43,13 +61,7 @@ export const testServerSpec: ApiSpec = {
     version: '1.0.0',
     description: 'Predictable target for load tests and scenario demos.',
     createdAt: '2026-11-05T14:40:00.000Z',
-    servers: [
-        {
-            url: 'http://testserver:8080',
-            description: 'From containers in the Docker network (LoadAPI worker)',
-        },
-        { url: 'http://localhost:8080', description: 'From the host machine' },
-    ],
+    servers: [{ url: 'http://testserver:8080' }, { url: 'http://localhost:8080' }],
     endpoints: [
         endpoint({
             method: 'GET',
@@ -154,8 +166,9 @@ export const shopSpec: ApiSpec = {
     description: 'Products and orders',
     createdAt: '2026-11-05T15:02:11.304Z',
     servers: [
-        { url: 'https://api.shop.example.com/v2', description: 'Production' },
-        { url: 'http://localhost:4000/v2', description: 'Local' },
+        { url: 'https://api.shop.example.com/v2' },
+        { url: 'http://localhost:4000/v2' },
+        { url: '/v2', relative: true },
     ],
     endpoints: [
         endpoint({
@@ -202,9 +215,9 @@ export const shopSpec: ApiSpec = {
             parameters: [bearer],
             requestBody: json(
                 {
-                    productId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                    productId: '{{$uuid}}',
                     quantity: 1,
-                    comment: 'string',
+                    comment: 'example',
                 },
                 [
                     { path: 'productId', type: 'string', format: 'uuid', required: true },
@@ -240,7 +253,7 @@ function syntaxError(line: number, column: number, message: string) {
     );
 }
 
-function importSpec(content: string, name: string | undefined): Response {
+function rejectSpec(content: string): Response | null {
     const text = content.trim();
     if (text.startsWith('{')) {
         try {
@@ -274,17 +287,101 @@ function importSpec(content: string, name: string | undefined): Response {
             { status: 400 },
         );
     }
-    const title = /"?title"?\s*:\s*"?([^"\n,]+)"?/.exec(text)?.[1]?.trim() ?? 'Imported API';
+    return null;
+}
+
+const titleOf = (content: string) =>
+    /"?title"?\s*:\s*"?([^"\n,]+)"?/.exec(content)?.[1]?.trim() ?? 'Imported API';
+
+const methods = Object.values(ApiSpecResponseDtoEndpointsItemMethod);
+
+const operationSchema = z.object({
+    summary: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+});
+const pathsSchema = z.object({
+    paths: z.record(z.string(), z.record(z.string(), z.unknown())),
+});
+
+function endpointsOf(content: string): Endpoint[] | null {
+    let parsed: unknown;
+    try {
+        parsed = parse(content);
+    } catch {
+        return null;
+    }
+    const doc = pathsSchema.safeParse(parsed);
+    if (!doc.success) {
+        return null;
+    }
+    return Object.entries(doc.data.paths).flatMap(([path, operations]) =>
+        Object.entries(operations).flatMap(([name, operation]) => {
+            const method = methods.find((candidate) => candidate === name.toUpperCase());
+            const details = operationSchema.safeParse(operation);
+            if (!method || !details.success) {
+                return [];
+            }
+            const { summary, tags = [] } = details.data;
+            return [endpoint({ method, path, tags, ...(summary ? { summary } : {}) })];
+        }),
+    );
+}
+
+function diff(previous: Endpoint[], next: Endpoint[]) {
+    const before = new Map(previous.map((item) => [item.key, item]));
+    const after = new Set(next.map((item) => item.key));
+    return {
+        added: next.filter((item) => !before.has(item.key)).map((item) => item.key),
+        changed: next
+            .filter((item) => {
+                const old = before.get(item.key);
+                return old !== undefined && old.summary !== item.summary;
+            })
+            .map((item) => item.key),
+        removed: previous.filter((item) => !after.has(item.key)).map((item) => item.key),
+    };
+}
+
+function importSpec(content: string, name: string | undefined): Response {
+    const rejected = rejectSpec(content);
+    if (rejected) {
+        return rejected;
+    }
+    const title = titleOf(content);
     const spec: ApiSpec = {
         ...testServerSpec,
         id: crypto.randomUUID(),
         name: name ?? title,
         title,
+        endpoints: endpointsOf(content) ?? testServerSpec.endpoints,
         createdAt: new Date().toISOString(),
     };
     mockApiSpecs.unshift(spec);
     return HttpResponse.json(spec, { status: 201 });
 }
+
+function replaceSpec(id: string, content: string, name: string | undefined): Response {
+    const index = mockApiSpecs.findIndex((candidate) => candidate.id === id);
+    const previous = mockApiSpecs[index];
+    if (!previous) {
+        return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+    }
+    const rejected = rejectSpec(content);
+    if (rejected) {
+        return rejected;
+    }
+    const endpoints = endpointsOf(content) ?? previous.endpoints;
+    const spec: ApiSpec = {
+        ...previous,
+        name: name ?? previous.name,
+        title: titleOf(content),
+        endpoints,
+    };
+    mockApiSpecs.splice(index, 1, spec);
+    return HttpResponse.json({ ...spec, changes: diff(previous.endpoints, endpoints) });
+}
+
+const bodySchema = z.object({ name: z.string().optional(), content: z.string().default('') });
 
 export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
     id: spec.id,
@@ -297,10 +394,31 @@ export const toSummary = (spec: ApiSpec): ApiSpecSummary => ({
 
 export const apiSpecHandlers = [
     http.post('*/v1/api-specs', async ({ request }) => {
-        const body = z
-            .object({ name: z.string().optional(), content: z.string().default('') })
-            .parse(await request.json());
+        const body = bodySchema.parse(await request.json());
         return importSpec(body.content, body.name);
+    }),
+    http.put('*/v1/api-specs/:id', async ({ params, request }) => {
+        const body = bodySchema.parse(await request.json());
+        return replaceSpec(String(params.id), body.content, body.name);
+    }),
+    http.patch('*/v1/api-specs/:id', async ({ params, request }) => {
+        const { name } = z.object({ name: z.string().min(1).max(255) }).parse(await request.json());
+        const index = mockApiSpecs.findIndex((candidate) => candidate.id === params.id);
+        const previous = mockApiSpecs[index];
+        if (!previous) {
+            return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+        }
+        const spec = { ...previous, name };
+        mockApiSpecs.splice(index, 1, spec);
+        return HttpResponse.json(toSummary(spec));
+    }),
+    http.delete('*/v1/api-specs/:id', ({ params }) => {
+        const index = mockApiSpecs.findIndex((candidate) => candidate.id === params.id);
+        if (index === -1) {
+            return coreError(404, 'API_SPEC.NOT_FOUND', 'API spec not found');
+        }
+        mockApiSpecs.splice(index, 1);
+        return new HttpResponse(null, { status: 204 });
     }),
     http.get('*/v1/api-specs', () => HttpResponse.json(mockApiSpecs.map(toSummary))),
     http.get('*/v1/api-specs/:id', ({ params }) => {

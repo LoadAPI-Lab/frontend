@@ -611,7 +611,7 @@ export function LivePlot({
                             >
                                 <span
                                     className={cn(
-                                        bars ? 'size-1.75 rounded-xs' : 'h-0.5 w-2',
+                                        bars ? 'size-2 rounded-[2px]' : 'h-0.5 w-2',
                                         'shrink-0',
                                         line.swatch,
                                     )}

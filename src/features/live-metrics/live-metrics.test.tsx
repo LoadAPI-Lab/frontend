@@ -7,7 +7,7 @@ import { FakeUPlot } from '@/test/fake-uplot';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
 import { LateBadge } from './late-badge';
-import { LiveChartCard, LiveCharts } from './live-charts';
+import { chartWindowSeconds, LiveChartCard, LiveCharts, plottedSnapshots } from './live-charts';
 import { appendFrame, isSingleAppend, lineAnimationMs, nextGap, zoomAround } from './live-plot';
 import { LiveStats } from './live-stats';
 import { RunFailure } from './run-failure';
@@ -413,6 +413,22 @@ describe('StatusCodesCard', () => {
     });
 });
 
+describe('chartWindowSeconds', () => {
+    it('matches the run duration, even when it is short', () => {
+        expect(chartWindowSeconds(5, 0)).toBe(5);
+        expect(chartWindowSeconds(60, 12)).toBe(60);
+    });
+
+    it('grows when seconds arrive past the duration', () => {
+        expect(chartWindowSeconds(5, 6)).toBe(6);
+    });
+
+    it('falls back to 10 seconds when the duration is unknown', () => {
+        expect(chartWindowSeconds(null, 0)).toBe(10);
+        expect(chartWindowSeconds(null, 25)).toBe(25);
+    });
+});
+
 describe('zoomAround', () => {
     it('halves the window around a second and stays inside the run', () => {
         expect(zoomAround([1, 61], [1, 61], 30, 0.5)).toEqual([15, 45]);
@@ -564,5 +580,13 @@ describe('RunProgress', () => {
             />,
         );
         expect(screen.getByRole('progressbar')).toHaveAttribute('value', '100');
+    });
+});
+
+describe('plottedSnapshots', () => {
+    it('drops the trailing second core sends after the run ends', () => {
+        const ticks = [sampleSnapshot(1), sampleSnapshot(2), sampleSnapshot(3)];
+        expect(plottedSnapshots(ticks, 2).map((tick) => tick.elapsedSeconds)).toEqual([1, 2]);
+        expect(plottedSnapshots(ticks, null)).toHaveLength(3);
     });
 });
