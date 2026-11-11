@@ -14,12 +14,13 @@ import {
 export interface AuthEditorProps {
     auth: AuthConfig;
     onChange: (auth: AuthConfig) => void;
+    readOnly?: boolean;
 }
 
 const KINDS: AuthKind[] = ['none', 'bearer', 'basic', 'apiKey'];
 const LOCATIONS: ApiKeyLocation[] = ['header', 'query'];
 
-function AuthFields({ auth, onChange }: AuthEditorProps) {
+function AuthFields({ auth, onChange, readOnly = false }: AuthEditorProps) {
     const { t } = useTranslation();
     if (auth.kind === 'bearer') {
         return (
@@ -27,6 +28,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                 <Field.Label>{t('requestAuth.token')}</Field.Label>
                 <SecretInput
                     value={auth.token}
+                    readOnly={readOnly}
                     onValueChange={(token) => onChange({ ...auth, token })}
                 />
             </Field.Root>
@@ -39,6 +41,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                     <Field.Label>{t('requestAuth.username')}</Field.Label>
                     <Input
                         value={auth.username}
+                        readOnly={readOnly}
                         autoComplete="off"
                         onValueChange={(username) => onChange({ ...auth, username })}
                     />
@@ -47,6 +50,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                     <Field.Label>{t('requestAuth.password')}</Field.Label>
                     <SecretInput
                         value={auth.password}
+                        readOnly={readOnly}
                         onValueChange={(password) => onChange({ ...auth, password })}
                     />
                 </Field.Root>
@@ -61,6 +65,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                         <Field.Label>{t('requestAuth.keyName')}</Field.Label>
                         <Input
                             value={auth.name}
+                            readOnly={readOnly}
                             placeholder="X-API-Key"
                             spellCheck={false}
                             className="font-mono"
@@ -71,6 +76,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                         <Field.Label>{t('requestAuth.keyValue')}</Field.Label>
                         <SecretInput
                             value={auth.value}
+                            readOnly={readOnly}
                             onValueChange={(value) => onChange({ ...auth, value })}
                         />
                     </Field.Root>
@@ -78,6 +84,7 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
                 <SegmentedControl.Root<ApiKeyLocation>
                     aria-label={t('requestAuth.addTo')}
                     value={auth.location}
+                    disabled={readOnly}
                     onValueChange={(location) => onChange({ ...auth, location })}
                     className="self-start"
                 >
@@ -96,13 +103,14 @@ function AuthFields({ auth, onChange }: AuthEditorProps) {
     return <p className="text-fg-muted text-base">{t('requestAuth.noneHint')}</p>;
 }
 
-export function AuthEditor({ auth, onChange }: AuthEditorProps) {
+export function AuthEditor({ auth, onChange, readOnly = false }: AuthEditorProps) {
     const { t } = useTranslation();
     return (
         <div className="flex flex-col gap-4">
             <SegmentedControl.Root<AuthKind>
                 aria-label={t('requestAuth.type')}
                 value={auth.kind}
+                disabled={readOnly}
                 onValueChange={(kind) => onChange(emptyAuth(kind))}
                 className="self-start"
             >
@@ -118,6 +126,7 @@ export function AuthEditor({ auth, onChange }: AuthEditorProps) {
             <AuthFields
                 auth={auth}
                 onChange={onChange}
+                readOnly={readOnly}
             />
         </div>
     );

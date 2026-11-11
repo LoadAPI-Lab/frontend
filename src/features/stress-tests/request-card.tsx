@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Lock } from 'lucide-react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { JsonBodyEditor } from '@/components/shared/json-body-editor';
@@ -17,6 +18,7 @@ export interface RequestCardProps {
     onDraftChange: (draft: RequestDraft) => void;
     pathParams: string[];
     onFillExample?: () => void;
+    readOnly?: boolean;
     className?: string;
 }
 
@@ -34,15 +36,18 @@ export function RequestCard({
     onDraftChange,
     pathParams,
     onFillExample,
+    readOnly = false,
     className,
 }: RequestCardProps) {
     const { t } = useTranslation();
     const [tab, setTab] = useState('body');
+    const noteId = useId();
     const change = (changes: Partial<RequestDraft>) => onDraftChange({ ...draft, ...changes });
 
     return (
         <section
             aria-label={t('requestCard.label')}
+            aria-describedby={readOnly ? noteId : undefined}
             className={cn(
                 'bg-surface-1 border-border flex min-h-0 flex-col overflow-hidden rounded-card border',
                 className,
@@ -85,22 +90,34 @@ export function RequestCard({
                             <Count value={paramCount(draft)} />
                         </Tabs.Tab>
                     </Tabs.List>
-                    {tab === 'body' ? (
-                        <div className="flex items-center gap-2">
-                            {onFillExample ? (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onFillExample}
-                                >
-                                    {t('requestCard.fillExample')}
-                                </Button>
-                            ) : null}
+                    <div className="flex items-center gap-2">
+                        {readOnly ? (
+                            <span
+                                id={noteId}
+                                className="text-fg-muted flex items-center gap-1.5 text-sm"
+                            >
+                                <Lock
+                                    aria-hidden
+                                    className="size-3.5"
+                                />
+                                {t('requestCard.readOnly')}
+                            </span>
+                        ) : null}
+                        {tab === 'body' && onFillExample && !readOnly ? (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onFillExample}
+                            >
+                                {t('requestCard.fillExample')}
+                            </Button>
+                        ) : null}
+                        {tab === 'body' ? (
                             <span className="border-border-strong text-fg-muted rounded-sm border px-2 py-1 font-mono text-sm">
                                 {t('requestCard.rawJson')}
                             </span>
-                        </div>
-                    ) : null}
+                        ) : null}
+                    </div>
                 </div>
                 <Tabs.Panel
                     value="body"
@@ -109,6 +126,7 @@ export function RequestCard({
                     <JsonBodyEditor
                         value={draft.body}
                         onChange={(body) => change({ body })}
+                        readOnly={readOnly}
                         className="flex-1"
                     />
                 </Tabs.Panel>
@@ -125,6 +143,8 @@ export function RequestCard({
                         removeLabel={(index) => t('requestCard.headers.remove', { index })}
                         keyPlaceholder={t('requestCard.headers.namePlaceholder')}
                         valuePlaceholder={t('requestCard.headers.valuePlaceholder')}
+                        readOnly={readOnly}
+                        emptyText={t('requestCard.headers.empty')}
                     />
                 </Tabs.Panel>
                 <Tabs.Panel
@@ -134,6 +154,7 @@ export function RequestCard({
                     <AuthEditor
                         auth={draft.auth}
                         onChange={(auth) => change({ auth })}
+                        readOnly={readOnly}
                     />
                 </Tabs.Panel>
                 <Tabs.Panel
@@ -156,6 +177,7 @@ export function RequestCard({
                                     <Input
                                         value={draft.pathParams[name] ?? ''}
                                         spellCheck={false}
+                                        readOnly={readOnly}
                                         className="font-mono"
                                         onValueChange={(value) =>
                                             change({
@@ -180,6 +202,8 @@ export function RequestCard({
                             removeLabel={(index) => t('requestCard.params.remove', { index })}
                             keyPlaceholder={t('requestCard.params.namePlaceholder')}
                             valuePlaceholder={t('requestCard.params.valuePlaceholder')}
+                            readOnly={readOnly}
+                            emptyText={t('requestCard.params.empty')}
                         />
                     </fieldset>
                 </Tabs.Panel>
