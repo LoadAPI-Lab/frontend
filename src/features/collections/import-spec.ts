@@ -22,6 +22,8 @@ export type ImportIssue =
     | { kind: 'syntax'; line: number | null; column: number | null; detail: string | null }
     | { kind: 'invalid'; problems: { field: string; message: string }[] }
     | { kind: 'unsupportedVersion' }
+    | { kind: 'notObject' }
+    | { kind: 'missingPaths' }
     | { kind: 'tooLarge' }
     | { kind: 'other'; message: string };
 

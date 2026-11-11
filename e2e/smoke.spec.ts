@@ -116,15 +116,46 @@ test('importing a pasted OpenAPI doc adds it to the collections', async ({ page 
     await page.goto('/tests');
     await page.getByRole('button', { name: 'Import OpenAPI doc' }).click();
     const dialog = page.getByRole('dialog', { name: 'Import an OpenAPI doc' });
-    await dialog
-        .getByRole('textbox', { name: 'OpenAPI document' })
-        .fill('openapi: 3.0.3\ninfo:\n  title: Pet Store\n  version: 1.0.0\npaths: {}\n');
+    await dialog.getByRole('textbox', { name: 'OpenAPI document' }).fill(
+        JSON.stringify({
+            openapi: '3.0.3',
+            info: { title: 'Pet Store', version: '1.0.0' },
+            paths: { '/pets': { get: { tags: ['pets'] } } },
+        }),
+    );
+    await expect(dialog.getByText('OpenAPI 3.0 · 1 endpoint · 1 tag')).toBeVisible();
     await dialog.getByRole('button', { name: 'Import' }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByRole('treeitem', { name: /^Pet Store/ })).toHaveAttribute(
         'aria-expanded',
         'true',
     );
+});
+
+test('importing a chosen file previews the same counts the sidebar shows', async ({ page }) => {
+    await page.goto('/tests');
+    await page.getByRole('button', { name: 'Import OpenAPI doc' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Import an OpenAPI doc' });
+    const chooser = page.waitForEvent('filechooser');
+    await dialog.getByRole('button', { name: 'Choose file' }).click();
+    await (await chooser).setFiles('e2e/fixtures/pet-store.yaml');
+    await expect(dialog.getByText('OpenAPI 3.1 · 5 endpoints · 2 tags')).toBeVisible();
+    await expect(dialog.getByRole('textbox', { name: 'Name (optional)' })).toHaveAttribute(
+        'placeholder',
+        'Pet Store',
+    );
+    const axe = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
+    expect(axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual(
+        [],
+    );
+    await dialog.getByRole('button', { name: 'Import' }).click();
+    await expect(dialog).toBeHidden();
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await expect(
+        tree.getByRole('treeitem', { name: /^Pet Store\b.*5 endpoints$/ }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    await expect(tree.getByRole('treeitem', { name: /^pets.*3 endpoints$/ })).toBeVisible();
+    await expect(tree.getByRole('treeitem', { name: /^users.*1 endpoint$/ })).toBeVisible();
 });
 
 test('a saved doc can be re-imported with a new version from the keyboard', async ({ page }) => {
