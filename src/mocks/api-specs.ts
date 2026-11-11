@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { parse } from 'yaml';
 import { z } from 'zod';
 
 import { ApiSpecResponseDtoEndpointsItemMethod } from '@/api/generated/model';
@@ -305,7 +306,7 @@ const pathsSchema = z.object({
 function endpointsOf(content: string): Endpoint[] | null {
     let parsed: unknown;
     try {
-        parsed = JSON.parse(content);
+        parsed = parse(content);
     } catch {
         return null;
     }
@@ -352,6 +353,7 @@ function importSpec(content: string, name: string | undefined): Response {
         id: crypto.randomUUID(),
         name: name ?? title,
         title,
+        endpoints: endpointsOf(content) ?? testServerSpec.endpoints,
         createdAt: new Date().toISOString(),
     };
     mockApiSpecs.unshift(spec);
@@ -368,7 +370,7 @@ function replaceSpec(id: string, content: string, name: string | undefined): Res
     if (rejected) {
         return rejected;
     }
-    const endpoints = endpointsOf(content.trim()) ?? previous.endpoints;
+    const endpoints = endpointsOf(content) ?? previous.endpoints;
     const spec: ApiSpec = {
         ...previous,
         name: name ?? previous.name,

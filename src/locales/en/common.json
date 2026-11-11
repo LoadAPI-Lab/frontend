@@ -320,17 +320,35 @@
     },
     "importSpec": {
         "title": "Import an OpenAPI doc",
-        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON. Its endpoints appear in the sidebar.",
+        "description": "Paste an OpenAPI 3.0 or 3.1 document as YAML or JSON, or load it from a file. Its endpoints appear in the sidebar.",
         "name": "Name (optional)",
         "namePlaceholder": "Uses the doc's title",
         "content": "OpenAPI document",
         "contentPlaceholder": "openapi: 3.0.3\ninfo:\n  title: My API\n  version: 1.0.0\npaths: …",
+        "file": {
+            "choose": "Choose file",
+            "input": "OpenAPI file",
+            "hint": "Drop a .json, .yaml or .yml file here, or paste the document.",
+            "drop": "Drop the file to load it",
+            "errors": {
+                "wrongType": "{{name}} isn't a .json, .yaml or .yml file.",
+                "tooLarge": "{{name}} is over 5 MB, the import limit.",
+                "unreadable": "Couldn't read {{name}}. Try again or paste the document."
+            }
+        },
+        "preview": {
+            "summary": "OpenAPI {{version}} · {{endpoints}} · {{tags}}",
+            "endpoints_one": "{{count}} endpoint",
+            "endpoints_other": "{{count}} endpoints",
+            "tags_one": "{{count}} tag",
+            "tags_other": "{{count}} tags"
+        },
         "cancel": "Cancel",
         "submit": "Import",
         "importing": "Importing…",
         "reimport": {
             "title": "Re-import {{name}}",
-            "description": "Paste the new version of this doc. Its endpoints are replaced; past runs stay in History.",
+            "description": "Paste or load the new version of this doc. Its endpoints are replaced; past runs stay in History.",
             "namePlaceholder": "Keeps {{name}}",
             "submit": "Re-import",
             "importing": "Re-importing…"
@@ -340,6 +358,8 @@
             "syntaxAt": "Line {{line}}, column {{column}}: {{detail}}",
             "invalid": "This isn't a valid OpenAPI document:",
             "unsupportedVersion": "Only OpenAPI 3.0 and 3.1 are supported. Convert Swagger 2.0 docs first.",
+            "notObject": "The document must be an object with openapi, info and paths.",
+            "missingPaths": "The document needs a paths object.",
             "tooLarge": "This doc is over 5 MB, the import limit."
         }
     },
