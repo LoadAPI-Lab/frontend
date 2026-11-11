@@ -6,6 +6,7 @@ import { snapshotLatency } from '@/api/live';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
 import { type ApiSpec, type Endpoint, isUsableServer } from '@/features/collections';
@@ -28,6 +29,7 @@ import {
 import { ActiveRunBanner } from './active-run-banner';
 import { exampleBody, rememberBody, restoredDraft } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
+import { NoEndpoint } from './no-endpoint';
 import { type PastRequest, pastRequest } from './past-run';
 import { RequestCard } from './request-card';
 import { TestConfigBar } from './test-config-bar';
@@ -65,6 +67,7 @@ export interface EndpointSelection {
 export interface StressTestPageProps {
     selection: EndpointSelection | null;
     missing?: boolean;
+    pending?: boolean;
     runId: string | undefined;
     onRunStarted: (runId: string) => void;
 }
@@ -77,7 +80,14 @@ interface WorkspaceProps extends StressTestPageProps {
     past: PastRequest | null;
 }
 
-function Workspace({ selection, past, missing = false, runId, onRunStarted }: WorkspaceProps) {
+function Workspace({
+    selection,
+    past,
+    missing = false,
+    pending = false,
+    runId,
+    onRunStarted,
+}: WorkspaceProps) {
     const { t } = useTranslation();
     const [mode, setMode] = useState<Mode>('single');
     const modeHint =
@@ -128,7 +138,7 @@ function Workspace({ selection, past, missing = false, runId, onRunStarted }: Wo
             durationSeconds={limits.durationSeconds}
         />
     ) : null;
-    let chartsEmpty = route ? t('stressTests.resultsLater') : t('stressTests.pickRoute');
+    let chartsEmpty = t('stressTests.resultsLater');
     if (outcome.failure) {
         chartsEmpty = t('stressTests.failedNoData');
     } else if (live.isFinal) {
@@ -212,7 +222,9 @@ function Workspace({ selection, past, missing = false, runId, onRunStarted }: Wo
                             description={t('stressTests.notFound.body')}
                         />
                     </Card>
-                ) : (
+                ) : pending ? (
+                    <Skeleton className="h-120" />
+                ) : route ? (
                     <>
                         <LiveStats
                             rps={summary?.avgRps ?? live.latest?.actualRps ?? null}
@@ -256,6 +268,11 @@ function Workspace({ selection, past, missing = false, runId, onRunStarted }: Wo
                             </div>
                         </div>
                     </>
+                ) : (
+                    <>
+                        <NoEndpoint />
+                        <RecentRunsCard />
+                    </>
                 )}
             </Tabs.Panel>
         </Tabs.Root>
@@ -282,6 +299,7 @@ export function StressTestPage(props: StressTestPageProps) {
         },
     });
     const past = !selection && seed.data && seed.data.id === seedId ? pastRequest(seed.data) : null;
+    const pending = props.pending === true || (!selection && Boolean(seedId) && seed.isPending);
     let key = 'none';
     if (selection) {
         key = `${selection.spec.id}:${selection.endpoint.key}`;
@@ -298,6 +316,7 @@ export function StressTestPage(props: StressTestPageProps) {
                 key={key}
                 {...props}
                 past={past}
+                pending={pending}
                 onRunStarted={(id) => {
                     setOwnRuns((current) => new Set(current).add(id));
                     onRunStarted(id);

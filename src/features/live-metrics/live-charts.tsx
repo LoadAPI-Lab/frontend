@@ -585,7 +585,6 @@ export function LiveCharts({
     emptyMessage,
     className,
 }: LiveChartsProps) {
-    const { t } = useTranslation();
     const [zoom, setZoom] = useState<ZoomRange | null>(null);
     const shownZoom = snapshots.length > 0 ? zoom : null;
     const [collapsedKinds, setCollapsedKind] = useCollapsedCharts();
@@ -598,9 +597,7 @@ export function LiveCharts({
                     kind={kind}
                     snapshots={snapshots}
                     durationSeconds={durationSeconds}
-                    emptyMessage={
-                        kind === 'latency' ? emptyMessage : t('liveMetrics.charts.noData')
-                    }
+                    emptyMessage={emptyMessage}
                     zoom={shownZoom}
                     onZoom={setZoom}
                     collapsed={collapsedKinds.has(kind)}

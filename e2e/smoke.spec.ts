@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 test('signed-in user lands on stress tests with the app shell', async ({ page }) => {
     await page.goto('/');
@@ -215,8 +215,44 @@ test('deleting the open doc removes it and clears the Tests page', async ({ page
     await expect(shop).toHaveCount(0);
     await expect(page).not.toHaveURL(/spec=/);
     await expect(
-        page.getByText('Pick a route from the collections to start a test.').first(),
+        page.getByText('Pick an endpoint from the sidebar', { exact: true }),
     ).toBeVisible();
+});
+
+test('with no endpoint picked the Tests page shows one empty state', async ({ page }) => {
+    await page.goto('/tests');
+    const main = page.getByRole('main');
+    await expect(main.getByText('Pick an endpoint from the sidebar', { exact: true })).toHaveCount(
+        1,
+    );
+    await expect(main.getByRole('textbox', { name: 'Request body' })).toHaveCount(0);
+    await expect(main.getByRole('figure')).toHaveCount(0);
+    await expect(main.getByRole('heading', { name: 'Recent runs' })).toBeVisible();
+    const start = main.getByRole('button', { name: 'Start test' });
+    await expect(start).toBeDisabled();
+    await expect(start).toHaveAccessibleDescription('Pick an endpoint from the sidebar first.');
+});
+
+async function deleteDoc(page: Page, name: string) {
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await tree.getByRole('treeitem', { name: new RegExp(`^${name}`) }).hover();
+    await page.getByLabel(`Actions for ${name}`).click();
+    await page.getByRole('menuitem', { name: 'Delete…' }).click();
+    await page
+        .getByRole('alertdialog', { name: `Delete ${name}?` })
+        .getByRole('button', { name: 'Delete' })
+        .click();
+    await expect(page.getByText(`${name} deleted`)).toBeVisible();
+}
+
+test('a fresh account sees the import call to action on the Tests page', async ({ page }) => {
+    await page.goto('/tests');
+    await deleteDoc(page, 'Shop API');
+    await deleteDoc(page, 'LoadAPI test server');
+    const main = page.getByRole('main');
+    await expect(main.getByText('Import an OpenAPI doc to start')).toBeVisible();
+    await main.getByRole('button', { name: 'Import OpenAPI doc' }).click();
+    await expect(page.getByRole('dialog', { name: 'Import an OpenAPI doc' })).toBeVisible();
 });
 
 test('navigates between top-level pages', async ({ page }) => {

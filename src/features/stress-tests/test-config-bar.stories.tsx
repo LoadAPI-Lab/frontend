@@ -49,8 +49,9 @@ export const NoRoute: Story = {
     args: { initial: DEFAULT_CONFIG, block: { kind: 'noTarget' } },
     play: async ({ canvasElement }) => {
         const canvas = within(canvasElement);
-        await expect(canvas.getByRole('button', { name: 'Start test' })).toBeDisabled();
-        await expect(canvas.getByText(/Pick a route/)).toBeVisible();
+        const start = canvas.getByRole('button', { name: 'Start test' });
+        await expect(start).toBeDisabled();
+        await expect(start).toHaveAccessibleDescription('Pick an endpoint from the sidebar first.');
     },
 };
 

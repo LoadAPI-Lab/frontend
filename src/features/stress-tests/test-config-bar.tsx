@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { NumberField } from '@/components/ui/number-field';
+import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 
 import type { ConfigField, ConfigIssue, ConfigIssues, TestConfig } from './test-config';
@@ -109,7 +110,20 @@ export function TestConfigBar({
     const locked = phase !== 'idle';
     const setField = (field: ConfigField) => (value: number | null) =>
         onConfigChange({ ...config, [field]: value });
-    const showBlock = block && block.kind !== 'invalidConfig' && phase === 'idle';
+    const idleBlock = phase === 'idle' ? block : null;
+    const tooltipBlock = idleBlock?.kind === 'noTarget' ? idleBlock : null;
+    const showBlock = idleBlock && idleBlock.kind !== 'invalidConfig' && !tooltipBlock;
+    const startButton = (
+        <Button
+            variant="primary"
+            className="font-bold"
+            disabled={Boolean(block) || phase === 'starting'}
+            aria-describedby={showBlock || tooltipBlock ? blockId : undefined}
+            onClick={onStart}
+        >
+            {phase === 'starting' ? t('testConfig.starting') : t('testConfig.start')}
+        </Button>
+    );
 
     return (
         <div className={cn('flex flex-col items-end gap-1.5', className)}>
@@ -147,16 +161,25 @@ export function TestConfigBar({
                     >
                         {phase === 'stopping' ? t('testConfig.stopping') : t('testConfig.stop')}
                     </Button>
+                ) : tooltipBlock ? (
+                    <Tooltip.Root>
+                        <Tooltip.Trigger
+                            render={<span className="inline-flex cursor-not-allowed" />}
+                        >
+                            {startButton}
+                        </Tooltip.Trigger>
+                        <Tooltip.Content aria-hidden>
+                            <BlockText block={tooltipBlock} />
+                        </Tooltip.Content>
+                        <span
+                            id={blockId}
+                            className="sr-only"
+                        >
+                            <BlockText block={tooltipBlock} />
+                        </span>
+                    </Tooltip.Root>
                 ) : (
-                    <Button
-                        variant="primary"
-                        className="font-bold"
-                        disabled={Boolean(block) || phase === 'starting'}
-                        aria-describedby={showBlock ? blockId : undefined}
-                        onClick={onStart}
-                    >
-                        {phase === 'starting' ? t('testConfig.starting') : t('testConfig.start')}
-                    </Button>
+                    startButton
                 )}
             </div>
             {showBlock ? (
@@ -164,7 +187,7 @@ export function TestConfigBar({
                     id={blockId}
                     className="text-fg-muted text-label"
                 >
-                    <BlockText block={block} />
+                    <BlockText block={idleBlock} />
                 </p>
             ) : null}
         </div>

@@ -15,6 +15,7 @@ import { CollectionsRail } from './collections-rail';
 import { CollectionsTree } from './collections-tree';
 import { DeleteSpecDialog } from './delete-spec-dialog';
 import { ImportDialog } from './import-dialog';
+import { openImportDialog, useImportDialogOpen } from './import-dialog-store';
 import type { SpecChanges } from './import-spec';
 import { RenameSpecDialog } from './rename-spec-dialog';
 import type { SpecAction } from './spec-actions';
@@ -59,8 +60,7 @@ export function CollectionsSidebar() {
     };
     const navigate = useNavigate();
     const [expanded, setExpanded] = useExpanded();
-    const [importing, setImporting] = useState(false);
-    const openImport = () => setImporting(true);
+    const [importing, setImporting] = useImportDialogOpen();
     const [specAction, setSpecAction] = useState<PendingAction | null>(null);
     const [specActionOpen, setSpecActionOpen] = useState(false);
     const search = useSearch({ strict: false });
@@ -90,7 +90,7 @@ export function CollectionsSidebar() {
                             render={
                                 <IconButton
                                     aria-label={t('collections.importShort')}
-                                    onClick={openImport}
+                                    onClick={openImportDialog}
                                 >
                                     <PlusIcon />
                                 </IconButton>
@@ -114,7 +114,7 @@ export function CollectionsSidebar() {
                             },
                         });
                     }}
-                    onImport={openImport}
+                    onImport={openImportDialog}
                     onSpecAction={(action, spec) => {
                         setSpecAction({ action, spec });
                         setSpecActionOpen(true);
