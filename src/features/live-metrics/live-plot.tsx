@@ -350,6 +350,7 @@ export function LivePlot({
     const captionId = useId();
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<uPlot | null>(null);
+    const animationFrame = useRef<number | null>(null);
     const order = drawOrder(series.length, bars);
     const latest = useRef({
         data,
@@ -437,17 +438,21 @@ export function LivePlot({
         }
         const duration = asBars ? BAR_ANIMATION_MS : lineAnimationMs(arrivals.current.gap);
         const ease = asBars ? easeOut : linear;
-        let frame = 0;
         const step = (now: number) => {
             const progress = Math.min(1, (now - startedAt) / duration);
             chart.setData(toPlotData(appendFrame(previous, data, ease(progress), asBars), drawn));
             if (progress < 1) {
-                frame = requestAnimationFrame(step);
+                animationFrame.current = requestAnimationFrame(step);
+            } else {
+                animationFrame.current = null;
             }
         };
-        frame = requestAnimationFrame(step);
+        animationFrame.current = requestAnimationFrame(step);
         return () => {
-            cancelAnimationFrame(frame);
+            if (animationFrame.current !== null) {
+                cancelAnimationFrame(animationFrame.current);
+                animationFrame.current = null;
+            }
             if (chartRef.current === chart) {
                 chart.setData(toPlotData(data, drawn));
             }
