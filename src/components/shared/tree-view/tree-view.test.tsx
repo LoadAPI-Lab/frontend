@@ -111,7 +111,7 @@ describe('TreeView', () => {
 
         act(() => item('Shop API').click());
         expect(item('products')).toHaveClass('motion-safe:animate-tree-in');
-        expect(item('GET /health')).toHaveStyle({ animationDelay: '12ms' });
+        expect(item('GET /health').style.animationDelay).toBe('12ms');
 
         act(() => item('Shop API').click());
         expect(item('products')).toHaveClass('motion-safe:animate-tree-out');
