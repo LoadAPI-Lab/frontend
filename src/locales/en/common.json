@@ -111,6 +111,20 @@
         "runs": "Runs",
         "listLabel": "Test runs",
         "filterLabel": "Run type",
+        "search": {
+            "label": "Search runs",
+            "placeholder": "Search by endpoint",
+            "clear": "Clear search"
+        },
+        "statusFilter": {
+            "label": "Status",
+            "all": "All statuses"
+        },
+        "groupByEndpoint": "Group by endpoint",
+        "endpointGroup": {
+            "meta_one": "{{count}} run · latest {{time}}",
+            "meta_other": "{{count}} runs · latest {{time}}"
+        },
         "filters": {
             "all": "All"
         },
@@ -149,8 +163,8 @@
         },
         "totalCount_one": "{{count}} total",
         "totalCount_other": "{{count}} total",
-        "loadedCount_one": "{{count}} loaded",
-        "loadedCount_other": "{{count}} loaded",
+        "showing_one": "Showing {{count}}",
+        "showing_other": "Showing {{count}}",
         "loading": "Loading runs",
         "loadMore": "Load more",
         "loadingMore": "Loading…",
@@ -158,6 +172,12 @@
             "title": "No test runs yet",
             "body": "Runs you start show up here with their results.",
             "action": "Start a test"
+        },
+        "noMatch": {
+            "title": "No runs match",
+            "body": "Try another search or status.",
+            "bodyMore": "Try another search or status, or load more runs.",
+            "action": "Clear filters"
         },
         "pick": {
             "title": "Pick a run",

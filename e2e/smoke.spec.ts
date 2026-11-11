@@ -346,3 +346,51 @@ test('a finished run shows up in History with its results', async ({ page }) => 
         .click();
     await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
 });
+
+test('History can be searched and filtered by status, and back keeps the filters', async ({
+    page,
+}) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('1');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByText('Test completed')).toBeVisible({ timeout: 10_000 });
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+    const runs = page.getByRole('navigation', { name: 'Test runs' });
+    await expect(runs.getByRole('link', { name: /\/fixed/ })).toBeVisible();
+
+    await page.getByRole('searchbox', { name: 'Search runs' }).fill('/nothing');
+    await expect(runs.getByText('No runs match')).toBeVisible();
+    await expect(page).toHaveURL(/q=/);
+    await runs.getByRole('button', { name: 'Clear filters' }).click();
+    await expect(page.getByRole('searchbox', { name: 'Search runs' })).toHaveValue('');
+    await expect(runs.getByRole('link', { name: /\/fixed/ })).toBeVisible();
+
+    const status = page.getByRole('combobox', { name: 'Status' });
+    await status.click();
+    await page.getByRole('option', { name: 'Failed' }).click();
+    await expect(page).toHaveURL(/status=failed/);
+    await expect(runs.getByText('No runs match')).toBeVisible();
+
+    await page.goBack();
+    await expect(page).not.toHaveURL(/status=/);
+    await expect(status).toContainText('All statuses');
+    await expect(runs.getByRole('link', { name: /\/fixed/ })).toBeVisible();
+
+    await page.goForward();
+    await expect(page).toHaveURL(/status=failed/);
+    await expect(status).toContainText('Failed');
+
+    const group = page.getByRole('button', { name: 'Group by endpoint' });
+    await expect(group).toHaveAttribute('aria-pressed', 'true');
+    await group.click();
+    await expect(page).toHaveURL(/group=day/);
+    await expect(group).toHaveAttribute('aria-pressed', 'false');
+    await runs.getByRole('button', { name: 'Clear filters' }).click();
+    await expect(page).not.toHaveURL(/status=/);
+    await expect(page).toHaveURL(/group=day/);
+    await expect(runs.getByRole('region', { name: /^today/i })).toBeVisible();
+});
