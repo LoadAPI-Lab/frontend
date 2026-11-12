@@ -1,6 +1,6 @@
 ---
 name: frontend-conventions
-description: Stack, folder layout, state rules, runtime config, v1 scope and git conventions for the LoadAPI frontend (React SPA, Vite, TypeScript, pnpm). Use before adding or restructuring code, creating a feature or route, adding a dependency, or writing a commit or PR in this repo.
+description: Stack, folder layout, state rules, runtime config, v1 scope, code rules, common lint traps, settled product decisions (collections menu, base URL, run memory, masked secrets, Send, Scratch request) and git conventions for the LoadAPI frontend (React SPA, Vite, TypeScript, pnpm). Use before adding or restructuring code, creating a feature or route, changing Tests/History/Collections behaviour, adding a dependency, or writing a commit or PR in this repo.
 ---
 
 # LoadAPI frontend conventions
@@ -153,8 +153,49 @@ Same-origin deployment, so the defaults need no config: `API_BASE` is empty and 
 - Prefixes: `feat/`, `fix/`, `refactor/`, `chore/`, `docs/`.
 - Conventional Commits (commitlint): `<type>(<scope>): <description>`.
   Scopes: `auth`, `collections`, `stress-tests`, `scenarios`, `history`, `ui`, `shared`, `layout`, `api`, `app`, `e2e`, `ci`, `deps`.
-- Before committing: `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. Husky + lint-staged run format and lint on staged files.
+- Before committing: `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. Before a PR, also `pnpm test:storybook && pnpm test:e2e`. Husky + lint-staged run oxfmt and oxlint on staged files; a lint error aborts the commit.
 - Small, logical commits. No `console.log`.
+- One branch per ticket (e.g. `feat/collection-actions`). Put the ticket id in the PR title: `feat(history): history list, run detail and recent runs (FE-17)`.
+
+## Code rules
+
+- No code comments unless asked for. Lint-disable directives are fine.
+- New components get a Storybook story (with axe checks); logic gets unit tests; user flows get Playwright e2e on `build:mock` (see `testing`).
+- When widening a shared type into a union, grep every use first: code that destructures one member's fields breaks typecheck.
+
+Common oxlint traps:
+
+- `no-useless-undefined`, also for arguments: make the parameter optional and call `fn()`, not `fn(undefined)`.
+- `prefer-tag-over-role`, `consistent-function-scoping`, `no-object-type-as-default-prop`.
+- `no-shadow`: e.g. a callback argument named like an outer variable.
+- `no-unsafe-type-assertion`: build typed fixtures instead of `as`.
+- `no-unused-vars`: remove imports left over after a refactor.
+- Tests: `no-conditional-expect`, `require-mock-type-parameters` (`vi.fn<…>()`).
+
+## Product decisions
+
+Settled behaviour; keep it unless the user changes it.
+
+**Collections sidebar**
+
+- Each doc row has an actions menu (hover "…" button, or Shift+F10 / Menu key on the row): Rename, Re-import (`PUT`, keeps the id), Delete (AlertDialog confirm; blocked while a test runs on that doc).
+
+**Tests page**
+
+- The endpoint header shows method, path and base URL only, no doc (collection) name.
+- Base URL is always a free-text input (no dropdown), prefilled with the last URL used for that doc, else the doc's first server. Disabled only while a run is starting, running or stopping.
+- Core doesn't store which doc/endpoint a run came from; the frontend remembers it in sessionStorage (`lib/run-memory`). A run opened without that (another tab, re-run from History, deleted doc) is shown from the run's own config: method, path and base URL parsed from `target.url`, plus query, headers, body and RPS/duration/ramp-up, editable and restartable (`stress-tests/past-run.ts`). A later improvement would be core storing `source: { specId, endpointKey }` (needs a contract change).
+- Core masks secrets in stored runs (`***`; Authorization keeps its scheme, `Bearer ***`). Start stays blocked until a masked value is re-entered. History's Re-run uses core's stored config, so it needs no re-entry.
+- **Send (FE-46):** sends one request via core's `POST /v1/requests` (see `api-and-live-data`). It sits next to Start and shares its checks (`stress-tests/request-block.ts`). Before a run the right column shows the Response card instead of empty charts; after a run, a Response / Live metrics switch appears once something was sent. Core's refusals (private host, 429) show inside the card, not as toasts. Single requests don't go to History.
+
+**Scratch request (FE-47)**: one request outside collections, no saved drafts list.
+
+- Route `/tests?scratch=1` (the search param is the number `1`; ignored when `spec` is set). Opened from **New request** (the "+" in the sidebar header; Import beside it has the upload icon) and from the no-endpoint empty state.
+- Header replaces the endpoint header: method select, one full-URL input and Clear (`stress-tests/scratch-header.tsx`). The URL's query and the Params tab stay in sync both ways; the route sent to core is the URL without its query, plus the Params rows.
+- Stored in sessionStorage `routelab.tests.scratch` (`lib/scratch-request.ts`, a `useSyncExternalStore` store): saved on every edit, removed once empty, so it survives a reload and is gone when the tab closes. Clear empties it and drops `run` from the URL.
+- While it has content, a "Scratch request" row (method, URL, running spinner) sits above the collections tree (`collections/scratch-row.tsx`) and opens its last run.
+- Its runs are remembered as `{ scratch: true }` in `lib/run-memory`. `RunPlace` is `EndpointPlace | ScratchPlace`: use `placeSearch(place)` to build Tests search params (History's Open charts and Re-run, the active-run banner), `isScratchPlace` to tell them apart, and `EndpointPlace` where only endpoints make sense (edited-body memory). Opening such a run shows the stored scratch request, or rebuilds it from the run's config if cleared (`pastScratch`).
+- A URL that isn't `http(s)://…` blocks Send and Start with its own message (`noUrl`); `noServer` stays for a collection path without a base URL.
 
 ## Adding a dependency
 

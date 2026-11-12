@@ -32,6 +32,15 @@ Visual regression (Playwright `toHaveScreenshot`) is optional. Add it only for s
 - uPlot and CodeMirror do not render meaningfully in jsdom. Test their wrappers' inputs and outputs (data passed in, value changes out) and cover the real rendering in Playwright.
 - A bug fix comes with a test that failed before the fix.
 
+## Gotchas
+
+- Test names containing an apostrophe need double quotes (`it("the doc's …")`); oxfmt fails to parse them otherwise.
+- Lint in tests: no `expect` inside conditionals; `vi.fn<…>()` always has a type parameter; build typed fixtures instead of `as`.
+- E2E specs have no DOM types: use `page.evaluate('sessionStorage.clear()')`, not `window`.
+- MSW keeps runs in browser memory, so `page.goto` or a reload after starting a run empties History. Once a run exists, move between pages by clicking links.
+- Accessible names differ between jsdom and Chromium (Chromium adds a space before `, 5 endpoints`): in e2e, match tree items with a regex.
+- Playwright matches `name` as a substring: use `exact: true` when one accessible name contains another (region "Response" vs "Response body").
+
 ## Commands
 
 ```bash

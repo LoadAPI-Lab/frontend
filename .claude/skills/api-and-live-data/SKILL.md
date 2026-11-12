@@ -9,7 +9,7 @@ description: How the LoadAPI frontend talks to the backend, covering same-origin
 
 The backend `core` app (NestJS + nestjs-zod) publishes an OpenAPI document via Swagger:
 
-- JSON: `http://localhost:3001/docs/json` locally (bootstrap default path `docs`; the backend README says `/api/v1/docs`, so confirm before relying on it)
+- JSON: `http://localhost:3001/docs/json` locally, Swagger UI at `/docs`. Core has no committed spec file: NestJS builds it at startup.
 - API routes are URI-versioned: `/v1/...`. The browser calls the **same paths on its own origin** (`/v1/...`); the dev server or reverse proxy forwards `/v1/*` to core unchanged. No `/api` prefix: core scopes its auth cookies to `/v1/auth` (refresh) and `/v1/oauth` (OAuth state), so a prefixed path would never carry them.
 
 We **generate** the client; we never hand-write request types that exist in the spec.
@@ -24,7 +24,18 @@ pnpm api:generate   # orval: spec → src/api/generated (Query hooks, Zod schema
 - CI regenerates and fails if `src/api/generated` differs from what is committed.
 - Output mode `tags-split`, client `react-query`, plus the `zod` and `msw` generators.
 - `src/api/generated/**` is never edited by hand and is excluded from lint and format.
-- When the backend changes the spec: refresh the snapshot, regenerate, fix type errors, and commit as `chore(api): sync openapi`.
+- When the backend changes the spec: refresh the snapshot, regenerate, fix type errors, and commit as `chore(api): sync openapi` on its own.
+- Hook names come from `operationId`, so a renamed controller or method on core renames the hook.
+
+Sync steps:
+
+```bash
+# in ~/backend, on the branch with the change: rebuild core
+docker compose -f infra/docker-compose.yml up -d --build
+# in this repo
+OPENAPI_URL=http://localhost:3001/docs/json pnpm api:generate
+curl -fsS http://localhost:3001/docs/json -o openapi/openapi.json && pnpm format
+```
 
 ## Fetcher (orval mutator)
 
@@ -92,6 +103,16 @@ interface Target {
 
 Final `result` (COMPLETED / STOPPED) is the worker's `LoadResult` for single runs (`durationMs, targetRps, avgRps, targets[]` with `totalRequests, errorRate`, percentiles, `statusCodes`, `errors`) and `{ summary, steps[] }` for scenarios. Core types it as `unknown`: validate it with our Zod schemas in `src/api/live/schemas.ts`.
 
+Core masks secrets in stored run configs (`***`; Authorization keeps its scheme, `Bearer ***`). See `frontend-conventions` → Product decisions for how the UI handles it.
+
+## Single request (`POST /v1/requests`)
+
+Sends one request through core and stores nothing (used by Send, FE-46). Limits: 30 per user per minute, 1 MB body limits, no body on GET/HEAD. Refusals (private host, 429) are shown inside the Response card, not toasted (`meta: { toastOnError: false }`).
+
+## Outbound protection (backend #19)
+
+Core and the worker refuse private/internal hosts unless `OUTBOUND_ALLOW_PRIVATE_NETWORKS=true` (or the host is in `OUTBOUND_ALLOWED_HOSTS`) in the backend's `infra/.env`. Locally it must be on to test against `testserver`; otherwise runs show "Blocked target" and Send shows the private-network message. Snapshots then carry the worker's `blocked` network error kind.
+
 Placeholders resolved by the worker: `{{$uuid}}`, `{{$randomInt}}`, `{{$randomEmail}}`, `{{$timestamp}}`; scenario steps can use `{{name}}` from earlier `extract: [{ name, path }]` rules.
 
 ## Live metrics (SSE)
@@ -100,6 +121,7 @@ Placeholders resolved by the worker: `{{$uuid}}`, `{{$randomInt}}`, `{{$randomEm
 
 - `status`: `{ status, reason? }`. Always sent FIRST with the current status. For a finished run it is the only event and the stream ends.
 - `snapshot`: the worker's per-second `Snapshot` (`testId, timestamp, elapsedSeconds, targetRps, actualRps, targets[]`), validated with `snapshotSchema`.
+- The SSE stream is not in the OpenAPI spec: its schemas are hand-written in `src/api/live/schemas.ts`. When the worker changes snapshot fields, update them by hand. Unknown network error kinds are counted as `other`, so a new kind can't make snapshots fail validation.
 - The stream completes after a final `status` event. Stop reading then; do not reconnect after a final status.
 
 Rules:
