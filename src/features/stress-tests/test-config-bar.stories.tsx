@@ -5,7 +5,10 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import { DEFAULT_CONFIG, type TestConfig, validateConfig } from './test-config';
 import { TestConfigBar, type TestConfigBarProps } from './test-config-bar';
 
-type StoryArgs = Pick<TestConfigBarProps, 'block' | 'phase' | 'onStart' | 'onStop'> & {
+type StoryArgs = Pick<
+    TestConfigBarProps,
+    'block' | 'phase' | 'onStart' | 'onStop' | 'sendBlock' | 'sending' | 'onSend' | 'onCancelSend'
+> & {
     initial: TestConfig;
 };
 
@@ -88,3 +91,34 @@ export const Running: Story = {
 };
 
 export const Stopping: Story = { args: { phase: 'stopping' } };
+
+export const WithSend: Story = {
+    args: { onSend: fn(), onCancelSend: fn() },
+    play: async ({ args, canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(canvas.getByRole('button', { name: 'Send' }));
+        await expect(args.onSend).toHaveBeenCalledOnce();
+    },
+};
+
+export const Sending: Story = {
+    args: { onSend: fn(), onCancelSend: fn(), sending: true },
+    play: async ({ args, canvasElement }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }));
+        await expect(args.onCancelSend).toHaveBeenCalledOnce();
+    },
+};
+
+export const BodyOnGet: Story = {
+    args: { onSend: fn(), sendBlock: { kind: 'bodyNotAllowed', method: 'GET' } },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        const send = canvas.getByRole('button', { name: 'Send' });
+        await expect(send).toBeDisabled();
+        await expect(send).toHaveAccessibleDescription(
+            "GET requests can't have a body. Clear the body to send.",
+        );
+        await expect(canvas.getByRole('button', { name: 'Start test' })).toBeEnabled();
+    },
+};

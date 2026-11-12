@@ -14,10 +14,10 @@ export type ApiSpecResponseDtoEndpointsItemMethod = typeof ApiSpecResponseDtoEnd
 
 export const ApiSpecResponseDtoEndpointsItemMethod = {
   GET: 'GET',
-  PUT: 'PUT',
   POST: 'POST',
-  DELETE: 'DELETE',
-  OPTIONS: 'OPTIONS',
-  HEAD: 'HEAD',
+  PUT: 'PUT',
   PATCH: 'PATCH',
+  DELETE: 'DELETE',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
 } as const;

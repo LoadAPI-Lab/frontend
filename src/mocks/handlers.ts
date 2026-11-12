@@ -6,6 +6,7 @@ import { getUsersMock } from '@/api/generated/endpoints/users/users.msw';
 
 import { apiSpecHandlers } from './api-specs';
 import { mockProviders, mockUser } from './data';
+import { requestHandlers } from './requests';
 import { testRunHandlers } from './test-runs';
 
 export const handlers = [
@@ -15,6 +16,7 @@ export const handlers = [
     http.post('*/v1/auth/logout', () => new HttpResponse(null, { status: 204 })),
     ...apiSpecHandlers,
     ...testRunHandlers,
+    ...requestHandlers,
     ...getAuthMock(),
     ...getOauthMock(),
     ...getUsersMock(),

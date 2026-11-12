@@ -65,6 +65,7 @@ const emptyNetworkErrors = (): Record<NetworkError, number> => ({
     connection_refused: 0,
     connection_reset: 0,
     dns: 0,
+    blocked: 0,
     other: 0,
 });
 

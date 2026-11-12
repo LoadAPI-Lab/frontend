@@ -11,8 +11,23 @@ export const networkErrorSchema = z.enum([
     'connection_refused',
     'connection_reset',
     'dns',
+    'blocked',
     'other',
 ]);
+
+type NetworkErrorCounts = Partial<Record<z.infer<typeof networkErrorSchema>, number>>;
+
+export const networkErrorCountsSchema = z
+    .record(z.string(), z.number().int())
+    .transform((counts) => {
+        const known: NetworkErrorCounts = {};
+        for (const [kind, count] of Object.entries(counts)) {
+            const parsed = networkErrorSchema.safeParse(kind);
+            const key = parsed.success ? parsed.data : 'other';
+            known[key] = (known[key] ?? 0) + count;
+        }
+        return known;
+    });
 
 export const routeSnapshotSchema = z.object({
     method: z.string(),
@@ -23,7 +38,7 @@ export const routeSnapshotSchema = z.object({
     responseTime: percentilesSchema.optional(),
     serviceTime: percentilesSchema.optional(),
     statusCodes: z.record(z.string(), z.number().int()).optional(),
-    errors: z.partialRecord(networkErrorSchema, z.number().int()).optional(),
+    errors: networkErrorCountsSchema.optional(),
 });
 
 export const snapshotSchema = z.object({
@@ -46,7 +61,7 @@ export const routeResultSchema = z.object({
     responseTime: percentilesSchema.optional(),
     serviceTime: percentilesSchema.optional(),
     statusCodes: z.record(z.string(), z.number().int()).optional(),
-    errors: z.partialRecord(networkErrorSchema, z.number().int()).optional(),
+    errors: networkErrorCountsSchema.optional(),
 });
 
 export const runResultSchema = z.object({

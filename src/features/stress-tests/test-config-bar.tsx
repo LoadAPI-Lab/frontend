@@ -8,6 +8,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 
 import type { ConfigField, ConfigIssue, ConfigIssues, TestConfig } from './test-config';
+import type { SendBlock } from './use-send-request';
 import type { RunPhase, StartBlock } from './use-test-run-controls';
 
 export interface TestConfigBarProps {
@@ -18,6 +19,10 @@ export interface TestConfigBarProps {
     phase: RunPhase;
     onStart: () => void;
     onStop: () => void;
+    sendBlock?: SendBlock | null;
+    sending?: boolean;
+    onSend?: () => void;
+    onCancelSend?: () => void;
     className?: string;
 }
 
@@ -35,8 +40,11 @@ function IssueText({ issue }: { issue: ConfigIssue }) {
     return t('testConfig.issues.rampLongerThanDuration', { max: issue.max });
 }
 
-function BlockText({ block }: { block: StartBlock }) {
+function BlockText({ block }: { block: StartBlock | SendBlock }) {
     const { t } = useTranslation();
+    if (block.kind === 'bodyNotAllowed') {
+        return t('sendRequest.bodyNotAllowed', { method: block.method });
+    }
     if (block.kind === 'noTarget') {
         return t('testConfig.blocked.noTarget');
     }
@@ -103,6 +111,10 @@ export function TestConfigBar({
     phase,
     onStart,
     onStop,
+    sendBlock = null,
+    sending = false,
+    onSend,
+    onCancelSend,
     className,
 }: TestConfigBarProps) {
     const { t } = useTranslation();
@@ -112,13 +124,29 @@ export function TestConfigBar({
         onConfigChange({ ...config, [field]: value });
     const idleBlock = phase === 'idle' ? block : null;
     const tooltipBlock = idleBlock?.kind === 'noTarget' ? idleBlock : null;
-    const showBlock = idleBlock && idleBlock.kind !== 'invalidConfig' && !tooltipBlock;
+    const shownStartBlock =
+        idleBlock && idleBlock.kind !== 'invalidConfig' && !tooltipBlock ? idleBlock : null;
+    const sendOnlyBlock =
+        phase === 'idle' && sendBlock?.kind === 'bodyNotAllowed' ? sendBlock : null;
+    const showBlock = shownStartBlock ?? sendOnlyBlock;
+    const showSend = Boolean(onSend) && phase === 'idle' && block?.kind !== 'noTarget';
+    const sendButton = sending ? (
+        <Button onClick={onCancelSend}>{t('sendRequest.cancel')}</Button>
+    ) : (
+        <Button
+            disabled={Boolean(sendBlock)}
+            aria-describedby={sendBlock && showBlock ? blockId : undefined}
+            onClick={onSend}
+        >
+            {t('sendRequest.send')}
+        </Button>
+    );
     const startButton = (
         <Button
             variant="primary"
             className="font-bold"
             disabled={Boolean(block) || phase === 'starting'}
-            aria-describedby={showBlock || tooltipBlock ? blockId : undefined}
+            aria-describedby={shownStartBlock || tooltipBlock ? blockId : undefined}
             onClick={onStart}
         >
             {phase === 'starting' ? t('testConfig.starting') : t('testConfig.start')}
@@ -153,6 +181,7 @@ export function TestConfigBar({
                     disabled={locked}
                     onChange={setField('rampUpSeconds')}
                 />
+                {showSend ? sendButton : null}
                 {phase === 'running' || phase === 'stopping' ? (
                     <Button
                         variant="danger"
@@ -187,7 +216,7 @@ export function TestConfigBar({
                     id={blockId}
                     className="text-fg-muted text-label"
                 >
-                    <BlockText block={idleBlock} />
+                    <BlockText block={showBlock} />
                 </p>
             ) : null}
         </div>

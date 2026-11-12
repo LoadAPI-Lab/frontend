@@ -295,6 +295,53 @@
             "noServer": "Set a base URL for this collection to start."
         }
     },
+    "sendRequest": {
+        "send": "Send",
+        "cancel": "Cancel",
+        "title": "Response",
+        "idle": {
+            "title": "No response yet",
+            "body": "Send the request once to check it before a load test. You'll see its status, headers and body here. Nothing is saved."
+        },
+        "waiting": "Waiting for the response…",
+        "status": "Status",
+        "time": "Time",
+        "size": "Size",
+        "units": {
+            "ms": "{{value}} ms",
+            "s": "{{value}} s",
+            "b": "{{value}} B",
+            "kb": "{{value}} KB",
+            "mb": "{{value}} MB"
+        },
+        "tabs": {
+            "body": "Body",
+            "headers": "Headers"
+        },
+        "headers": {
+            "name": "Name",
+            "value": "Value"
+        },
+        "bodyLabel": "Response body",
+        "emptyBody": "The response has no body.",
+        "binary": "Binary response ({{size}}). Its body isn't shown.",
+        "truncated": "The body is longer than 1 MB. Only the first 1 MB is shown.",
+        "networkError": {
+            "title": "No response: {{reason}}",
+            "body": "Check the URL and that the server is reachable from LoadAPI."
+        },
+        "problems": {
+            "targetNotAllowed": "This host is in a private or internal network, so LoadAPI won't send requests to it.",
+            "rateLimited": "Too many requests. You can send up to 30 a minute, try again shortly.",
+            "failed": "Couldn't send the request: {{message}}"
+        },
+        "bodyNotAllowed": "{{method}} requests can't have a body. Clear the body to send.",
+        "panels": {
+            "label": "Results",
+            "response": "Response",
+            "metrics": "Live metrics"
+        }
+    },
     "secretInput": {
         "show": "Show",
         "hide": "Hide"
@@ -447,6 +494,7 @@
                 "connection_refused": "Connection refused",
                 "connection_reset": "Connection reset",
                 "dns": "DNS",
+                "blocked": "Blocked target",
                 "other": "Other"
             },
             "empty": "No responses yet.",

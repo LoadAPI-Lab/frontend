@@ -6,6 +6,7 @@ import { snapshotLatency } from '@/api/live';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card } from '@/components/ui/card';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs } from '@/components/ui/tabs';
 import { config } from '@/config';
@@ -32,9 +33,11 @@ import { EndpointHeader } from './endpoint-header';
 import { NoEndpoint } from './no-endpoint';
 import { type PastRequest, pastRequest } from './past-run';
 import { RequestCard } from './request-card';
+import { ResponseCard } from './response-card';
 import { TestConfigBar } from './test-config-bar';
 import { useRunLimits } from './use-run-limits';
 import { useRunOutcome } from './use-run-outcome';
+import { useSendRequest } from './use-send-request';
 import { useServer } from './use-server';
 import { useTestRunControls } from './use-test-run-controls';
 
@@ -75,6 +78,8 @@ export interface StressTestPageProps {
 const joinUrl = (base: string, path: string) => `${base.replace(/\/+$/, '')}${path}`;
 
 type Mode = (typeof modes)[number]['value'];
+
+type ResultsPanel = 'response' | 'metrics';
 
 interface WorkspaceProps extends StressTestPageProps {
     past: PastRequest | null;
@@ -118,8 +123,20 @@ function Workspace({
     } else if (past) {
         route = { method: past.method, url: joinUrl(pastServer, past.path) };
     }
+    const target = route ? buildRequest(route, draft) : null;
+    const [panel, setPanel] = useState<ResultsPanel>(runId ? 'metrics' : 'response');
+    const [panelRunId, setPanelRunId] = useState(runId);
+    if (panelRunId !== runId) {
+        setPanelRunId(runId);
+        setPanel(runId ? 'metrics' : 'response');
+    }
+    const sender = useSendRequest({
+        target,
+        body: draft.body,
+        onSend: () => setPanel('response'),
+    });
     const controls = useTestRunControls({
-        target: route ? buildRequest(route, draft) : null,
+        target,
         body: draft.body,
         runId,
         onRunStarted,
@@ -131,6 +148,9 @@ function Workspace({
     const totals = summary?.totals ?? live.totals;
     const limits = useRunLimits(runId) ?? controls.config;
     const locked = controls.phase !== 'idle';
+    const hasResponse = sender.sending || Boolean(sender.outcome) || Boolean(sender.problem);
+    const switchable = Boolean(runId) && !locked && hasResponse;
+    const showResponse = !runId || (switchable && panel === 'response');
     const progress = runId ? (
         <RunProgress
             status={live.status}
@@ -184,6 +204,10 @@ function Workspace({
                     phase={controls.phase}
                     onStart={controls.start}
                     onStop={controls.stop}
+                    sendBlock={sender.block}
+                    sending={sender.sending}
+                    onSend={sender.send}
+                    onCancelSend={sender.cancel}
                 />
             </div>
             <Tabs.Panel
@@ -257,15 +281,41 @@ function Workspace({
                                 <RecentRunsCard />
                             </div>
                             <div className="flex min-w-0 flex-col gap-3">
-                                <LiveCharts
-                                    snapshots={live.snapshots}
-                                    durationSeconds={limits.durationSeconds}
-                                    emptyMessage={chartsEmpty}
-                                />
-                                <StatusCodesCard
-                                    codes={totals.codes}
-                                    networkErrors={totals.networkErrors}
-                                />
+                                {switchable ? (
+                                    <SegmentedControl.Root<ResultsPanel>
+                                        aria-label={t('sendRequest.panels.label')}
+                                        value={panel}
+                                        onValueChange={setPanel}
+                                        className="self-start"
+                                    >
+                                        <SegmentedControl.Item value="response">
+                                            {t('sendRequest.panels.response')}
+                                        </SegmentedControl.Item>
+                                        <SegmentedControl.Item value="metrics">
+                                            {t('sendRequest.panels.metrics')}
+                                        </SegmentedControl.Item>
+                                    </SegmentedControl.Root>
+                                ) : null}
+                                {showResponse ? (
+                                    <ResponseCard
+                                        outcome={sender.outcome}
+                                        problem={sender.problem}
+                                        sending={sender.sending}
+                                        className="h-120"
+                                    />
+                                ) : (
+                                    <>
+                                        <LiveCharts
+                                            snapshots={live.snapshots}
+                                            durationSeconds={limits.durationSeconds}
+                                            emptyMessage={chartsEmpty}
+                                        />
+                                        <StatusCodesCard
+                                            codes={totals.codes}
+                                            networkErrors={totals.networkErrors}
+                                        />
+                                    </>
+                                )}
                             </div>
                         </div>
                     </>
