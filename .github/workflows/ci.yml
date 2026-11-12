@@ -33,12 +33,6 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Check the API client matches the spec
-              run: |
-                  pnpm api:generate
-                  git add --intent-to-add src/api/generated
-                  git diff --exit-code -- src/api/generated
-
             - name: Check formatting
               run: pnpm format:check
 

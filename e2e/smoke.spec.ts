@@ -105,6 +105,40 @@ test('a running test can be stopped', async ({ page }) => {
     await expect(baseUrl).toBeEditable();
 });
 
+test('Send shows the response of one request before a load test', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    const response = page.getByRole('region', { name: 'Response', exact: true });
+    await expect(response.getByText('No response yet')).toBeVisible();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(response.getByText('200 OK')).toBeVisible();
+    await expect(response.getByLabel('Response body')).toContainText('"method": "GET"');
+    await response.getByRole('tab', { name: /^Headers/ }).click();
+    await expect(response.getByRole('row', { name: /set-cookie/ })).toHaveCount(2);
+
+    await page.getByRole('textbox', { name: 'Base URL' }).fill('http://10.0.0.1');
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(response.getByRole('alert')).toContainText('private or internal network');
+});
+
+test('after a run, Send switches back to the response and the charts stay one click away', async ({
+    page,
+}) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('2');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Start test' })).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    const response = page.getByRole('region', { name: 'Response', exact: true });
+    await expect(response.getByText('200 OK')).toBeVisible();
+    const panels = page.getByRole('group', { name: 'Results' });
+    await panels.getByRole('button', { name: 'Live metrics' }).click();
+    await expect(
+        page.getByRole('figure', { name: /^Latency chart\. Latest second/ }),
+    ).toBeVisible();
+    await expect(response).toBeHidden();
+});
+
 test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {
     await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fnope');
     await expect(page.getByText("This endpoint isn't in your collections")).toBeVisible();

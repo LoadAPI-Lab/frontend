@@ -11,10 +11,8 @@ import {
 import type { StartTestRunDto } from '@/api/generated/model';
 import { useLiveTest } from '@/api/live';
 import { toast } from '@/components/ui/toast';
-import { isValidJsonBody } from '@/lib/json-body';
-import { unresolvedPathParam } from '@/lib/target-url';
 
-import { maskedSecret } from './past-run';
+import { type RequestBlock, requestBlock } from './request-block';
 import { DEFAULT_CONFIG, type TestConfig, validateConfig } from './test-config';
 
 export type RunTarget = Extract<StartTestRunDto, { type: 'single' }>['config']['target'];
@@ -31,13 +29,7 @@ const withKey = (key: string) => ({ headers: { [IDEMPOTENCY_KEY_HEADER]: key } }
 
 export type RunPhase = 'idle' | 'starting' | 'running' | 'stopping';
 
-export type StartBlock =
-    | { kind: 'noTarget' }
-    | { kind: 'noServer' }
-    | { kind: 'pathParam'; param: string }
-    | { kind: 'maskedSecret'; name: string }
-    | { kind: 'invalidBody' }
-    | { kind: 'invalidConfig' };
+export type StartBlock = RequestBlock | { kind: 'invalidConfig' };
 
 const ACTIVE_STATUSES = new Set(['PENDING', 'RUNNING']);
 
@@ -54,24 +46,7 @@ function startBlock(
     body: string,
     configValid: boolean,
 ): StartBlock | null {
-    if (!target) {
-        return { kind: 'noTarget' };
-    }
-    if (!/^https?:\/\/[^/]/i.test(target.url)) {
-        return { kind: 'noServer' };
-    }
-    const param = unresolvedPathParam(target.url);
-    if (param) {
-        return { kind: 'pathParam', param };
-    }
-    const secret = maskedSecret(target);
-    if (secret) {
-        return { kind: 'maskedSecret', name: secret };
-    }
-    if (!isValidJsonBody(body)) {
-        return { kind: 'invalidBody' };
-    }
-    return configValid ? null : { kind: 'invalidConfig' };
+    return requestBlock(target, body) ?? (configValid ? null : { kind: 'invalidConfig' });
 }
 
 export function useTestRunControls({
