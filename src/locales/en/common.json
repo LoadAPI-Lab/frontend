@@ -42,6 +42,11 @@
         "title": "Collections",
         "empty": "No collections yet",
         "importShort": "Import OpenAPI doc",
+        "newRequest": "New request",
+        "scratchRow": {
+            "title": "Scratch request",
+            "empty": "No URL yet"
+        },
         "emptyBody": "Import an OpenAPI doc to see its endpoints here.",
         "loading": "Loading collections",
         "endpointsFailed": "Couldn't load the endpoints",
@@ -103,7 +108,16 @@
             "pick": {
                 "title": "Pick an endpoint from the sidebar",
                 "body": "You'll edit the request here, set the load above, then start the test and watch live results."
-            }
+            },
+            "orNew": "Or test any URL with a new request."
+        },
+        "scratch": {
+            "label": "Scratch request",
+            "method": "Method",
+            "url": "URL",
+            "urlPlaceholder": "https://api.example.com/path?page=1",
+            "clear": "Clear",
+            "note": "Not saved to a collection. Kept until this tab closes."
         },
         "notFound": {
             "title": "This endpoint isn't in your collections",
@@ -292,7 +306,8 @@
             "maskedSecret": "Re-enter {{name}} to start. Past runs hide secret values.",
             "invalidBody": "Fix the request body to start.",
             "invalidConfig": "Fix the test settings to start.",
-            "noServer": "Set a base URL for this collection to start."
+            "noServer": "Set a base URL for this collection to start.",
+            "noUrl": "Enter a full URL that starts with http:// or https://."
         }
     },
     "sendRequest": {

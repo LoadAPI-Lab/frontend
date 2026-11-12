@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { lastRunFor, placeOfRun, rememberRun } from './run-memory';
+import { lastRunFor, placeOfRun, placeSearch, rememberRun, SCRATCH_PLACE } from './run-memory';
 
 const fixed = { spec: 's1', endpoint: 'GET /fixed' };
 const flaky = { spec: 's1', endpoint: 'GET /flaky' };
@@ -25,6 +25,20 @@ describe('run memory', () => {
         }
         expect(placeOfRun('r0')).toBeUndefined();
         expect(placeOfRun('r24')).toEqual(fixed);
+    });
+
+    it('remembers runs started from the scratch request', () => {
+        rememberRun('r1', fixed);
+        rememberRun('r2', SCRATCH_PLACE);
+        expect(placeOfRun('r2')).toEqual({ scratch: true });
+        expect(lastRunFor(SCRATCH_PLACE)).toBe('r2');
+        expect(lastRunFor(fixed)).toBe('r1');
+    });
+
+    it('turns a place into Tests page search params', () => {
+        expect(placeSearch(SCRATCH_PLACE)).toEqual({ scratch: 1 });
+        expect(placeSearch(fixed)).toEqual(fixed);
+        expect(placeSearch()).toEqual({});
     });
 
     it('survives bad stored values', () => {

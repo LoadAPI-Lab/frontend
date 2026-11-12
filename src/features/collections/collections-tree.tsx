@@ -13,6 +13,7 @@ import { UploadIcon } from '@/components/ui/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
 import { methodColorClass } from '@/lib/http-method';
+import { isScratchPlace } from '@/lib/run-memory';
 
 import {
     type ApiSpec,
@@ -84,7 +85,8 @@ export function CollectionsTree({
     const { t } = useTranslation();
     const [menuFor, setMenuFor] = useState<string | null>(null);
     const specs = useQuery(apiSpecsQuery);
-    const runningPlace = useActiveRun().active?.place;
+    const activePlace = useActiveRun().active?.place;
+    const runningPlace = isScratchPlace(activePlace) ? undefined : activePlace;
     const openSpecIds = (specs.data ?? [])
         .map((spec) => spec.id)
         .filter((id) => expanded.has(specNodeId(id)));

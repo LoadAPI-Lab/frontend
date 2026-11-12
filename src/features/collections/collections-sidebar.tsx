@@ -2,13 +2,15 @@ import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useActiveRun } from '@/api/live';
 import { Sidebar } from '@/components/layout/sidebar';
 import { useSidebarCollapsed } from '@/components/layout/use-sidebar-collapsed';
 import { IconButton } from '@/components/ui/icon-button';
-import { PlusIcon } from '@/components/ui/icons';
+import { PlusIcon, UploadIcon } from '@/components/ui/icons';
 import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
-import { lastRunFor } from '@/lib/run-memory';
+import { isScratchPlace, lastRunFor, SCRATCH_PLACE } from '@/lib/run-memory';
+import { useScratchRequest } from '@/lib/scratch-request';
 
 import type { ApiSpecSummary } from './api';
 import { CollectionsRail } from './collections-rail';
@@ -18,6 +20,7 @@ import { ImportDialog } from './import-dialog';
 import { openImportDialog, useImportDialogOpen } from './import-dialog-store';
 import type { SpecChanges } from './import-spec';
 import { RenameSpecDialog } from './rename-spec-dialog';
+import { ScratchRow } from './scratch-row';
 import type { SpecAction } from './spec-actions';
 import { specNodeId } from './spec-tree';
 import { useExpanded } from './use-expanded';
@@ -68,6 +71,9 @@ export function CollectionsSidebar() {
         search.spec && search.endpoint
             ? { specId: search.spec, endpointKey: search.endpoint }
             : null;
+    const scratch = useScratchRequest();
+    const scratchSelected = pathname.startsWith('/tests') && search.scratch === 1 && !search.spec;
+    const scratchRunning = isScratchPlace(useActiveRun().active?.place);
 
     return (
         <>
@@ -85,21 +91,54 @@ export function CollectionsSidebar() {
                     />
                 }
                 actions={
-                    <Tooltip.Root>
-                        <Tooltip.Trigger
-                            render={
-                                <IconButton
-                                    aria-label={t('collections.importShort')}
-                                    onClick={openImportDialog}
-                                >
-                                    <PlusIcon />
-                                </IconButton>
-                            }
-                        />
-                        <Tooltip.Content>{t('collections.importShort')}</Tooltip.Content>
-                    </Tooltip.Root>
+                    <>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger
+                                render={
+                                    <IconButton
+                                        aria-label={t('collections.newRequest')}
+                                        onClick={() =>
+                                            void navigate({ to: '/tests', search: { scratch: 1 } })
+                                        }
+                                    >
+                                        <PlusIcon />
+                                    </IconButton>
+                                }
+                            />
+                            <Tooltip.Content>{t('collections.newRequest')}</Tooltip.Content>
+                        </Tooltip.Root>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger
+                                render={
+                                    <IconButton
+                                        aria-label={t('collections.importShort')}
+                                        onClick={openImportDialog}
+                                    >
+                                        <UploadIcon />
+                                    </IconButton>
+                                }
+                            />
+                            <Tooltip.Content>{t('collections.importShort')}</Tooltip.Content>
+                        </Tooltip.Root>
+                    </>
                 }
             >
+                {scratch ? (
+                    <div className="border-divider mb-2 border-b pb-2">
+                        <ScratchRow
+                            method={scratch.method}
+                            url={scratch.url}
+                            selected={scratchSelected}
+                            running={scratchRunning}
+                            onOpen={() => {
+                                void navigate({
+                                    to: '/tests',
+                                    search: { scratch: 1, run: lastRunFor(SCRATCH_PLACE) },
+                                });
+                            }}
+                        />
+                    </div>
+                ) : null}
                 <CollectionsTree
                     selected={selected}
                     expanded={expanded}

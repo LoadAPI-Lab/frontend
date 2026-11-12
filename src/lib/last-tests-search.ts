@@ -6,6 +6,7 @@ export const testsSearchSchema = z.object({
     spec: z.string().optional(),
     endpoint: z.string().optional(),
     run: z.string().optional(),
+    scratch: z.literal(1).optional(),
 });
 
 export type TestsSearch = z.infer<typeof testsSearchSchema>;

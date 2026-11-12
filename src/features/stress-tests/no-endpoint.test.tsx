@@ -1,7 +1,7 @@
 import { renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
     setImportDialogOpen,
@@ -21,6 +21,13 @@ describe('NoEndpoint', () => {
         expect(
             screen.queryByRole('button', { name: 'Import OpenAPI doc' }),
         ).not.toBeInTheDocument();
+    });
+
+    it('opens a new request from the empty state', async () => {
+        const onNewRequest = vi.fn<() => void>();
+        renderWithProviders(<NoEndpoint onNewRequest={onNewRequest} />);
+        await userEvent.click(await screen.findByRole('button', { name: 'New request' }));
+        expect(onNewRequest).toHaveBeenCalledOnce();
     });
 
     it('offers to import a doc when there are no collections', async () => {

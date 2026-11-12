@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { TestRunResponseDto } from '@/api/generated/model';
 import { buildRequest } from '@/lib/request-draft';
 
-import { maskedSecret, pastRequest, splitTargetUrl } from './past-run';
+import { maskedSecret, pastRequest, pastScratch, splitTargetUrl } from './past-run';
 
 describe('splitTargetUrl', () => {
     it('splits the origin from the path and drops the query', () => {
@@ -81,6 +81,23 @@ describe('pastRequest', () => {
 
     it('skips scenario runs', () => {
         expect(pastRequest(run({ steps: [] }))).toBeNull();
+    });
+});
+
+describe('pastScratch', () => {
+    it('turns a past run into a scratch request with the query in the URL', () => {
+        const past = pastRequest(
+            run({
+                target: { method: 'DELETE', url: 'https://api.dev/v1/tasks/7?force=1' },
+                targetRps: 10,
+                durationSeconds: 5,
+            }),
+        );
+        expect(past && pastScratch(past)).toMatchObject({
+            method: 'DELETE',
+            url: 'https://api.dev/v1/tasks/7?force=1',
+            draft: { query: [{ key: 'force', value: '1' }] },
+        });
     });
 });
 

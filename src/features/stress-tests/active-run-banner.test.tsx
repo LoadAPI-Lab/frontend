@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
-import { rememberRun } from '@/lib/run-memory';
+import { rememberRun, SCRATCH_PLACE } from '@/lib/run-memory';
 import { server } from '@/mocks/server';
 
 import { ActiveRunBanner } from './active-run-banner';
@@ -61,6 +61,16 @@ function renderBanner(currentRunId?: string) {
 }
 
 describe('ActiveRunBanner', () => {
+    it('links a run started from the scratch request back to it', async () => {
+        serveActiveRun();
+        rememberRun(RUN_ID, SCRATCH_PLACE);
+        renderBanner();
+
+        const view = await screen.findByRole('link', { name: 'View it' });
+        expect(view.getAttribute('href')).toContain('scratch=1');
+        expect(view.getAttribute('href')).not.toContain('spec=');
+    });
+
     it('links to a run still going elsewhere and can stop it', async () => {
         let stopped = false;
         serveActiveRun(() => {

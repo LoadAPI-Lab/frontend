@@ -6,7 +6,7 @@ import { ApiError } from '@/api/fetcher';
 import { apiSpecQuery } from '@/features/collections';
 import { StressTestPage } from '@/features/stress-tests';
 import { rememberTestsSearch, testsSearchSchema } from '@/lib/last-tests-search';
-import { rememberRun } from '@/lib/run-memory';
+import { rememberRun, SCRATCH_PLACE } from '@/lib/run-memory';
 
 export const Route = createFileRoute('/_app/tests')({
     validateSearch: testsSearchSchema,
@@ -26,12 +26,23 @@ export const Route = createFileRoute('/_app/tests')({
         }
     },
     component: function TestsRoute() {
-        const { spec: specId, endpoint: endpointKey, run } = Route.useSearch();
+        const {
+            spec: specId,
+            endpoint: endpointKey,
+            run,
+            scratch: scratchParam,
+        } = Route.useSearch();
+        const scratch = scratchParam === 1 && !specId;
         const { found } = Route.useLoaderData();
         const navigate = Route.useNavigate();
         useEffect(() => {
-            rememberTestsSearch({ spec: specId, endpoint: endpointKey, run });
-        }, [specId, endpointKey, run]);
+            rememberTestsSearch({
+                spec: specId,
+                endpoint: endpointKey,
+                run,
+                scratch: scratch ? 1 : undefined,
+            });
+        }, [specId, endpointKey, run, scratch]);
         const spec = useQuery({ ...apiSpecQuery(specId ?? ''), enabled: Boolean(specId) && found });
         const endpoint = spec.data?.endpoints.find((candidate) => candidate.key === endpointKey);
         const selection = spec.data && endpoint ? { spec: spec.data, endpoint } : null;
@@ -43,8 +54,13 @@ export const Route = createFileRoute('/_app/tests')({
                 missing={missing}
                 pending={Boolean(specId) && found && spec.isPending}
                 runId={run}
+                scratch={scratch}
+                onNewRequest={() => void navigate({ search: { scratch: 1 } })}
+                onScratchCleared={() => void navigate({ search: { scratch: 1 } })}
                 onRunStarted={(id) => {
-                    if (specId && endpointKey) {
+                    if (scratch) {
+                        rememberRun(id, SCRATCH_PLACE);
+                    } else if (specId && endpointKey) {
                         rememberRun(id, { spec: specId, endpoint: endpointKey });
                     }
                     void navigate({ search: (previous) => ({ ...previous, run: id }) });
