@@ -6,7 +6,10 @@ import { Field } from '@/components/ui/field';
 import { NumberField } from '@/components/ui/number-field';
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
+import { formatNumber } from '@/lib/format';
 
+import { estimateRequests, LOAD_PRESETS, type LoadPresetId, matchPreset } from './load-presets';
+import { PresetSelect } from './preset-select';
 import type { ConfigField, ConfigIssue, ConfigIssues, TestConfig } from './test-config';
 import type { SendBlock } from './use-send-request';
 import type { RunPhase, StartBlock } from './use-test-run-controls';
@@ -120,11 +123,17 @@ export function TestConfigBar({
     onCancelSend,
     className,
 }: TestConfigBarProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const blockId = useId();
     const locked = phase !== 'idle';
     const setField = (field: ConfigField) => (value: number | null) =>
         onConfigChange({ ...config, [field]: value });
+    const applyPreset = (preset: LoadPresetId) => onConfigChange({ ...LOAD_PRESETS[preset] });
+    const { targetRps, durationSeconds, rampUpSeconds } = config;
+    const estimate =
+        Object.keys(issues).length === 0 && targetRps !== null && durationSeconds !== null
+            ? estimateRequests({ targetRps, durationSeconds, rampUpSeconds: rampUpSeconds ?? 0 })
+            : null;
     const idleBlock = phase === 'idle' ? block : null;
     const tooltipBlock = idleBlock?.kind === 'noTarget' ? idleBlock : null;
     const shownStartBlock =
@@ -159,6 +168,11 @@ export function TestConfigBar({
     return (
         <div className={cn('flex flex-col items-end gap-1.5', className)}>
             <div className="flex items-start gap-2">
+                <PresetSelect
+                    value={matchPreset(config)}
+                    onSelect={applyPreset}
+                    disabled={locked}
+                />
                 <ConfigInput
                     label={t('testConfig.targetRps')}
                     value={config.targetRps}
@@ -214,6 +228,14 @@ export function TestConfigBar({
                     startButton
                 )}
             </div>
+            {estimate === null ? null : (
+                <p className="text-fg-muted text-label">
+                    {t('testConfig.estimate', {
+                        count: estimate,
+                        formatted: formatNumber(estimate, 0, i18n.language),
+                    })}
+                </p>
+            )}
             {showBlock ? (
                 <p
                     id={blockId}

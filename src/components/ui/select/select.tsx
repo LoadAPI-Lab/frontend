@@ -34,11 +34,17 @@ function Value({ className, ...props }: BaseSelect.Value.Props) {
     );
 }
 
-function Popup({ className, children, ...props }: BaseSelect.Popup.Props) {
+function Popup({
+    className,
+    children,
+    alignItemWithTrigger,
+    ...props
+}: BaseSelect.Popup.Props & Pick<BaseSelect.Positioner.Props, 'alignItemWithTrigger'>) {
     return (
         <BaseSelect.Portal>
             <BaseSelect.Positioner
                 sideOffset={6}
+                alignItemWithTrigger={alignItemWithTrigger}
                 className="z-50 outline-none"
             >
                 <BaseSelect.Popup

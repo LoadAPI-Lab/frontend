@@ -286,6 +286,16 @@
         "targetRps": "Target RPS",
         "duration": "Duration",
         "rampUp": "Ramp-up",
+        "preset": "Preset",
+        "presets": {
+            "smoke": "Smoke",
+            "load": "Load",
+            "spike": "Spike",
+            "custom": "Custom"
+        },
+        "presetSummary": "{{targetRps}} RPS · {{durationSeconds}} s · {{rampUpSeconds}} s",
+        "estimate_one": "≈ {{formatted}} request",
+        "estimate_other": "≈ {{formatted}} requests",
         "secondsUnit": "s",
         "inSeconds": " (seconds)",
         "start": "Start test",
