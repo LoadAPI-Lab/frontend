@@ -71,6 +71,7 @@ describe('runningTotals', () => {
             connection_refused: 1,
             connection_reset: 0,
             dns: 0,
+            blocked: 0,
             other: 0,
         });
         expect(totals.statuses.network).toBe(3);

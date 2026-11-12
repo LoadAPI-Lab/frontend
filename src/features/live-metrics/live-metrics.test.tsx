@@ -397,6 +397,7 @@ describe('StatusCodesCard', () => {
                     connection_refused: 1,
                     connection_reset: 0,
                     dns: 0,
+                    blocked: 0,
                     other: 0,
                 }}
             />,
