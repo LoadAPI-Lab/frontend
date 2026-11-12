@@ -19,6 +19,7 @@ import {
     RunProgress,
     StatusCodesCard,
 } from '@/features/live-metrics';
+import type { HttpMethod } from '@/lib/http-method';
 import {
     buildRequest,
     emptyDraft,
@@ -26,14 +27,27 @@ import {
     type RequestDraft,
     type RequestRoute,
 } from '@/lib/request-draft';
+import {
+    clearScratch,
+    emptyScratch,
+    hasScratchContent,
+    queryRowsOf,
+    readScratch,
+    saveScratch,
+    type ScratchRequest,
+    urlWithoutQuery,
+    urlWithQueryRows,
+    useScratchRequest,
+} from '@/lib/scratch-request';
 
 import { ActiveRunBanner } from './active-run-banner';
 import { exampleBody, rememberBody, restoredDraft } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
 import { NoEndpoint } from './no-endpoint';
-import { type PastRequest, pastRequest } from './past-run';
+import { type PastRequest, pastRequest, pastScratch } from './past-run';
 import { RequestCard } from './request-card';
 import { ResponseCard } from './response-card';
+import { ScratchHeader } from './scratch-header';
 import { TestConfigBar } from './test-config-bar';
 import { useRunLimits } from './use-run-limits';
 import { useRunOutcome } from './use-run-outcome';
@@ -73,6 +87,9 @@ export interface StressTestPageProps {
     pending?: boolean;
     runId: string | undefined;
     onRunStarted: (runId: string) => void;
+    scratch?: boolean;
+    onNewRequest?: () => void;
+    onScratchCleared?: () => void;
 }
 
 const joinUrl = (base: string, path: string) => `${base.replace(/\/+$/, '')}${path}`;
@@ -92,19 +109,50 @@ function Workspace({
     pending = false,
     runId,
     onRunStarted,
+    scratch = false,
+    onNewRequest,
+    onScratchCleared,
 }: WorkspaceProps) {
     const { t } = useTranslation();
     const [mode, setMode] = useState<Mode>('single');
     const modeHint =
         modes.find((candidate) => candidate.value === mode)?.hintKey ?? modes[0].hintKey;
     const place = selection ? { spec: selection.spec.id, endpoint: selection.endpoint.key } : null;
+    const [initialScratch] = useState<ScratchRequest | null>(() => {
+        if (!scratch) {
+            return null;
+        }
+        return readScratch() ?? (past ? pastScratch(past) : emptyScratch());
+    });
     const [draft, setDraft] = useState<RequestDraft>(() => {
+        if (initialScratch) {
+            return initialScratch.draft;
+        }
         if (selection && place) {
             return restoredDraft(selection.endpoint, place);
         }
         return past ? past.draft : emptyDraft();
     });
+    const [scratchMethod, setScratchMethod] = useState<HttpMethod>(initialScratch?.method ?? 'GET');
+    const [scratchUrl, setScratchUrl] = useState(initialScratch?.url ?? '');
+    const keepScratch = (next: ScratchRequest) => {
+        setScratchMethod(next.method);
+        setScratchUrl(next.url);
+        setDraft(next.draft);
+        saveScratch(next);
+    };
     const changeDraft = (next: RequestDraft) => {
+        if (scratch) {
+            keepScratch({
+                method: scratchMethod,
+                url:
+                    next.query === draft.query
+                        ? scratchUrl
+                        : urlWithQueryRows(scratchUrl, next.query),
+                draft: next,
+            });
+            return;
+        }
         if (selection && place && next.body !== draft.body) {
             rememberBody(selection.endpoint, place, next.body);
         }
@@ -118,7 +166,9 @@ function Workspace({
     const endpoint = selection?.endpoint;
     const example = endpoint ? exampleBody(endpoint) : undefined;
     let route: RequestRoute | null = null;
-    if (endpoint) {
+    if (scratch) {
+        route = { method: scratchMethod, url: urlWithoutQuery(scratchUrl.trim()) };
+    } else if (endpoint) {
         route = { method: endpoint.method, url: joinUrl(server, endpoint.path) };
     } else if (past) {
         route = { method: past.method, url: joinUrl(pastServer, past.path) };
@@ -143,6 +193,15 @@ function Workspace({
         initialConfig: past?.config,
     });
     const { live } = controls;
+    const clearScratchRequest = () => {
+        const empty = emptyScratch();
+        clearScratch();
+        sender.cancel();
+        setScratchMethod(empty.method);
+        setScratchUrl(empty.url);
+        setDraft(empty.draft);
+        onScratchCleared?.();
+    };
     const outcome = useRunOutcome(runId, live);
     const { summary } = outcome;
     const totals = summary?.totals ?? live.totals;
@@ -215,7 +274,28 @@ function Workspace({
                 className="flex flex-col gap-3 pt-4"
             >
                 <ActiveRunBanner currentRunId={runId} />
-                {endpoint ? (
+                {scratch && !pending ? (
+                    <ScratchHeader
+                        method={scratchMethod}
+                        onMethodChange={(method) => keepScratch({ method, url: scratchUrl, draft })}
+                        url={scratchUrl}
+                        onUrlChange={(url) =>
+                            keepScratch({
+                                method: scratchMethod,
+                                url,
+                                draft: { ...draft, query: queryRowsOf(url, draft.query) },
+                            })
+                        }
+                        onClear={clearScratchRequest}
+                        canClear={hasScratchContent({
+                            method: scratchMethod,
+                            url: scratchUrl,
+                            draft,
+                        })}
+                        locked={locked}
+                        status={progress}
+                    />
+                ) : endpoint ? (
                     <EndpointHeader
                         method={endpoint.method}
                         path={endpoint.path}
@@ -321,7 +401,7 @@ function Workspace({
                     </>
                 ) : (
                     <>
-                        <NoEndpoint />
+                        <NoEndpoint onNewRequest={onNewRequest} />
                         <RecentRunsCard />
                     </>
                 )}
@@ -332,7 +412,8 @@ function Workspace({
 
 export function StressTestPage(props: StressTestPageProps) {
     const { t } = useTranslation();
-    const { selection, runId, onRunStarted } = props;
+    const { selection, runId, onRunStarted, scratch = false } = props;
+    const storedScratch = useScratchRequest();
     const [ownRuns, setOwnRuns] = useState<ReadonlySet<string>>(() => new Set());
     const [seedId, setSeedId] = useState(runId);
     let nextSeed = runId;
@@ -344,15 +425,20 @@ export function StressTestPage(props: StressTestPageProps) {
     }
     const seed = useTestRunsGet(seedId ?? '', {
         query: {
-            enabled: !selection && Boolean(seedId),
+            enabled: !selection && Boolean(seedId) && !(scratch && storedScratch),
             staleTime: Number.POSITIVE_INFINITY,
             retry: false,
         },
     });
     const past = !selection && seed.data && seed.data.id === seedId ? pastRequest(seed.data) : null;
-    const pending = props.pending === true || (!selection && Boolean(seedId) && seed.isPending);
+    const seedPending = Boolean(seedId) && seed.isPending;
+    const pending =
+        props.pending === true ||
+        (scratch ? !storedScratch && seedPending : !selection && seedPending);
     let key = 'none';
-    if (selection) {
+    if (scratch) {
+        key = `scratch:${seedId ?? ''}:${pending ? 'wait' : 'ready'}`;
+    } else if (selection) {
         key = `${selection.spec.id}:${selection.endpoint.key}`;
     } else if (past && seedId) {
         key = `run:${seedId}`;

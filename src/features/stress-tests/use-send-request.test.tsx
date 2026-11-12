@@ -36,6 +36,8 @@ describe('sendBlock', () => {
     it('uses the same checks as Start', () => {
         expect(sendBlock(null, '')).toEqual({ kind: 'noTarget' });
         expect(sendBlock({ method: 'GET', url: '/tasks' }, '')).toEqual({ kind: 'noServer' });
+        expect(sendBlock({ method: 'GET', url: '' }, '')).toEqual({ kind: 'noUrl' });
+        expect(sendBlock({ method: 'GET', url: 'api.dev/tasks' }, '')).toEqual({ kind: 'noUrl' });
         expect(sendBlock(target, '{"title": ')).toEqual({ kind: 'invalidBody' });
     });
 

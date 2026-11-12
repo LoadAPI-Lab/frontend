@@ -10,6 +10,11 @@ describe('last Tests page search', () => {
         expect(lastTestsSearch()).toEqual({ spec: 's1', endpoint: 'GET /fixed', run: 'r1' });
     });
 
+    it('remembers the scratch request', () => {
+        rememberTestsSearch({ scratch: 1, run: 'r2' });
+        expect(lastTestsSearch()).toEqual({ scratch: 1, run: 'r2' });
+    });
+
     it('is empty before anything was remembered', () => {
         expect(lastTestsSearch()).toEqual({});
     });

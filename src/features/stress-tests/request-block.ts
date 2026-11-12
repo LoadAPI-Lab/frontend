@@ -7,6 +7,7 @@ import type { RunTarget } from './use-test-run-controls';
 export type RequestBlock =
     | { kind: 'noTarget' }
     | { kind: 'noServer' }
+    | { kind: 'noUrl' }
     | { kind: 'pathParam'; param: string }
     | { kind: 'maskedSecret'; name: string }
     | { kind: 'invalidBody' };
@@ -16,7 +17,7 @@ export function requestBlock(target: RunTarget | null, body: string): RequestBlo
         return { kind: 'noTarget' };
     }
     if (!/^https?:\/\/[^/]/i.test(target.url)) {
-        return { kind: 'noServer' };
+        return target.url.startsWith('/') ? { kind: 'noServer' } : { kind: 'noUrl' };
     }
     const param = unresolvedPathParam(target.url);
     if (param) {

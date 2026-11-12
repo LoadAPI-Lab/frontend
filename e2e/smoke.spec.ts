@@ -139,6 +139,58 @@ test('after a run, Send switches back to the response and the charts stay one cl
     await expect(response).toBeHidden();
 });
 
+test('a scratch request outside collections can be sent, stress tested and reopened from its run', async ({
+    page,
+}) => {
+    await page.goto('/tests');
+    await page.evaluate('sessionStorage.clear()');
+    const sidebar = page.getByRole('complementary', { name: 'Collections' });
+    await sidebar.getByRole('button', { name: 'New request' }).click();
+    await expect(page).toHaveURL(/\/tests\?scratch=1$/);
+    await expect(sidebar.getByRole('button', { name: /Scratch request/ })).toHaveCount(0);
+
+    const header = page.getByRole('region', { name: 'Scratch request' });
+    await header.getByRole('combobox', { name: 'Method' }).click();
+    await page.getByRole('option', { name: 'POST' }).click();
+    const url = header.getByRole('textbox', { name: 'URL' });
+    await url.fill('http://testserver:8080/echo?page=2');
+
+    await page.getByRole('tab', { name: /^Params/ }).click();
+    await expect(page.getByRole('textbox', { name: 'Query parameter name 1' })).toHaveValue('page');
+    await page.getByRole('textbox', { name: 'Query parameter value 1' }).fill('3');
+    await expect(url).toHaveValue('http://testserver:8080/echo?page=3');
+
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    const response = page.getByRole('region', { name: 'Response', exact: true });
+    await expect(response.getByText('200 OK')).toBeVisible();
+    await expect(response.getByLabel('Response body')).toContainText('"method": "POST"');
+    await expect(sidebar.getByRole('button', { name: /^POST Scratch request/ })).toBeVisible();
+
+    await page.reload();
+    await expect(url).toHaveValue('http://testserver:8080/echo?page=3');
+
+    await page.getByRole('textbox', { name: /Duration/ }).fill('2');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(url).toBeDisabled();
+    await expect(page.getByText('Test completed')).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/scratch=1/);
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+    await page.getByRole('link', { name: 'Open charts' }).click();
+    await expect(page).toHaveURL(/scratch=1/);
+    await expect(page).toHaveURL(/run=/);
+    await expect(url).toHaveValue('http://testserver:8080/echo?page=3');
+    await expect(page.getByText('Test completed')).toBeVisible();
+
+    await header.getByRole('button', { name: 'Clear' }).click();
+    await expect(url).toHaveValue('');
+    await expect(page).not.toHaveURL(/run=/);
+    await expect(sidebar.getByRole('button', { name: /Scratch request/ })).toHaveCount(0);
+});
+
 test('a link to an unknown endpoint shows the not-found state', async ({ page }) => {
     await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=GET%20%2Fnope');
     await expect(page.getByText("This endpoint isn't in your collections")).toBeVisible();
@@ -344,7 +396,7 @@ test('shows the desktop-only notice on small screens', async ({ page }) => {
     await expect(page.getByRole('alert')).toContainText('Desktop only');
 });
 
-for (const path of ['/tests', '/login']) {
+for (const path of ['/tests', '/tests?scratch=1', '/login']) {
     test(`no serious accessibility violations on ${path}`, async ({ page }) => {
         await page.goto(path);
         const results = await new AxeBuilder({ page }).analyze();

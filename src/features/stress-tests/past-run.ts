@@ -1,5 +1,6 @@
 import type { TestRunResponseDto } from '@/api/generated/model';
 import { emptyDraft, newRow, type RequestDraft, type RequestRoute } from '@/lib/request-draft';
+import { type ScratchRequest, urlWithQueryRows } from '@/lib/scratch-request';
 
 import type { TestConfig } from './test-config';
 import type { RunTarget } from './use-test-run-controls';
@@ -66,4 +67,9 @@ export function pastRequest(run: TestRunResponseDto): PastRequest | null {
             rampUpSeconds: config.rampUpSeconds ?? 0,
         },
     };
+}
+
+export function pastScratch(past: PastRequest): ScratchRequest {
+    const url = `${past.server.replace(/\/+$/, '')}${past.path}`;
+    return { method: past.method, url: urlWithQueryRows(url, past.draft.query), draft: past.draft };
 }

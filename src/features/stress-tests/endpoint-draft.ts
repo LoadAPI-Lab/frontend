@@ -1,7 +1,7 @@
 import type { Endpoint } from '@/features/collections';
 import { editedBodyFor, forgetEditedBody, rememberEditedBody } from '@/lib/body-memory';
 import { emptyDraft, newRow, type RequestDraft } from '@/lib/request-draft';
-import type { RunPlace } from '@/lib/run-memory';
+import type { EndpointPlace } from '@/lib/run-memory';
 
 type Parameter = Endpoint['parameters'][number];
 
@@ -49,13 +49,13 @@ export function draftFromEndpoint(endpoint: Endpoint): RequestDraft {
     return draft;
 }
 
-export function restoredDraft(endpoint: Endpoint, place: RunPlace): RequestDraft {
+export function restoredDraft(endpoint: Endpoint, place: EndpointPlace): RequestDraft {
     const draft = draftFromEndpoint(endpoint);
     const edited = editedBodyFor(place);
     return edited === undefined ? draft : { ...draft, body: edited };
 }
 
-export function rememberBody(endpoint: Endpoint, place: RunPlace, body: string) {
+export function rememberBody(endpoint: Endpoint, place: EndpointPlace, body: string) {
     if (body === (exampleBody(endpoint) ?? '')) {
         forgetEditedBody(place);
     } else {

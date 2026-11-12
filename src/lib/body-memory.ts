@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { RunPlace } from './run-memory';
+import type { EndpointPlace } from './run-memory';
 
 const KEY = 'routelab.tests.bodies';
 const MAX_BODIES = 50;
@@ -9,7 +9,7 @@ const memorySchema = z.record(z.string(), z.string());
 
 type Memory = z.infer<typeof memorySchema>;
 
-const placeKey = ({ spec, endpoint }: RunPlace) => `${spec}|${endpoint}`;
+const placeKey = ({ spec, endpoint }: EndpointPlace) => `${spec}|${endpoint}`;
 
 function read(): Memory {
     try {
@@ -31,12 +31,12 @@ function write(memory: Memory) {
 const without = (memory: Memory, key: string) =>
     Object.entries(memory).filter(([candidate]) => candidate !== key);
 
-export function rememberEditedBody(place: RunPlace, body: string) {
+export function rememberEditedBody(place: EndpointPlace, body: string) {
     const key = placeKey(place);
     write(Object.fromEntries([...without(read(), key), [key, body]].slice(-MAX_BODIES)));
 }
 
-export function forgetEditedBody(place: RunPlace) {
+export function forgetEditedBody(place: EndpointPlace) {
     const memory = read();
     const key = placeKey(place);
     if (key in memory) {
@@ -44,4 +44,4 @@ export function forgetEditedBody(place: RunPlace) {
     }
 }
 
-export const editedBodyFor = (place: RunPlace): string | undefined => read()[placeKey(place)];
+export const editedBodyFor = (place: EndpointPlace): string | undefined => read()[placeKey(place)];

@@ -6,6 +6,7 @@ import { useTestRunsStop } from '@/api/generated/endpoints/test-runs/test-runs';
 import { useActiveRun } from '@/api/live';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { placeSearch } from '@/lib/run-memory';
 
 export interface ActiveRunBannerProps {
     currentRunId: string | undefined;
@@ -37,7 +38,7 @@ export function ActiveRunBanner({ currentRunId, className }: ActiveRunBannerProp
             <p className="min-w-0 flex-1">{t('activeRun.message')}</p>
             <Link
                 to="/tests"
-                search={place ? { ...place, run: active.id } : { run: active.id }}
+                search={{ ...placeSearch(place), run: active.id }}
                 className="text-info focus-visible:ring-accent/40 rounded-sm font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-2"
             >
                 {t('activeRun.view')}

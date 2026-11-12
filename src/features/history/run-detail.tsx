@@ -24,7 +24,7 @@ import { RunFailure, StatusCodesCard } from '@/features/live-metrics';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
 import { methodBackgroundClass } from '@/lib/http-method';
-import { placeOfRun, rememberRun } from '@/lib/run-memory';
+import { placeOfRun, placeSearch, rememberRun } from '@/lib/run-memory';
 
 import { routeRuns, type RunListItem } from './history-api';
 import {
@@ -150,7 +150,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
             if (place) {
                 rememberRun(created.id, place);
             }
-            void navigate({ to: '/tests', search: { ...place, run: created.id } });
+            void navigate({ to: '/tests', search: { ...placeSearch(place), run: created.id } });
         },
         onError: (error) => {
             toast.error({
@@ -570,7 +570,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                             {chartsReplayable(run) ? (
                                 <Link
                                     to="/tests"
-                                    search={{ ...placeOfRun(run.id), run: run.id }}
+                                    search={{ ...placeSearch(placeOfRun(run.id)), run: run.id }}
                                     className="text-accent focus-visible:ring-accent/40 rounded-sm font-semibold underline-offset-2 outline-none hover:underline focus-visible:ring-2"
                                 >
                                     {t('history.routeRuns.openCharts')}
