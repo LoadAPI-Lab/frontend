@@ -46,7 +46,7 @@ export const ApiSpecsImportResponse = zod.object({
   "endpoints": zod.array(zod.object({
   "id": zod.string().describe('Stable endpoint id derived from the key'),
   "key": zod.string().describe('"METHOD path"'),
-  "method": zod.enum(['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH']).describe('HTTP method'),
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
   "path": zod.string().describe('Path template'),
   "summary": zod.string().optional(),
   "description": zod.string().optional(),
@@ -140,7 +140,7 @@ export const ApiSpecsGetResponse = zod.object({
   "endpoints": zod.array(zod.object({
   "id": zod.string().describe('Stable endpoint id derived from the key'),
   "key": zod.string().describe('"METHOD path"'),
-  "method": zod.enum(['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH']).describe('HTTP method'),
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
   "path": zod.string().describe('Path template'),
   "summary": zod.string().optional(),
   "description": zod.string().optional(),
@@ -258,7 +258,7 @@ export const ApiSpecsUpdateContentResponse = zod.object({
   "endpoints": zod.array(zod.object({
   "id": zod.string().describe('Stable endpoint id derived from the key'),
   "key": zod.string().describe('"METHOD path"'),
-  "method": zod.enum(['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH']).describe('HTTP method'),
+  "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
   "path": zod.string().describe('Path template'),
   "summary": zod.string().optional(),
   "description": zod.string().optional(),
