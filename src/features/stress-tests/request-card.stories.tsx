@@ -6,13 +6,20 @@ import { emptyDraft, newRow, type RequestDraft } from '@/lib/request-draft';
 
 import { RequestCard } from './request-card';
 
-function Controlled({ initial, pathParams }: { initial: RequestDraft; pathParams: string[] }) {
+interface ControlledProps {
+    initial: RequestDraft;
+    pathParams: string[];
+    readOnly?: boolean;
+}
+
+function Controlled({ initial, pathParams, readOnly }: ControlledProps) {
     const [draft, setDraft] = useState(initial);
     return (
         <RequestCard
             draft={draft}
             onDraftChange={setDraft}
             pathParams={pathParams}
+            readOnly={readOnly}
             className="h-[596px] w-[512px]"
         />
     );
@@ -33,7 +40,7 @@ const meta = {
         },
         pathParams: ['id'],
     },
-} satisfies Meta<{ initial: RequestDraft; pathParams: string[] }>;
+} satisfies Meta<ControlledProps>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -74,5 +81,23 @@ export const Params: Story = {
         await userEvent.click(canvas.getByRole('tab', { name: 'Params' }));
         await userEvent.type(canvas.getByLabelText('id'), '42');
         await expect(canvas.getByRole('tab', { name: 'Params 1' })).toBeVisible();
+    },
+};
+
+export const ReadOnly: Story = {
+    args: { readOnly: true },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('Read-only while the test runs')).toBeVisible();
+        await expect(canvas.getByRole('textbox', { name: 'Request body' })).toHaveAttribute(
+            'aria-readonly',
+            'true',
+        );
+        await expect(canvas.queryByRole('group', { name: 'Insert placeholder' })).toBeNull();
+        await userEvent.click(canvas.getByRole('tab', { name: 'Headers 3' }));
+        await expect(canvas.getByRole('textbox', { name: 'Header name 1' })).toHaveAttribute(
+            'readonly',
+        );
+        await expect(canvas.queryByRole('button', { name: 'Add header' })).toBeNull();
     },
 };

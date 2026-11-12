@@ -314,7 +314,8 @@
             "add": "Add header",
             "remove": "Remove header {{index}}",
             "namePlaceholder": "Name",
-            "valuePlaceholder": "Value"
+            "valuePlaceholder": "Value",
+            "empty": "No headers"
         },
         "params": {
             "path": "Path parameters",
@@ -324,9 +325,11 @@
             "add": "Add query parameter",
             "remove": "Remove query parameter {{index}}",
             "namePlaceholder": "Name",
-            "valuePlaceholder": "Value"
+            "valuePlaceholder": "Value",
+            "empty": "No query parameters"
         },
-        "fillExample": "Fill with example"
+        "fillExample": "Fill with example",
+        "readOnly": "Read-only while the test runs"
     },
     "requestAuth": {
         "type": "Auth type",

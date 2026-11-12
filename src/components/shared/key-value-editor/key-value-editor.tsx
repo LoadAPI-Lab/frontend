@@ -16,6 +16,8 @@ export interface KeyValueEditorProps {
     removeLabel: (index: number) => string;
     keyPlaceholder?: string;
     valuePlaceholder?: string;
+    readOnly?: boolean;
+    emptyText?: string;
     className?: string;
 }
 
@@ -28,6 +30,8 @@ export function KeyValueEditor({
     removeLabel,
     keyPlaceholder,
     valuePlaceholder,
+    readOnly = false,
+    emptyText,
     className,
 }: KeyValueEditorProps) {
     const update = (id: string, change: Partial<KeyValueRow>) =>
@@ -47,6 +51,7 @@ export function KeyValueEditor({
                                 value={row.key}
                                 placeholder={keyPlaceholder}
                                 spellCheck={false}
+                                readOnly={readOnly}
                                 className="w-2/5 font-mono"
                                 onValueChange={(key) => update(row.id, { key })}
                             />
@@ -55,32 +60,40 @@ export function KeyValueEditor({
                                 value={row.value}
                                 placeholder={valuePlaceholder}
                                 spellCheck={false}
+                                readOnly={readOnly}
                                 className="flex-1 font-mono"
                                 onValueChange={(value) => update(row.id, { value })}
                             />
-                            <IconButton
-                                variant="ghost"
-                                size="md"
-                                aria-label={removeLabel(index + 1)}
-                                onClick={() =>
-                                    onChange(rows.filter((other) => other.id !== row.id))
-                                }
-                            >
-                                <X aria-hidden />
-                            </IconButton>
+                            {readOnly ? null : (
+                                <IconButton
+                                    variant="ghost"
+                                    size="md"
+                                    aria-label={removeLabel(index + 1)}
+                                    onClick={() =>
+                                        onChange(rows.filter((other) => other.id !== row.id))
+                                    }
+                                >
+                                    <X aria-hidden />
+                                </IconButton>
+                            )}
                         </li>
                     ))}
                 </ul>
             ) : null}
-            <Button
-                variant="ghost"
-                size="sm"
-                className="self-start"
-                onClick={() => onChange([...rows, newRow()])}
-            >
-                <PlusIcon aria-hidden />
-                {addLabel}
-            </Button>
+            {readOnly && rows.length === 0 && emptyText ? (
+                <p className="text-fg-muted text-base">{emptyText}</p>
+            ) : null}
+            {readOnly ? null : (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => onChange([...rows, newRow()])}
+                >
+                    <PlusIcon aria-hidden />
+                    {addLabel}
+                </Button>
+            )}
         </div>
     );
 }

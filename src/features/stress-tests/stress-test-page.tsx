@@ -130,7 +130,7 @@ function Workspace({
     const { summary } = outcome;
     const totals = summary?.totals ?? live.totals;
     const limits = useRunLimits(runId) ?? controls.config;
-    const serverLocked = controls.phase !== 'idle';
+    const locked = controls.phase !== 'idle';
     const progress = runId ? (
         <RunProgress
             status={live.status}
@@ -201,7 +201,7 @@ function Workspace({
                         relativeServer={relativeServer?.url}
                         server={server}
                         onServerChange={setServer}
-                        serverLocked={serverLocked}
+                        serverLocked={locked}
                         status={progress}
                     />
                 ) : past ? (
@@ -210,7 +210,7 @@ function Workspace({
                         path={past.path}
                         server={pastServer}
                         onServerChange={setPastServer}
-                        serverLocked={serverLocked}
+                        serverLocked={locked}
                         status={progress}
                     />
                 ) : null}
@@ -245,6 +245,7 @@ function Workspace({
                                 <RequestCard
                                     draft={draft}
                                     onDraftChange={changeDraft}
+                                    readOnly={locked}
                                     pathParams={route ? pathParamNames(route.url) : []}
                                     onFillExample={
                                         example === undefined
