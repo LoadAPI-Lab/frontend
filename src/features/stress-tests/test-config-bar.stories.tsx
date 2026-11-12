@@ -122,3 +122,11 @@ export const BodyOnGet: Story = {
         await expect(canvas.getByRole('button', { name: 'Start test' })).toBeEnabled();
     },
 };
+
+export const PresetAndEstimate: Story = {
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('combobox', { name: 'Preset' })).toHaveTextContent('Custom');
+        await expect(canvas.getByText('≈ 16,500 requests')).toBeVisible();
+    },
+};
