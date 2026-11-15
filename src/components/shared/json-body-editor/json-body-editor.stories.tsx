@@ -4,13 +4,15 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { JsonBodyEditor } from './json-body-editor';
 
-function Controlled({ initial }: { initial: string }) {
+function Controlled({ initial, variables }: { initial: string; variables?: string[] }) {
     const [value, setValue] = useState(initial);
     return (
         <div className="bg-surface-1 border-border rounded-card flex h-[560px] w-[512px] flex-col overflow-hidden border">
             <JsonBodyEditor
                 value={value}
                 onChange={setValue}
+                variables={variables}
+                variablesLabel="Insert a variable"
                 className="flex-1"
             />
             <output
@@ -25,9 +27,14 @@ function Controlled({ initial }: { initial: string }) {
 
 const meta = {
     title: 'shared/JsonBodyEditor',
-    render: (args) => <Controlled initial={args.initial} />,
+    render: (args) => (
+        <Controlled
+            initial={args.initial}
+            variables={args.variables}
+        />
+    ),
     args: { initial: '' },
-} satisfies Meta<{ initial: string }>;
+} satisfies Meta<{ initial: string; variables?: string[] }>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -121,5 +128,15 @@ export const QuotesTextPlaceholders: Story = {
         canvas.getByRole('textbox', { name: 'Request body' }).focus();
         await userEvent.click(canvas.getByRole('button', { name: '{{$uuid}}' }));
         await waitFor(() => expect(canvas.getByTestId('value')).toHaveTextContent('"{{$uuid}}"'));
+    },
+};
+
+export const WithVariables: Story = {
+    args: { initial: '{\n  "id": {{taskId}}\n}', variables: ['token', 'taskId'] },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.queryByText(/isn't valid JSON/)).toBeNull();
+        await userEvent.click(canvas.getByRole('button', { name: '{{token}}' }));
+        await waitFor(() => expect(canvas.getByTestId('value').textContent).toContain('{{token}}'));
     },
 };

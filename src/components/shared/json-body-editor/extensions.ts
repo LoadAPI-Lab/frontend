@@ -170,3 +170,15 @@ export function insertGenerator(view: EditorView, name: Generator) {
     });
     view.focus();
 }
+
+export function insertVariable(view: EditorView, name: string) {
+    const { from, to } = view.state.selection.main;
+    const insert = `{{${name}}}`;
+    view.dispatch({
+        changes: { from, to, insert },
+        selection: { anchor: from + insert.length },
+        scrollIntoView: true,
+        userEvent: 'input',
+    });
+    view.focus();
+}

@@ -20,6 +20,37 @@ const STATUS_PATH = /\/status\/(\d{3})(?:[/?#]|$)/;
 
 const encoder = new TextEncoder();
 
+export const MOCK_ACCESS_TOKEN = 'mock-access-token';
+export const MOCK_TASK_ID = 'task-42';
+
+const TASK = {
+    id: MOCK_TASK_ID,
+    title: 'Write the report',
+    status: 'todo',
+    tags: ['diploma', 'frontend'],
+    owner: { id: 'user-7', email: 'demo@example.com' },
+};
+
+function testServerBody(method: string, url: string): unknown {
+    const { hostname, pathname } = new URL(url);
+    if (hostname !== 'testserver') {
+        return undefined;
+    }
+    if (method === 'POST' && pathname === '/auth/login') {
+        return { accessToken: MOCK_ACCESS_TOKEN, tokenType: 'Bearer', expiresIn: 3600 };
+    }
+    if (method === 'POST' && pathname === '/tasks') {
+        return { data: TASK };
+    }
+    if (method === 'GET' && pathname.startsWith('/tasks/')) {
+        return { data: { ...TASK, id: pathname.slice('/tasks/'.length) } };
+    }
+    if (method === 'GET' && pathname === '/tasks') {
+        return { items: [TASK], total: 1 };
+    }
+    return undefined;
+}
+
 function respond(method: string, url: string, body?: string): SendRequestResponseDto {
     if (url.includes(MOCK_REFUSED_PATH)) {
         return {
@@ -43,7 +74,8 @@ function respond(method: string, url: string, body?: string): SendRequestRespons
         };
     }
     const status = Number(STATUS_PATH.exec(url)?.[1] ?? 200);
-    const text = JSON.stringify({ method, url, ...(body ? { received: body } : {}) });
+    const known = testServerBody(method, url);
+    const text = JSON.stringify(known ?? { method, url, ...(body ? { received: body } : {}) });
     return {
         kind: 'response',
         status,

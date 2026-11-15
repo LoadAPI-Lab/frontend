@@ -5,8 +5,14 @@ import type { RunResult, RunStatus, Snapshot } from '@/api/live';
 
 import { coreError } from './core-error';
 
+interface MockStep {
+    target: { method: string; url: string; headers?: Record<string, string>; body?: string };
+    extract?: { name: string; path: string }[];
+}
+
 interface MockRun {
     id: string;
+    steps: MockStep[] | null;
     method: string;
     url: string;
     targetRps: number;
@@ -25,15 +31,122 @@ export function resetMockTestRuns() {
     idempotencyKeys.clear();
 }
 
-const startSchema = z.object({
-    type: z.literal('single'),
-    config: z.object({
-        target: z.object({ method: z.string(), url: z.string() }),
-        targetRps: z.number(),
-        durationSeconds: z.number(),
-        rampUpSeconds: z.number().optional(),
-    }),
+const targetSchema = z.object({
+    method: z.string(),
+    url: z.string(),
+    headers: z.record(z.string(), z.string()).optional(),
+    body: z.string().optional(),
 });
+
+const startSchema = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal('single'),
+        config: z.object({
+            target: targetSchema,
+            targetRps: z.number(),
+            durationSeconds: z.number(),
+            rampUpSeconds: z.number().optional(),
+        }),
+    }),
+    z.object({
+        type: z.literal('scenario'),
+        config: z.object({
+            steps: z
+                .array(
+                    z.object({
+                        target: targetSchema,
+                        extract: z
+                            .array(z.object({ name: z.string(), path: z.string() }))
+                            .optional(),
+                    }),
+                )
+                .min(1),
+        }),
+    }),
+]);
+
+export const MOCK_MISSING_FIELD = 'missing';
+const SCENARIO_SECONDS = 1;
+const variableRe = /\{\{(\w+)\}\}/g;
+
+function successCode(method: string) {
+    if (method === 'POST') {
+        return 201;
+    }
+    return method === 'DELETE' ? 204 : 200;
+}
+
+export function mockScenarioResult(steps: MockStep[], stopped = false) {
+    const vars = new Set<string>();
+    const results = steps.map((step, index) => {
+        const base = { method: step.target.method, url: step.target.url };
+        if (stopped) {
+            return { ...base, status: 'SKIPPED' as const, description: 'test stopped' };
+        }
+        const texts = [
+            step.target.url,
+            step.target.body ?? '',
+            ...Object.values(step.target.headers ?? {}),
+        ];
+        const missing = [
+            ...new Set(
+                texts.flatMap((text) =>
+                    [...text.matchAll(variableRe)].map((match) => match[1] ?? ''),
+                ),
+            ),
+        ].filter((name) => !vars.has(name));
+        if (missing.length > 0) {
+            return {
+                ...base,
+                status: 'SKIPPED' as const,
+                description: `undefined variables: ${missing.join(', ')}`,
+            };
+        }
+        const durationMs = 18 + ((index * 17) % 40);
+        if (step.target.url.includes(MOCK_FAILING_PATH)) {
+            return {
+                ...base,
+                status: 'FAILED' as const,
+                statusCode: 500,
+                durationMs,
+                description: 'unexpected status 500',
+            };
+        }
+        const broken = step.extract?.find((rule) => rule.path.includes(MOCK_MISSING_FIELD));
+        if (broken) {
+            return {
+                ...base,
+                status: 'FAILED' as const,
+                statusCode: successCode(step.target.method),
+                durationMs,
+                description: `extract "${broken.name}": path "${broken.path}": field "${MOCK_MISSING_FIELD}" not found`,
+            };
+        }
+        for (const rule of step.extract ?? []) {
+            vars.add(rule.name);
+        }
+        return {
+            ...base,
+            status: 'OK' as const,
+            statusCode: successCode(step.target.method),
+            durationMs,
+        };
+    });
+    const count = (status: string) => results.filter((result) => result.status === status).length;
+    return {
+        summary: {
+            totalSteps: results.length,
+            okCount: count('OK'),
+            failedCount: count('FAILED'),
+            skippedCount: count('SKIPPED'),
+            durationMs: results.reduce(
+                (total, result) => total + ('durationMs' in result ? result.durationMs : 0),
+                0,
+            ),
+        },
+        steps: results,
+    };
+}
 
 export const MOCK_FAILING_PATH = '/status/599';
 export const MOCK_FAILURE_REASON = 'The worker lost its connection to the target.';
@@ -42,7 +155,7 @@ const FAIL_AFTER_SECONDS = 2;
 const elapsedOf = (run: MockRun, now = Date.now()) =>
     Math.floor(((run.stoppedAt ?? now) - run.createdAt) / 1000);
 
-const failing = (run: MockRun) => run.url.includes(MOCK_FAILING_PATH);
+const failing = (run: MockRun) => run.steps === null && run.url.includes(MOCK_FAILING_PATH);
 
 function statusOf(run: MockRun): RunStatus {
     if (run.stoppedAt !== null) {
@@ -168,7 +281,7 @@ function runBody(run: MockRun) {
     const status = statusOf(run);
     const base = {
         id: run.id,
-        type: 'single',
+        type: run.steps ? 'scenario' : 'single',
         status,
         createdAt: new Date(run.createdAt).toISOString(),
         startedAt: new Date(run.createdAt).toISOString(),
@@ -185,6 +298,16 @@ function runBody(run: MockRun) {
 }
 
 function listItem(run: MockRun) {
+    if (run.steps) {
+        const finished = statusOf(run) !== 'RUNNING';
+        return {
+            ...runBody(run),
+            stepsCount: run.steps.length,
+            ...(finished
+                ? { okCount: mockScenarioResult(run.steps, run.stoppedAt !== null).summary.okCount }
+                : {}),
+        };
+    }
     const result =
         statusOf(run) === 'COMPLETED' || statusOf(run) === 'STOPPED' ? mockResult(run) : null;
     return {
@@ -200,6 +323,15 @@ function listItem(run: MockRun) {
 
 function runDetail(run: MockRun) {
     const status = statusOf(run);
+    if (run.steps) {
+        return {
+            ...runBody(run),
+            config: { steps: run.steps },
+            ...(status === 'RUNNING'
+                ? {}
+                : { result: mockScenarioResult(run.steps, run.stoppedAt !== null) }),
+        };
+    }
     return {
         ...runBody(run),
         config: {
@@ -246,17 +378,32 @@ export const testRunHandlers = [
                 'Too many test runs are in progress, try again later',
             );
         }
-        const { config } = parsed.data;
-        const run: MockRun = {
-            id: crypto.randomUUID(),
-            method: config.target.method,
-            url: config.target.url,
-            targetRps: config.targetRps,
-            durationSeconds: config.durationSeconds,
-            rampUpSeconds: config.rampUpSeconds ?? 0,
-            createdAt: Date.now(),
-            stoppedAt: null,
-        };
+        const start = parsed.data;
+        const first = start.type === 'scenario' ? start.config.steps[0] : undefined;
+        const run: MockRun =
+            start.type === 'scenario'
+                ? {
+                      id: crypto.randomUUID(),
+                      steps: start.config.steps,
+                      method: first?.target.method ?? 'GET',
+                      url: first?.target.url ?? '',
+                      targetRps: 1,
+                      durationSeconds: SCENARIO_SECONDS,
+                      rampUpSeconds: 0,
+                      createdAt: Date.now(),
+                      stoppedAt: null,
+                  }
+                : {
+                      id: crypto.randomUUID(),
+                      steps: null,
+                      method: start.config.target.method,
+                      url: start.config.target.url,
+                      targetRps: start.config.targetRps,
+                      durationSeconds: start.config.durationSeconds,
+                      rampUpSeconds: start.config.rampUpSeconds ?? 0,
+                      createdAt: Date.now(),
+                      stoppedAt: null,
+                  };
         runs.set(run.id, run);
         if (key) {
             idempotencyKeys.set(key, { fingerprint, runId: run.id });
@@ -329,6 +476,9 @@ export const liveStreamHandlers = () => [
                 return status;
             };
             const sendHistory = (upTo: number) => {
+                if (run.steps) {
+                    return;
+                }
                 for (let past = 1; past <= upTo; past += 1) {
                     client.send({
                         event: 'snapshot',
@@ -347,7 +497,7 @@ export const liveStreamHandlers = () => [
             sendHistory(Math.min(second, lastSecond(run)));
             const timer = setInterval(() => {
                 second += 1;
-                if (run.stoppedAt === null && second <= lastSecond(run)) {
+                if (run.steps === null && run.stoppedAt === null && second <= lastSecond(run)) {
                     client.send({
                         event: 'snapshot',
                         data: JSON.stringify(mockSnapshot(run, second)),
