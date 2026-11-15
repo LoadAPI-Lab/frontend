@@ -5,16 +5,11 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@/api/fetcher';
+import { sendProblem, TARGET_NOT_ALLOWED } from '@/lib/send-problem';
 import { coreError } from '@/mocks/core-error';
 import { server } from '@/mocks/server';
 
-import {
-    type SendRequestOptions,
-    sendBlock,
-    sendProblem,
-    TARGET_NOT_ALLOWED,
-    useSendRequest,
-} from './use-send-request';
+import { type SendRequestOptions, sendBlock, useSendRequest } from './use-send-request';
 
 const target = { method: 'POST' as const, url: 'https://api.dev/tasks' };
 

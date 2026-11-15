@@ -19,6 +19,7 @@ import {
     RunProgress,
     StatusCodesCard,
 } from '@/features/live-metrics';
+import { exampleBody } from '@/lib/endpoint-request';
 import type { HttpMethod } from '@/lib/http-method';
 import {
     buildRequest,
@@ -41,7 +42,7 @@ import {
 } from '@/lib/scratch-request';
 
 import { ActiveRunBanner } from './active-run-banner';
-import { exampleBody, rememberBody, restoredDraft } from './endpoint-draft';
+import { rememberBody, restoredDraft } from './endpoint-draft';
 import { EndpointHeader } from './endpoint-header';
 import { NoEndpoint } from './no-endpoint';
 import { type PastRequest, pastRequest, pastScratch } from './past-run';
