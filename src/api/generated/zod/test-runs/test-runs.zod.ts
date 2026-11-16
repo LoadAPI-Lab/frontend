@@ -26,6 +26,7 @@ export const testRunsStartBodyTwoConfigStepsItemExtractItemNameRegExp = new RegE
 
 export const testRunsStartBodyTwoConfigStepsMax = 50;
 
+export const testRunsStartBodyTwoScenarioIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
 
 
 export const TestRunsStartBody = zod.union([zod.object({
@@ -56,7 +57,8 @@ export const TestRunsStartBody = zod.union([zod.object({
   "path": zod.string().min(1)
 })).optional()
 })).min(1).max(testRunsStartBodyTwoConfigStepsMax)
-})
+}),
+  "scenarioId": zod.uuid().regex(testRunsStartBodyTwoScenarioIdRegExp).optional().describe('Saved scenario this run is started from. The run links to it while it exists; an id the user has no scenario with is ignored. The config is always taken from `config`, not from the saved scenario')
 })])
 
 export const testRunsStartResponseIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
@@ -87,6 +89,7 @@ export const testRunsListResponseItemsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8
 export const testRunsListResponseItemsItemCreatedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsListResponseItemsItemStartedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsListResponseItemsItemFinishedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
+export const testRunsListResponseItemsItemScenarioIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
 export const testRunsListResponseItemsItemTargetRpsMin = -9007199254740991;
 export const testRunsListResponseItemsItemTargetRpsMax = 9007199254740991;
 
@@ -110,6 +113,10 @@ export const TestRunsListResponse = zod.object({
   "startedAt": zod.iso.datetime({"offset":true}).regex(testRunsListResponseItemsItemStartedAtRegExp).optional().describe('Start time, ISO 8601'),
   "finishedAt": zod.iso.datetime({"offset":true}).regex(testRunsListResponseItemsItemFinishedAtRegExp).optional().describe('Finish time, ISO 8601'),
   "reason": zod.string().optional().describe('Failure reason, present on FAILED runs'),
+  "scenario": zod.object({
+  "id": zod.uuid().regex(testRunsListResponseItemsItemScenarioIdRegExp).describe('Saved scenario id'),
+  "name": zod.string().describe('Current scenario name')
+}).optional().describe('Saved scenario the run was started from, present on scenario runs while that scenario exists'),
   "request": zod.object({
   "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),
   "url": zod.string().describe('URL template as entered by the user, secret query parameter values are masked as ***')
@@ -138,6 +145,7 @@ export const testRunsGetResponseIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA
 export const testRunsGetResponseCreatedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsGetResponseStartedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
 export const testRunsGetResponseFinishedAtRegExp = new RegExp('^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$');
+export const testRunsGetResponseScenarioIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
 export const testRunsGetResponseConfigOneTargetRpsMin = -9007199254740991;
 export const testRunsGetResponseConfigOneTargetRpsMax = 9007199254740991;
 
@@ -193,6 +201,10 @@ export const TestRunsGetResponse = zod.object({
   "startedAt": zod.iso.datetime({"offset":true}).regex(testRunsGetResponseStartedAtRegExp).optional().describe('Start time, ISO 8601'),
   "finishedAt": zod.iso.datetime({"offset":true}).regex(testRunsGetResponseFinishedAtRegExp).optional().describe('Finish time, ISO 8601'),
   "reason": zod.string().optional().describe('Failure reason, present on FAILED runs'),
+  "scenario": zod.object({
+  "id": zod.uuid().regex(testRunsGetResponseScenarioIdRegExp).describe('Saved scenario id'),
+  "name": zod.string().describe('Current scenario name')
+}).optional().describe('Saved scenario the run was started from, present on scenario runs while that scenario exists'),
   "config": zod.union([zod.object({
   "target": zod.object({
   "method": zod.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).describe('HTTP method'),

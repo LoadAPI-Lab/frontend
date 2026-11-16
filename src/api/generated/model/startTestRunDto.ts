@@ -41,4 +41,9 @@ export type StartTestRunDto = {
 }[];
 })[];
 };
+  /**
+     * Saved scenario this run is started from. The run links to it while it exists; an id the user has no scenario with is ignored. The config is always taken from `config`, not from the saved scenario
+     * @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+     */
+  scenarioId?: string;
 };
