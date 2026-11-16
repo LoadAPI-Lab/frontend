@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { RunResult, RunStatus, Snapshot } from '@/api/live';
 
 import { coreError } from './core-error';
+import { mockScenarioLink } from './scenarios';
 
 interface MockStep {
     target: { method: string; url: string; headers?: Record<string, string>; body?: string };
@@ -13,6 +14,7 @@ interface MockStep {
 interface MockRun {
     id: string;
     steps: MockStep[] | null;
+    scenarioId: string | null;
     method: string;
     url: string;
     targetRps: number;
@@ -62,6 +64,7 @@ const startSchema = z.discriminatedUnion('type', [
                 )
                 .min(1),
         }),
+        scenarioId: z.string().optional(),
     }),
 ]);
 
@@ -285,6 +288,7 @@ function runBody(run: MockRun) {
         status,
         createdAt: new Date(run.createdAt).toISOString(),
         startedAt: new Date(run.createdAt).toISOString(),
+        ...mockScenarioLink(run.scenarioId),
     };
     if (status === 'RUNNING') {
         return base;
@@ -385,6 +389,7 @@ export const testRunHandlers = [
                 ? {
                       id: crypto.randomUUID(),
                       steps: start.config.steps,
+                      scenarioId: start.scenarioId ?? null,
                       method: first?.target.method ?? 'GET',
                       url: first?.target.url ?? '',
                       targetRps: 1,
@@ -396,6 +401,7 @@ export const testRunHandlers = [
                 : {
                       id: crypto.randomUUID(),
                       steps: null,
+                      scenarioId: null,
                       method: start.config.target.method,
                       url: start.config.target.url,
                       targetRps: start.config.targetRps,
@@ -430,6 +436,27 @@ export const testRunHandlers = [
     http.get('*/v1/test-runs/:id', ({ params }) => {
         const run = runs.get(String(params.id));
         return run ? HttpResponse.json(runDetail(run)) : notFound();
+    }),
+    http.post('*/v1/test-runs/:id/rerun', ({ params }) => {
+        const source = runs.get(String(params.id));
+        if (!source) {
+            return notFound();
+        }
+        if ([...runs.values()].some((run) => statusOf(run) === 'RUNNING')) {
+            return coreError(
+                503,
+                'TEST_RUN.CAPACITY_EXCEEDED',
+                'Too many test runs are in progress, try again later',
+            );
+        }
+        const run: MockRun = {
+            ...source,
+            id: crypto.randomUUID(),
+            createdAt: Date.now(),
+            stoppedAt: null,
+        };
+        runs.set(run.id, run);
+        return HttpResponse.json({ id: run.id, status: 'PENDING' }, { status: 201 });
     }),
     http.post('*/v1/test-runs/:id/stop', ({ params }) => {
         const run = runs.get(String(params.id));

@@ -84,6 +84,11 @@ const bodySchema = z.object({
 
 const scenarios = new Map<string, ScenarioResponseDto>();
 
+export function mockScenarioLink(id: string | null) {
+    const scenario = id ? scenarios.get(id) : undefined;
+    return scenario ? { scenario: { id: scenario.id, name: scenario.name } } : {};
+}
+
 export function resetMockScenarios(seed: ScenarioResponseDto[] = [taskLifecycleScenario]) {
     scenarios.clear();
     for (const scenario of seed) {

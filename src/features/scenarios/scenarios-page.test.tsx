@@ -121,11 +121,25 @@ describe('ScenariosPage', () => {
         );
     });
 
-    it('runs the scenario and shows each step result', async () => {
+    it('runs the scenario linked to its saved id and shows each step result', async () => {
+        const starts: unknown[] = [];
+        server.use(
+            http.post('*/v1/test-runs', async ({ request }) => {
+                starts.push(await request.clone().json());
+            }),
+        );
         const { user } = renderPage();
         await screen.findByRole('textbox', { name: 'Scenario name' });
 
         await user.click(runButton());
+        await vi.waitFor(() =>
+            expect(starts).toEqual([
+                expect.objectContaining({
+                    type: 'scenario',
+                    scenarioId: taskLifecycleScenario.id,
+                }),
+            ]),
+        );
         const source = await vi.waitFor(() => FakeEventSource.latest());
         act(() => source.emit('status', { status: 'RUNNING' }));
         expect(await screen.findByRole('button', { name: 'Stop' })).toBeEnabled();
