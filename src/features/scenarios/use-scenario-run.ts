@@ -14,7 +14,7 @@ import { isFinalStatus, useLiveTest } from '@/api/live';
 import { toast } from '@/components/ui/toast';
 
 import { configFingerprint, type ScenarioConfig } from './scenario-draft';
-import { rememberScenarioRun, useScenarioStore } from './scenario-store';
+import { NEW_SCENARIO, rememberScenarioRun, useScenarioStore } from './scenario-store';
 
 type RunResult = NonNullable<TestRunResponseDto['result']>;
 export type ScenarioResult = Extract<RunResult, { summary: unknown }>;
@@ -53,7 +53,11 @@ export function useScenarioRun(key: string, config: ScenarioConfig) {
     const start = useMutation({
         mutationFn: (startConfig: ScenarioConfig) =>
             testRunsStart(
-                { type: 'scenario', config: startConfig },
+                {
+                    type: 'scenario',
+                    config: startConfig,
+                    ...(key === NEW_SCENARIO ? {} : { scenarioId: key }),
+                },
                 { headers: { 'Idempotency-Key': crypto.randomUUID() } },
             ),
         meta: { toastOnError: false },

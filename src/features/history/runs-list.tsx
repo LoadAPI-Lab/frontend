@@ -163,7 +163,12 @@ function RunRow({
     const format = (value: number) => formatNumber(value, 0, i18n.language);
     const time = formatRunTime(run.createdAt, i18n.language);
     const single = run.type === 'single';
-    const title = single && run.request ? runPath(run.request.url) : t(`history.types.${run.type}`);
+    let title = t(`history.types.${run.type}`);
+    if (single && run.request) {
+        title = runPath(run.request.url);
+    } else if (run.type === 'scenario') {
+        title = run.scenario?.name ?? title;
+    }
     const meta = single
         ? t('history.row.single', {
               rps: format(run.targetRps ?? 0),

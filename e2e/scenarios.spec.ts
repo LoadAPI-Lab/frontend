@@ -65,3 +65,29 @@ test('a sent step shows its response and a picked value becomes an extract rule'
     );
     expect(serious).toEqual([]);
 });
+
+test('a scenario run shows its steps in History and can be re-run and reopened in the builder', async ({
+    page,
+}) => {
+    await page.goto('/scenarios');
+    await page.getByRole('button', { name: 'Run scenario' }).click();
+    await expect(page.getByText('4/4')).toBeVisible({ timeout: 10_000 });
+
+    await page
+        .getByRole('navigation', { name: 'Main' })
+        .getByRole('link', { name: 'History' })
+        .click();
+    await expect(page.getByRole('heading', { name: 'Task lifecycle', level: 2 })).toBeVisible();
+    const steps = page.getByRole('list', { name: 'Step results' }).getByRole('listitem');
+    await expect(steps).toHaveCount(4);
+    await expect(steps.first()).toContainText('201');
+
+    await page.getByRole('button', { name: 'Re-run scenario' }).click();
+    await expect(
+        page.getByRole('region', { name: 'Runs of this scenario' }).getByRole('listitem'),
+    ).toHaveCount(2, { timeout: 10_000 });
+    await expect(page.getByText('prev 4/4')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Open in builder' }).click();
+    await expect(page).toHaveURL(/\/scenarios\?scenario=/);
+});

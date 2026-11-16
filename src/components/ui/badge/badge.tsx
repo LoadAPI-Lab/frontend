@@ -13,6 +13,7 @@ export const badgeVariants = cva(
                 'accent-soft': 'bg-accent/15 text-accent',
                 danger: 'bg-danger/14 text-danger',
                 info: 'bg-info/14 text-info',
+                scenario: 'bg-scenario/14 text-scenario',
                 neutral: 'bg-surface-2 text-fg-badge',
                 outline: 'border border-border-strong font-normal text-fg-muted py-1',
             },

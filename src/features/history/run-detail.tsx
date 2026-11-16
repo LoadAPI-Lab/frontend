@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Download, RotateCcw } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
@@ -8,7 +8,6 @@ import { ApiError } from '@/api/fetcher';
 import {
     getTestRunsGetQueryOptions,
     getTestRunsListQueryKey,
-    testRunsRerun,
 } from '@/api/generated/endpoints/test-runs/test-runs';
 import type { TestRunResponseDto } from '@/api/generated/model';
 import { isFinalStatus, type RunSummary, summarizeRunResult } from '@/api/live';
@@ -19,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
 import { RunFailure, StatusCodesCard } from '@/features/live-metrics';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
@@ -38,6 +36,9 @@ import {
     trendWidth,
 } from './history-format';
 import { STATUS_TEXT } from './run-status';
+import { isScenarioConfig } from './scenario-run';
+import { ScenarioRunDetail } from './scenario-run-detail';
+import { downloadRun, useRerun } from './use-rerun';
 
 const ROUTE_RUNS = 5;
 
@@ -77,16 +78,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
             <dd className="text-fg truncate font-mono text-base">{children}</dd>
         </div>
     );
-}
-
-function download(run: TestRunResponseDto) {
-    const blob = new Blob([JSON.stringify(run, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `loadapi-run-${shortRunId(run.id)}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
 }
 
 function authKind(headers: Record<string, string> | undefined) {
@@ -141,26 +132,12 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
         ]),
     );
 
-    const rerun = useMutation({
-        mutationFn: (id: string) =>
-            testRunsRerun(id, { headers: { 'Idempotency-Key': crypto.randomUUID() } }),
-        meta: { toastOnError: false },
-        onSuccess: (created) => {
-            const place = placeOfRun(runId);
-            if (place) {
-                rememberRun(created.id, place);
-            }
-            void navigate({ to: '/tests', search: { ...placeSearch(place), run: created.id } });
-        },
-        onError: (error) => {
-            toast.error({
-                title: t('history.rerunFailed'),
-                description:
-                    error instanceof ApiError && error.code === 'TEST_RUN.CAPACITY_EXCEEDED'
-                        ? t('testConfig.capacityExceeded')
-                        : error.message,
-            });
-        },
+    const rerun = useRerun((created) => {
+        const place = placeOfRun(runId);
+        if (place) {
+            rememberRun(created.id, place);
+        }
+        void navigate({ to: '/tests', search: { ...placeSearch(place), run: created.id } });
     });
 
     if (runQuery.isPending) {
@@ -194,6 +171,16 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
     }
 
     const run = runQuery.data;
+    if (isScenarioConfig(run.config)) {
+        return (
+            <ScenarioRunDetail
+                run={run}
+                config={run.config}
+                listItems={listItems}
+                className={className}
+            />
+        );
+    }
     const single = isSingleConfig(run.config) ? run.config : null;
     const summary = summarizeRunResult(run.result);
     const previous = previousId ? (summaries.get(previousId) ?? null) : null;
@@ -287,7 +274,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                 <div className="flex shrink-0 items-center gap-2">
                     <Button
                         variant="secondary"
-                        onClick={() => download(run)}
+                        onClick={() => downloadRun(run)}
                     >
                         <Download
                             aria-hidden

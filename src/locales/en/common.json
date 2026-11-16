@@ -401,6 +401,66 @@
             "trend": "p95 trend",
             "note": "History keeps the final summary of each run. Per-second charts are on the Stress tests page while a run is live and for an hour after it ends.",
             "openCharts": "Open charts"
+        },
+        "scenario": {
+            "untitled": "Scenario run",
+            "steps_one": "{{count}} step",
+            "steps_other": "{{count}} steps",
+            "openInBuilder": "Open in builder",
+            "rerun": "Re-run scenario",
+            "running": "The scenario is running. Step results appear when it finishes.",
+            "noResult": "This run has no step results.",
+            "stats": {
+                "passed": "Steps passed",
+                "failed": "Failed",
+                "skipped": "Skipped",
+                "totalTime": "Total time",
+                "variables": "Variables",
+                "prev": "prev {{value}}",
+                "step": "step {{number}}",
+                "noFailures": "none",
+                "noSkipped": "all steps sent",
+                "noVariables": "none extracted"
+            },
+            "timeline": {
+                "title": "Step timeline",
+                "subtitle": "each step waits for the previous one · {{total}} total",
+                "label": "Step results",
+                "skipped": "SKIPPED",
+                "noResponse": "—"
+            },
+            "failedStep": {
+                "title": "Failed step",
+                "skippedTitle": "Skipped step",
+                "received": "Received",
+                "duration": "Duration",
+                "reason": "Reason",
+                "noResponse": "No response",
+                "requestBody": "Request body",
+                "requestBodyNote": "As stored, with placeholders unresolved. Response bodies aren't kept in History."
+            },
+            "variables": {
+                "title": "Variables",
+                "name": "Name",
+                "path": "Path",
+                "from": "From",
+                "usedIn": "Used in",
+                "unused": "—",
+                "empty": "No variables are extracted in this scenario."
+            },
+            "runs": {
+                "title": "Runs of this scenario",
+                "subtitle_one": "{{name}} · last {{count}}",
+                "subtitle_other": "{{name}} · last {{count}}",
+                "this": "this run",
+                "stepsLabel": "Step outcomes: {{outcomes}}",
+                "note": "Matched by steps (method and URL) among loaded runs."
+            },
+            "outcome": {
+                "OK": "passed",
+                "FAILED": "failed",
+                "SKIPPED": "skipped"
+            }
         }
     },
     "account": {
