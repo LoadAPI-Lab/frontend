@@ -18,11 +18,10 @@ const lineAt = (text: string, offset: number) => text.slice(0, offset).split('\n
 
 function standIn(placeholder: Placeholder): string {
     const length = placeholder.end - placeholder.start;
-    if (
-        placeholder.kind === 'generator' &&
-        placeholder.known &&
-        !isTextGenerator(placeholder.name)
-    ) {
+    const numeric =
+        placeholder.kind === 'variable' ||
+        (placeholder.known && !isTextGenerator(placeholder.name));
+    if (numeric) {
         return `1${' '.repeat(length - 1)}`;
     }
     return 'a'.repeat(length);

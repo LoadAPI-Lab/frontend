@@ -1,21 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRef } from 'react';
 
-import { ApiError, errorCode } from '@/api/fetcher';
 import { requestsSend } from '@/api/generated/endpoints/requests/requests';
 import type { SendRequestDto } from '@/api/generated/model';
+import { sendProblem } from '@/lib/send-problem';
 
 import { type RequestBlock, requestBlock } from './request-block';
 import type { RunTarget } from './use-test-run-controls';
 
 export type SendBlock = RequestBlock | { kind: 'bodyNotAllowed'; method: string };
-
-export type SendProblem =
-    | { kind: 'targetNotAllowed' }
-    | { kind: 'rateLimited' }
-    | { kind: 'failed'; message: string };
-
-export const TARGET_NOT_ALLOWED = 'REQUEST.TARGET_NOT_ALLOWED';
 
 const NO_BODY_METHODS = new Set(['GET', 'HEAD']);
 
@@ -28,16 +21,6 @@ export function sendBlock(target: RunTarget | null, body: string): SendBlock | n
         return { kind: 'bodyNotAllowed', method: target.method };
     }
     return null;
-}
-
-export function sendProblem(error: Error): SendProblem {
-    if (errorCode(error) === TARGET_NOT_ALLOWED) {
-        return { kind: 'targetNotAllowed' };
-    }
-    if (error instanceof ApiError && error.status === 429) {
-        return { kind: 'rateLimited' };
-    }
-    return { kind: 'failed', message: error.message };
 }
 
 interface SendAttempt {

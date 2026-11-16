@@ -7,8 +7,7 @@ import { CardTitle } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
-
-import type { SendProblem } from './use-send-request';
+import type { SendProblem } from '@/lib/send-problem';
 
 type ReceivedResponse = Extract<SendRequestResponseDto, { kind: 'response' }>;
 type FailedRequest = Extract<SendRequestResponseDto, { kind: 'error' }>;

@@ -85,7 +85,8 @@
             "title": "{{name}} re-imported",
             "changes": "{{added}} added, {{changed}} changed, {{removed}} removed",
             "noChanges": "No endpoint changes"
-        }
+        },
+        "addStepHint": "Click a route, or drag it into the builder, to add it as a step."
     },
     "stressTests": {
         "title": "Stress tests",
@@ -128,7 +129,154 @@
         "failedNoData": "The run failed before it sent any per-second data."
     },
     "scenarios": {
-        "title": "Scenarios"
+        "title": "Scenarios",
+        "loading": "Loading scenarios",
+        "tabsLabel": "Scenarios",
+        "newScenario": "New scenario",
+        "untitled": "Untitled scenario",
+        "sideLabel": "Run results and variables",
+        "saved": "Saved {{name}}",
+        "deleted": "Deleted {{name}}",
+        "tabTone": {
+            "passed": "last run passed",
+            "failed": "last run failed",
+            "unsaved": "unsaved changes"
+        },
+        "notFound": {
+            "title": "Scenario not found",
+            "body": "It may have been deleted.",
+            "action": "Open scenarios"
+        },
+        "header": {
+            "label": "Scenario",
+            "name": "Scenario name",
+            "steps_one": "{{count}} step",
+            "steps_other": "{{count}} steps",
+            "variables_one": "{{count}} variable",
+            "variables_other": "{{count}} variables",
+            "unsaved": "Unsaved changes",
+            "notSaved": "Not saved yet",
+            "edited": "Edited {{time}}",
+            "more": "More scenario actions",
+            "discard": "Discard changes",
+            "delete": "Delete scenario",
+            "save": "Save",
+            "saving": "Saving…",
+            "run": "Run scenario",
+            "starting": "Starting…",
+            "stop": "Stop",
+            "stopping": "Stopping…"
+        },
+        "blocked": {
+            "noSteps": "Add a step to run the scenario.",
+            "problems_one": "Fix {{count}} problem in the steps to run or save.",
+            "problems_other": "Fix {{count}} problems in the steps to run or save.",
+            "noName": "Name the scenario to save it."
+        },
+        "steps": {
+            "title": "Steps",
+            "limit": "{{count}} / {{max}}",
+            "emptyTitle": "No steps yet",
+            "dropHint": "Drop a route from Collections here, or",
+            "addBlank": "Add a blank step",
+            "full": "A scenario can have up to {{max}} steps.",
+            "added": "Step {{number}} added: {{method}} {{url}}"
+        },
+        "step": {
+            "label": "Step {{number}}, {{method}}",
+            "actions": "Step {{number}} actions",
+            "moveUp": "Move up",
+            "moveDown": "Move down",
+            "duplicate": "Duplicate",
+            "remove": "Remove step",
+            "method": "Step {{number}} method",
+            "url": "Step {{number}} URL",
+            "urlPlaceholder": "https://api.example.com/tasks/{{example}}",
+            "noUrl": "No URL yet",
+            "parts": "Step {{number}} request",
+            "insertVariable": "Insert a variable",
+            "headerValuePlaceholder": "Value or {{example}}"
+        },
+        "extract": {
+            "tab": "Extract",
+            "help": "Save a value from this step's JSON response and use it in later steps as {{example}}. Paths use dots and array indexes, for example data.id or items.0.id.",
+            "name": "Variable",
+            "path": "JSON path",
+            "namePlaceholder": "taskId",
+            "pathPlaceholder": "data.id",
+            "add": "Add rule",
+            "remove": "Remove rule {{index}}",
+            "label": "Extract",
+            "into": "into",
+            "listLabel": "Step {{number}} extracts",
+            "pickFromResponse": "Pick a value from the last response",
+            "sendToPick": "Send the step to see its response and pick values from it instead of typing paths.",
+            "more": "+{{count}}"
+        },
+        "issues": {
+            "noUrl": "Enter a full URL starting with http:// or https://.",
+            "pathParam": "Replace {{param}} in the URL with a value or a variable.",
+            "undefinedVariable": "Uses {{name}}, but no earlier step extracts it.",
+            "extractedLater": "Uses {{name}} before step {{step}} extracts it. Move this step below it.",
+            "unknownGenerator": "{{token}} isn't a known placeholder. Use one of {{known}}.",
+            "invalidBody": "The body isn't valid JSON.",
+            "extractNoName": "An extract rule needs a variable name.",
+            "extractName": "\"{{name}}\" can't be a variable name. Use letters, digits and _ only.",
+            "extractPath": "Give {{name}} a JSON path to read from the response."
+        },
+        "run": {
+            "lastRun": "Last run",
+            "never": "Not run yet. Run scenario sends each step once, in order, and fills variables from earlier responses.",
+            "running": "Running the steps…",
+            "stopping": "Stopping…",
+            "stopped": "Stopped before every step ran.",
+            "failed": "The run failed.",
+            "stale": "You changed the scenario after this run.",
+            "startFailed": "Couldn't start the scenario"
+        },
+        "result": {
+            "passed": "steps passed",
+            "totalTime": "total time",
+            "msUnit": "ms",
+            "failedCount": "failed",
+            "skippedCount": "skipped",
+            "ms": "{{value}} ms",
+            "skipped": "SKIP",
+            "failed": "FAIL"
+        },
+        "variables": {
+            "title": "Variables",
+            "empty": "No variables yet. Add an extract rule to a step to save a value from its response.",
+            "name": "Name",
+            "path": "Path",
+            "step": "Step",
+            "notExtracted": "used before any step extracts it",
+            "unused": "Not used by later steps: {{names}}"
+        },
+        "delete": {
+            "title": "Delete {{name}}?",
+            "body_one": "Its {{count}} step is removed. Past runs stay in History.",
+            "body_other": "Its {{count}} steps are removed. Past runs stay in History.",
+            "cancel": "Cancel",
+            "confirm": "Delete",
+            "deleting": "Deleting…"
+        },
+        "send": {
+            "button": "Send",
+            "sending": "Sending…",
+            "needsValues_one": "Uses {{names}}, which no earlier step has extracted yet.",
+            "needsValues_other": "Uses {{names}}, which no earlier step has extracted yet.",
+            "sendEarlier_one": "Needs {{names}} from an earlier response. Send step {{step}} first.",
+            "sendEarlier_other": "Needs {{names}} from earlier responses. Send from step {{step}} first."
+        },
+        "response": {
+            "tab": "Response",
+            "label": "Step {{number}} response",
+            "pickHint": "Click a value to extract it into a variable. Only text, numbers and true/false can be extracted.",
+            "notJson": "Values can only be picked from a JSON response.",
+            "moreItems_one": "{{count}} more item isn't shown",
+            "moreItems_other": "{{count}} more items aren't shown"
+        }
     },
     "history": {
         "title": "History",

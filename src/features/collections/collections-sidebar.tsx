@@ -1,3 +1,4 @@
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +12,10 @@ import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
 import { isScratchPlace, lastRunFor, SCRATCH_PLACE } from '@/lib/run-memory';
 import { useScratchRequest } from '@/lib/scratch-request';
+import { rememberedServer } from '@/lib/server-memory';
+import { pickStep, seedFromEndpoint, STEP_SEED_MIME, type StepSeed } from '@/lib/step-seed';
 
-import type { ApiSpecSummary } from './api';
+import { apiSpecQuery, type ApiSpecSummary, type Endpoint, isUsableServer } from './api';
 import { CollectionsRail } from './collections-rail';
 import { CollectionsTree } from './collections-tree';
 import { DeleteSpecDialog } from './delete-spec-dialog';
@@ -44,11 +47,19 @@ function changesText(
     });
 }
 
+function endpointSeed(queryClient: QueryClient, specId: string, endpoint: Endpoint): StepSeed {
+    const spec = queryClient.getQueryData(apiSpecQuery(specId).queryKey);
+    const firstServer = spec?.servers.find(isUsableServer)?.url ?? '';
+    return seedFromEndpoint(endpoint, rememberedServer(specId) ?? firstServer);
+}
+
 export function CollectionsSidebar() {
     const { t } = useTranslation();
     const [savedCollapsed, setSavedCollapsed] = useSidebarCollapsed();
     const pathname = useRouterState({ select: (state) => state.location.pathname });
     const onHistory = pathname.startsWith('/history');
+    const onScenarios = pathname.startsWith('/scenarios');
+    const queryClient = useQueryClient();
     const [visit, setVisit] = useState({ onHistory, open: false });
     if (visit.onHistory !== onHistory) {
         setVisit({ onHistory, open: false });
@@ -139,11 +150,36 @@ export function CollectionsSidebar() {
                         />
                     </div>
                 ) : null}
+                {onScenarios ? (
+                    <p className="border-accent/30 bg-accent/5 text-fg-secondary text-label mb-2 rounded-md border border-dashed px-2.5 py-2">
+                        {t('collections.addStepHint')}
+                    </p>
+                ) : null}
                 <CollectionsTree
-                    selected={selected}
+                    selected={onScenarios ? null : selected}
                     expanded={expanded}
                     onExpandedChange={setExpanded}
+                    onEndpointDragStart={
+                        onScenarios
+                            ? (specId, endpoint, event) => {
+                                  event.dataTransfer.effectAllowed = 'copy';
+                                  event.dataTransfer.setData(
+                                      STEP_SEED_MIME,
+                                      JSON.stringify(endpointSeed(queryClient, specId, endpoint)),
+                                  );
+                              }
+                            : undefined
+                    }
                     onSelect={({ specId, endpointKey }) => {
+                        if (onScenarios) {
+                            const endpoint = queryClient
+                                .getQueryData(apiSpecQuery(specId).queryKey)
+                                ?.endpoints.find((candidate) => candidate.key === endpointKey);
+                            if (endpoint) {
+                                pickStep(endpointSeed(queryClient, specId, endpoint));
+                            }
+                            return;
+                        }
                         void navigate({
                             to: '/tests',
                             search: {

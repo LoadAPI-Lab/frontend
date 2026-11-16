@@ -21,6 +21,10 @@ describe('validateJsonBody', () => {
         expect(isValidJsonBody(body)).toBe(true);
     });
 
+    it('accepts scenario variables inside or outside quotes', () => {
+        expect(isValidJsonBody('{"id": {{taskId}}, "ref": "task-{{taskId}}"}')).toBe(true);
+    });
+
     it('flags text placeholders outside quotes with their line', () => {
         const body = '{\n  "assignee": {{$randomEmail}},\n  "id": "{{$uuid}}"\n}';
         expect(validateJsonBody(body)).toEqual([

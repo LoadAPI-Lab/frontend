@@ -1,6 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ChevronRight, Folder, LoaderCircle } from 'lucide-react';
-import { useState } from 'react';
+import { type DragEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveRun } from '@/api/live';
@@ -50,6 +50,7 @@ export interface CollectionsTreeProps {
     onExpandedChange: (id: string, open: boolean) => void;
     onImport?: () => void;
     onSpecAction?: (action: SpecAction, spec: ApiSpecSummary) => void;
+    onEndpointDragStart?: (specId: string, endpoint: Endpoint, event: DragEvent) => void;
 }
 
 function Chevron({ open, className }: { open: boolean; className?: string }) {
@@ -81,6 +82,7 @@ export function CollectionsTree({
     onExpandedChange,
     onImport,
     onSpecAction,
+    onEndpointDragStart,
 }: CollectionsTreeProps) {
     const { t } = useTranslation();
     const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -145,6 +147,9 @@ export function CollectionsTree({
         return {
             id: endpointNodeId(spec.id, endpoint.key),
             tooltip: endpoint.path,
+            onDragStart: onEndpointDragStart
+                ? (event) => onEndpointDragStart(spec.id, endpoint, event)
+                : undefined,
             rowClassName: cn(
                 'flex h-7 items-center gap-2 rounded-md border-l-2 px-2 transition-colors',
                 indent,
