@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { DragEvent, KeyboardEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Tooltip } from '@/components/ui/tooltip';
@@ -14,6 +14,7 @@ export interface TreeNode {
     tooltip?: string;
     actions?: ReactNode;
     onOpenActions?: () => void;
+    onDragStart?: (event: DragEvent<HTMLLIElement>) => void;
 }
 
 export interface TreeViewProps {
@@ -271,6 +272,8 @@ export function TreeView({
                         aria-selected={parent ? undefined : node.id === selectedId}
                         aria-keyshortcuts={node.onOpenActions ? 'Shift+F10' : undefined}
                         tabIndex={node.id === tabStop ? 0 : -1}
+                        draggable={node.onDragStart ? true : undefined}
+                        onDragStart={node.onDragStart}
                         onFocus={() => setFocusedId(node.id)}
                         onKeyDown={(event) => onKeyDown(event, item)}
                         onClick={() => {

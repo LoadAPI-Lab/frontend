@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListTestRunsResponseDtoItemsItemRequest } from './listTestRunsResponseDtoItemsItemRequest';
+import type { ListTestRunsResponseDtoItemsItemScenario } from './listTestRunsResponseDtoItemsItemScenario';
 import type { ListTestRunsResponseDtoItemsItemStatus } from './listTestRunsResponseDtoItemsItemStatus';
 import type { ListTestRunsResponseDtoItemsItemType } from './listTestRunsResponseDtoItemsItemType';
 
@@ -36,6 +37,8 @@ export type ListTestRunsResponseDtoItemsItem = {
   finishedAt?: string;
   /** Failure reason, present on FAILED runs */
   reason?: string;
+  /** Saved scenario the run was started from, present on scenario runs while that scenario exists */
+  scenario?: ListTestRunsResponseDtoItemsItemScenario;
   /** Tested request, present on single runs */
   request?: ListTestRunsResponseDtoItemsItemRequest;
   /**

@@ -8,12 +8,16 @@ import { cn } from '@/lib/cn';
 import { type BodyIssue, validateJsonBody } from '@/lib/json-body';
 import { GENERATORS, generatorToken } from '@/lib/placeholders';
 
-import { editorExtensions, insertGenerator, setIssues } from './extensions';
+import { editorExtensions, insertGenerator, insertVariable, setIssues } from './extensions';
+
+const NO_VARIABLES: readonly string[] = [];
 
 export interface JsonBodyEditorProps {
     value: string;
     onChange: (value: string) => void;
     readOnly?: boolean;
+    variables?: readonly string[];
+    variablesLabel?: string;
     className?: string;
 }
 
@@ -44,6 +48,8 @@ export function JsonBodyEditor({
     value,
     onChange,
     readOnly = false,
+    variables = NO_VARIABLES,
+    variablesLabel,
     className,
 }: JsonBodyEditorProps) {
     const { t } = useTranslation();
@@ -140,7 +146,30 @@ export function JsonBodyEditor({
                         <legend className="text-fg-muted tracking-label mb-2 p-0 text-xs font-semibold uppercase">
                             {t('bodyEditor.insertPlaceholder')}
                         </legend>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {variables.length > 0 ? (
+                                <>
+                                    <span className="sr-only">{variablesLabel}</span>
+                                    {variables.map((name) => (
+                                        <Chip
+                                            key={`var-${name}`}
+                                            className="border-accent/30 text-accent"
+                                            onMouseDown={(event) => event.preventDefault()}
+                                            onClick={() => {
+                                                if (view.current) {
+                                                    insertVariable(view.current, name);
+                                                }
+                                            }}
+                                        >
+                                            {`{{${name}}}`}
+                                        </Chip>
+                                    ))}
+                                    <span
+                                        aria-hidden
+                                        className="bg-border-strong mx-0.5 h-4 w-px"
+                                    />
+                                </>
+                            ) : null}
                             {GENERATORS.map((name) => (
                                 <Chip
                                     key={name}

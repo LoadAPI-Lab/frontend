@@ -265,3 +265,179 @@ describe('HistoryPage', () => {
         expect(screen.getByRole('region', { name: /^today/i })).toBeVisible();
     });
 });
+
+const scenarioConfig = {
+    steps: [
+        {
+            target: { method: 'POST', url: 'http://api.test/tasks', body: '{"status":"done"}' },
+            extract: [{ name: 'taskId', path: 'id' }],
+        },
+        {
+            target: {
+                method: 'PATCH',
+                url: 'http://api.test/tasks/{{taskId}}',
+                body: '{"status":"done"}',
+            },
+        },
+        { target: { method: 'DELETE', url: 'http://api.test/tasks/{{taskId}}' } },
+    ],
+};
+
+const linked = { id: 'sc-1', name: 'TaskLifecycle' };
+
+const scenarioRun = (
+    id: string,
+    hoursAgo: number,
+    failed: boolean,
+    scenario: typeof linked | null = linked,
+) => ({
+    id,
+    type: 'scenario',
+    ...(scenario ? { scenario } : {}),
+    status: 'COMPLETED',
+    createdAt: at(hoursAgo),
+    config: scenarioConfig,
+    result: {
+        summary: {
+            totalSteps: 3,
+            okCount: failed ? 1 : 3,
+            failedCount: failed ? 1 : 0,
+            skippedCount: failed ? 1 : 0,
+            durationMs: failed ? 85 : 118,
+        },
+        steps: [
+            {
+                method: 'POST',
+                url: 'http://api.test/tasks',
+                status: 'OK',
+                statusCode: 201,
+                durationMs: 38,
+            },
+            failed
+                ? {
+                      method: 'PATCH',
+                      url: 'http://api.test/tasks/a83f',
+                      status: 'FAILED',
+                      statusCode: 500,
+                      durationMs: 47,
+                      description: 'unexpected status 500',
+                  }
+                : {
+                      method: 'PATCH',
+                      url: 'http://api.test/tasks/a83f',
+                      status: 'OK',
+                      statusCode: 200,
+                      durationMs: 50,
+                  },
+            failed
+                ? {
+                      method: 'DELETE',
+                      url: 'http://api.test/tasks/a83f',
+                      status: 'SKIPPED',
+                      description: 'previous step failed',
+                  }
+                : {
+                      method: 'DELETE',
+                      url: 'http://api.test/tasks/a83f',
+                      status: 'OK',
+                      statusCode: 204,
+                      durationMs: 30,
+                  },
+        ],
+    },
+});
+
+describe('HistoryPage scenario runs', () => {
+    it('shows step results, the failed step, variables and earlier runs of the scenario', async () => {
+        const runs = {
+            'sc-new': scenarioRun('sc-new', 0, true),
+            'sc-old': scenarioRun('sc-old', 1, false),
+        };
+        server.use(
+            http.get('*/v1/test-runs', () =>
+                HttpResponse.json({
+                    items: Object.values(runs).map((run) => ({
+                        id: run.id,
+                        type: 'scenario',
+                        status: run.status,
+                        createdAt: run.createdAt,
+                        stepsCount: 3,
+                        okCount: run.result.summary.okCount,
+                        scenario: linked,
+                    })),
+                }),
+            ),
+            http.get('*/v1/test-runs/:id', ({ params }) =>
+                HttpResponse.json(params.id === 'sc-old' ? runs['sc-old'] : runs['sc-new']),
+            ),
+        );
+        renderPage('sc-new', vi.fn<(id: string) => void>(), { grouped: false });
+
+        expect(
+            await screen.findByRole('heading', { name: 'TaskLifecycle', level: 2 }),
+        ).toBeVisible();
+        expect(screen.getByRole('link', { name: 'Open in builder' })).toHaveAttribute(
+            'href',
+            '/scenarios?scenario=sc-1',
+        );
+        expect(screen.getByRole('button', { name: 'Re-run scenario' })).toBeEnabled();
+
+        const timeline = screen.getByRole('list', { name: 'Step results' });
+        const steps = within(timeline).getAllByRole('listitem');
+        expect(steps).toHaveLength(3);
+        expect(steps[0]).toHaveTextContent('01POST/tasks20138ms');
+        expect(steps[1]).toHaveTextContent('02PATCH/tasks/a83f50047ms');
+        expect(steps[2]).toHaveTextContent('03DELETE/tasks/a83fSKIPPED—');
+
+        expect(screen.getByText('step 02')).toBeVisible();
+        expect(await screen.findByText('prev 3/3')).toBeVisible();
+        expect(screen.getByText('prev 118ms')).toBeVisible();
+
+        const failed = screen.getByRole('region', { name: 'Failed step' });
+        expect(within(failed).getByText('unexpected status 500')).toBeVisible();
+        expect(within(failed).getByText('{"status":"done"}')).toBeVisible();
+
+        const variables = screen.getByRole('region', { name: 'Variables' });
+        expect(within(variables).getByRole('row', { name: /taskId/ })).toHaveTextContent(
+            'taskIdid0102 03',
+        );
+
+        const history = screen.getByRole('region', { name: 'Runs of this scenario' });
+        const rows = within(history).getAllByRole('listitem');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toHaveTextContent('this run');
+        expect(rows[0]).toHaveTextContent('1/3');
+        expect(rows[1]).toHaveTextContent('3/3');
+
+        expect(runLinks()[0]).toHaveTextContent('TaskLifecycle');
+    });
+
+    it('falls back to a generic title without builder link for runs not linked to a saved scenario', async () => {
+        const run = scenarioRun('sc-x', 0, false, null);
+        server.use(
+            http.get('*/v1/test-runs', () =>
+                HttpResponse.json({
+                    items: [
+                        {
+                            id: run.id,
+                            type: 'scenario',
+                            status: run.status,
+                            createdAt: run.createdAt,
+                            stepsCount: 3,
+                            okCount: 3,
+                        },
+                    ],
+                }),
+            ),
+            http.get('*/v1/test-runs/:id', () => HttpResponse.json(run)),
+        );
+        renderPage('sc-x', vi.fn<(id: string) => void>(), { grouped: false });
+
+        expect(
+            await screen.findByRole('heading', { name: 'Scenario run', level: 2 }),
+        ).toBeVisible();
+        expect(screen.queryByRole('link', { name: 'Open in builder' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Failed step' })).not.toBeInTheDocument();
+        expect(screen.getByText('all steps sent')).toBeVisible();
+    });
+});

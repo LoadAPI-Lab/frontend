@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 import { resetLiveRuns, setLiveStreamOptions } from '@/api/live';
 import { resetMockApiSpecs } from '@/mocks/api-specs';
+import { resetMockScenarios } from '@/mocks/scenarios';
 import { server } from '@/mocks/server';
 import { resetMockTestRuns } from '@/mocks/test-runs';
 
@@ -28,6 +29,7 @@ afterEach(() => {
     resetMockApiSpecs();
     resetLiveRuns();
     resetMockTestRuns();
+    resetMockScenarios();
     FakeEventSource.reset();
     FakeUPlot.reset();
     localStorage.clear();

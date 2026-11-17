@@ -10,10 +10,10 @@ import { MethodBadge } from '@/components/shared/method-badge';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
-import { formatNumber } from '@/lib/format';
+import { formatNumber, formatRelativeTime } from '@/lib/format';
 
 import type { RunListItem } from './history-api';
-import { formatRelativeTime, runPath } from './history-format';
+import { runPath } from './history-format';
 import { STATUS_TEXT } from './run-status';
 
 export const RECENT_RUNS = 4;

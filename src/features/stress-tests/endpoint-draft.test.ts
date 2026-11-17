@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { draftFromEndpoint } from '@/lib/endpoint-request';
 import { shopSpec, testServerSpec } from '@/mocks/api-specs';
 
-import { draftFromEndpoint, rememberBody, restoredDraft } from './endpoint-draft';
+import { rememberBody, restoredDraft } from './endpoint-draft';
 
 const find = (spec: typeof shopSpec, key: string) => {
     const endpoint = spec.endpoints.find((candidate) => candidate.key === key);
