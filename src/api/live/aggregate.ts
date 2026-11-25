@@ -112,3 +112,6 @@ export function routeTotals(routes: readonly RouteCounts[]): RunningTotals {
         networkErrors,
     };
 }
+
+export const noSuccesses = (totals: Pick<RunningTotals, 'requests' | 'errors'>) =>
+    totals.requests > 0 && totals.errors >= totals.requests;

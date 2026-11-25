@@ -15,6 +15,7 @@ export interface StatCardProps extends Omit<ComponentProps<'div'>, 'children'> {
     label: string;
     value: string;
     unit?: string;
+    note?: string;
     tone?: 'default' | 'danger';
     badge?: ReactNode;
 }
@@ -23,6 +24,7 @@ export function StatCard({
     label,
     value,
     unit,
+    note,
     tone = 'default',
     badge,
     className,
@@ -44,16 +46,25 @@ export function StatCard({
                     danger ? 'text-danger' : 'text-fg',
                 )}
             >
-                <span>
-                    {value}
-                    {unit ? (
-                        <span
-                            className={cn('text-control', danger ? 'text-danger' : 'text-fg-muted')}
-                        >
-                            {unit}
-                        </span>
-                    ) : null}
-                </span>
+                {note ? (
+                    <span className="text-fg-muted min-w-0 font-sans text-base font-normal">
+                        {note}
+                    </span>
+                ) : (
+                    <span>
+                        {value}
+                        {unit ? (
+                            <span
+                                className={cn(
+                                    'text-control',
+                                    danger ? 'text-danger' : 'text-fg-muted',
+                                )}
+                            >
+                                {unit}
+                            </span>
+                        ) : null}
+                    </span>
+                )}
                 {badge ? (
                     <span className="ml-auto flex shrink-0 font-sans text-base font-normal">
                         {badge}

@@ -387,6 +387,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                     <StatusCodesCard
                         codes={summary.totals.codes}
                         networkErrors={summary.totals.networkErrors}
+                        target={single?.target}
                     />
                 </div>
             ) : null}

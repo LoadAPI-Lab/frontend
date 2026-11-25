@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Snapshot } from './schemas';
-import { errorSeries, serviceTimeSeries, throughputSeries } from './series';
+import { errorSeries, errorShareSeries, serviceTimeSeries, throughputSeries } from './series';
 
 const snapshot = (
     elapsedSeconds: number,
@@ -60,6 +60,27 @@ describe('serviceTimeSeries', () => {
         ).toEqual([
             [90, null],
             [140, null],
+        ]);
+    });
+});
+
+describe('errorShareSeries', () => {
+    it('turns each error class into a percentage of that second', () => {
+        expect(
+            errorShareSeries([
+                snapshot(1, {
+                    successCount: 45,
+                    errorCount: 5,
+                    statusCodes: { '200': 45, '404': 2, '503': 1 },
+                    errors: { timeout: 2 },
+                }),
+                snapshot(2, { successCount: 0, errorCount: 0 }),
+            ]),
+        ).toEqual([
+            [1, 2],
+            [4, 0],
+            [2, 0],
+            [4, 0],
         ]);
     });
 });

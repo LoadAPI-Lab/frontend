@@ -3,8 +3,9 @@ import { type RefObject, useCallback, useEffect, useId, useMemo, useRef, useStat
 import { useTranslation } from 'react-i18next';
 
 import {
-    errorSeries,
+    errorShareSeries,
     latencySeries,
+    noSuccesses,
     runningTotals,
     serviceTimeSeries,
     type Snapshot,
@@ -53,7 +54,9 @@ interface ChartConfig {
     shares?: string[];
     bars: boolean;
     yFloor: number;
+    yCeil?: number;
     formatValue: (value: number) => string;
+    formatTick: (value: number) => string;
     summary: string | null;
 }
 
@@ -110,6 +113,10 @@ export function LiveChartCard({
 
     const chart = useMemo((): ChartConfig => {
         const format = (value: number) => formatNumber(value, 0, i18n.language);
+        const percent = (value: number, digits = 0) =>
+            t('liveMetrics.units.percentValue', {
+                value: formatNumber(value, digits, i18n.language),
+            });
         if (kind === 'throughput') {
             const [elapsed, actual, target] = throughputSeries(snapshots);
             return {
@@ -134,6 +141,7 @@ export function LiveChartCard({
                 bars: false,
                 yFloor: 10,
                 formatValue: (value) => t('liveMetrics.units.rpsValue', { value: format(value) }),
+                formatTick: format,
                 summary: last
                     ? t('liveMetrics.throughput.summary', {
                           actual: format(last.actualRps),
@@ -143,14 +151,12 @@ export function LiveChartCard({
             };
         }
         if (kind === 'errors') {
-            const [elapsed, clientErrors, serverErrors, network] = errorSeries(snapshots);
+            const [elapsed, clientErrors, serverErrors, network] = errorShareSeries(snapshots);
             const raw = [clientErrors, serverErrors, network];
             const { statuses } = runningTotals(snapshots);
             const responses = Object.values(statuses).reduce((sum, count) => sum + count, 0);
             const share = (count: number) =>
-                responses > 0
-                    ? `${formatNumber((count / responses) * 100, 1, i18n.language)}%`
-                    : '—';
+                responses > 0 ? percent((count / responses) * 100, 1) : '—';
             return {
                 series: [
                     {
@@ -177,13 +183,15 @@ export function LiveChartCard({
                 shares: [share(statuses['4xx']), share(statuses['5xx']), share(statuses.network)],
                 bars: true,
                 yFloor: 5,
-                formatValue: format,
+                yCeil: 100,
+                formatValue: (value) => percent(value, 1),
+                formatTick: (value) => percent(value),
                 summary:
                     elapsed.length > 0
                         ? t('liveMetrics.errorsChart.summary', {
-                              clientErrors: format(clientErrors.at(-1) ?? 0),
-                              serverErrors: format(serverErrors.at(-1) ?? 0),
-                              network: format(network.at(-1) ?? 0),
+                              clientErrors: percent(clientErrors.at(-1) ?? 0, 1),
+                              serverErrors: percent(serverErrors.at(-1) ?? 0, 1),
+                              network: percent(network.at(-1) ?? 0, 1),
                           })
                         : null,
             };
@@ -227,6 +235,7 @@ export function LiveChartCard({
                 bars: false,
                 yFloor: 10,
                 formatValue: ms,
+                formatTick: format,
                 summary,
             };
         }
@@ -255,6 +264,7 @@ export function LiveChartCard({
             bars: false,
             yFloor: 10,
             formatValue: ms,
+            formatTick: format,
             summary,
         };
     }, [kind, serviceTime, snapshots, last, t, i18n.language]);
@@ -275,6 +285,16 @@ export function LiveChartCard({
         });
     } else if (latestMain !== null) {
         compactValue = t('liveMetrics.charts.compact.errors', { value: format(latestMain) });
+    }
+    const noSuccess = kind === 'latency' && noSuccesses(runningTotals(snapshots));
+    if (noSuccess) {
+        compactValue = t('liveMetrics.noSuccesses');
+    }
+    let overlay: string | null = null;
+    if (snapshots.length === 0) {
+        overlay = emptyMessage;
+    } else if (noSuccess) {
+        overlay = t('liveMetrics.noSuccesses');
     }
 
     const large = variant === 'large';
@@ -431,23 +451,24 @@ export function LiveChartCard({
                 values={chart.values}
                 bars={chart.bars}
                 yFloor={chart.yFloor}
+                yCeil={chart.yCeil}
                 height={PLOT_HEIGHT}
                 fill={large}
                 className={large ? 'h-full' : undefined}
                 zoom={activeZoom}
                 onZoom={changeZoom}
-                formatTick={(value) => formatNumber(value, 0, i18n.language)}
+                formatTick={chart.formatTick}
                 windowSeconds={windowSeconds}
                 formatValue={chart.formatValue}
-                label={chart.summary ?? emptyMessage}
+                label={noSuccess ? t('liveMetrics.noSuccesses') : (chart.summary ?? emptyMessage)}
                 browseLabel={t('liveMetrics.charts.browse', { chart: title })}
             />
-            {snapshots.length === 0 ? (
+            {overlay ? (
                 <p
                     aria-hidden
                     className="text-fg-muted absolute inset-0 flex items-center justify-center px-6 pb-6 text-center text-sm"
                 >
-                    {emptyMessage}
+                    {overlay}
                 </p>
             ) : null}
         </div>

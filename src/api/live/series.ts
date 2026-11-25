@@ -49,3 +49,17 @@ export function errorSeries(
     }
     return series;
 }
+
+const shareOf = (count: number, total: number) => (total > 0 ? (count / total) * 100 : 0);
+
+export function errorShareSeries(
+    snapshots: readonly Snapshot[],
+): [elapsed: number[], clientErrors: number[], serverErrors: number[], network: number[]] {
+    const [elapsed, clientErrors, serverErrors, network] = errorSeries(snapshots);
+    const requests = snapshots.map((snapshot) =>
+        snapshot.targets.reduce((sum, route) => sum + route.successCount + route.errorCount, 0),
+    );
+    const toShare = (counts: readonly number[]) =>
+        counts.map((count, index) => shareOf(count, requests[index] ?? 0));
+    return [elapsed, toShare(clientErrors), toShare(serverErrors), toShare(network)];
+}
