@@ -1,6 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ChevronRight, Folder, LoaderCircle } from 'lucide-react';
-import { type DragEvent, useState } from 'react';
+import { type DragEvent, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveRun } from '@/api/live';
@@ -24,18 +24,45 @@ import {
 } from './api';
 import { type SpecAction, SpecActions } from './spec-actions';
 import {
+    endpointMatches,
     endpointNodeId,
     folderNodeId,
     groupEndpoints,
+    matchRanges,
+    type Range,
+    searchTerms,
     specInitials,
     specNodeId,
+    splitDisplayPath,
 } from './spec-tree';
 
-function splitPath(path: string) {
-    const index = path.lastIndexOf('/');
-    return index > 0
-        ? { head: path.slice(0, index), tail: path.slice(index) }
-        : { head: '', tail: path };
+function highlight(text: string, ranges: readonly Range[], offset: number): ReactNode {
+    const parts: ReactNode[] = [];
+    let cursor = 0;
+    for (const [start, end] of ranges) {
+        const from = Math.max(start - offset, cursor);
+        const to = Math.min(end - offset, text.length);
+        if (to <= from) {
+            continue;
+        }
+        parts.push(text.slice(cursor, from));
+        parts.push(
+            <mark
+                key={from}
+                className="bg-accent/20 rounded-xs text-inherit"
+            >
+                {text.slice(from, to)}
+            </mark>,
+        );
+        cursor = to;
+    }
+    parts.push(text.slice(cursor));
+    return parts;
+}
+
+interface SearchView {
+    terms: string;
+    toggled: ReadonlyMap<string, boolean>;
 }
 
 export interface EndpointSelection {
@@ -51,6 +78,7 @@ export interface CollectionsTreeProps {
     onImport?: () => void;
     onSpecAction?: (action: SpecAction, spec: ApiSpecSummary) => void;
     onEndpointDragStart?: (specId: string, endpoint: Endpoint, event: DragEvent) => void;
+    query?: string;
 }
 
 function Chevron({ open, className }: { open: boolean; className?: string }) {
@@ -83,17 +111,32 @@ export function CollectionsTree({
     onImport,
     onSpecAction,
     onEndpointDragStart,
+    query = '',
 }: CollectionsTreeProps) {
     const { t } = useTranslation();
     const [menuFor, setMenuFor] = useState<string | null>(null);
     const specs = useQuery(apiSpecsQuery);
     const activePlace = useActiveRun().active?.place;
     const runningPlace = isScratchPlace(activePlace) ? undefined : activePlace;
+    const terms = searchTerms(query);
+    const searching = terms.length > 0;
+    const termsKey = terms.join(' ');
+    const [searchView, setSearchView] = useState<SearchView>({
+        terms: termsKey,
+        toggled: new Map(),
+    });
+    if (searchView.terms !== termsKey) {
+        setSearchView({ terms: termsKey, toggled: new Map() });
+    }
     const openSpecIds = (specs.data ?? [])
         .map((spec) => spec.id)
-        .filter((id) => expanded.has(specNodeId(id)));
+        .filter((id) => searching || expanded.has(specNodeId(id)));
     const details = useQueries({ queries: openSpecIds.map((id) => apiSpecQuery(id)) });
     const detailById = new Map(openSpecIds.map((id, index) => [id, details[index]]));
+    const matchingOf = (detail: ApiSpec) =>
+        searching
+            ? detail.endpoints.filter((endpoint) => endpointMatches(endpoint, terms))
+            : detail.endpoints;
 
     if (specs.isPending) {
         return (
@@ -140,13 +183,51 @@ export function CollectionsTree({
         );
     }
 
+    const searchExpanded = new Set<string>();
+    if (searching) {
+        for (const spec of specs.data) {
+            const data = detailById.get(spec.id)?.data;
+            const matching = data ? matchingOf(data) : [];
+            if (data && matching.length === 0) {
+                continue;
+            }
+            searchExpanded.add(specNodeId(spec.id));
+            for (const folder of groupEndpoints(matching).folders) {
+                searchExpanded.add(folderNodeId(spec.id, folder.tag));
+            }
+        }
+        for (const [toggledId, open] of searchView.toggled) {
+            if (open) {
+                searchExpanded.add(toggledId);
+            } else {
+                searchExpanded.delete(toggledId);
+            }
+        }
+    }
+    const shownExpanded: ReadonlySet<string> = searching ? searchExpanded : expanded;
+    const changeExpanded = (id: string, open: boolean) => {
+        if (!searching) {
+            onExpandedChange(id, open);
+            return;
+        }
+        setSearchView((view) => ({ ...view, toggled: new Map(view.toggled).set(id, open) }));
+    };
+
     const endpointNode = (spec: ApiSpecSummary, endpoint: Endpoint, indent: string): TreeNode => {
         const isSelected = selected?.specId === spec.id && selected.endpointKey === endpoint.key;
         const isRunning = runningPlace?.spec === spec.id && runningPlace.endpoint === endpoint.key;
-        const { head, tail } = splitPath(endpoint.path);
+        const { head, tail } = splitDisplayPath(endpoint.path);
+        const ranges = searching ? matchRanges(endpoint.path, terms) : [];
         return {
             id: endpointNodeId(spec.id, endpoint.key),
-            tooltip: endpoint.path,
+            tooltip: (
+                <span className="flex max-w-80 flex-col gap-0.5">
+                    <span className="font-mono break-all">{endpoint.path}</span>
+                    {endpoint.summary ? (
+                        <span className="text-fg-secondary">{endpoint.summary}</span>
+                    ) : null}
+                </span>
+            ),
             onDragStart: onEndpointDragStart
                 ? (event) => onEndpointDragStart(spec.id, endpoint, event)
                 : undefined,
@@ -174,8 +255,12 @@ export function CollectionsTree({
                             isSelected ? 'text-fg' : 'text-fg-secondary',
                         )}
                     >
-                        <span className="min-w-0 shrink-[100] truncate">{head}</span>
-                        <span className="min-w-0 truncate">{tail}</span>
+                        {head ? (
+                            <span className="min-w-2 truncate">{highlight(head, ranges, 0)}</span>
+                        ) : null}
+                        <span className="max-w-full shrink-0 truncate">
+                            {highlight(tail, ranges, head.length)}
+                        </span>
                     </span>
                     <span className="sr-only">{endpoint.path}</span>
                     {isRunning ? (
@@ -205,12 +290,12 @@ export function CollectionsTree({
         };
     };
 
-    const specChildren = (spec: ApiSpecSummary, detail: ApiSpec): TreeNode[] => {
-        const { folders, untagged } = groupEndpoints(detail.endpoints);
+    const specChildren = (spec: ApiSpecSummary, endpoints: Endpoint[]): TreeNode[] => {
+        const { folders, untagged } = groupEndpoints(endpoints);
         return [
             ...folders.map((folder): TreeNode => {
                 const id = folderNodeId(spec.id, folder.tag);
-                const open = expanded.has(id);
+                const open = shownExpanded.has(id);
                 return {
                     id,
                     rowClassName:
@@ -248,75 +333,95 @@ export function CollectionsTree({
         ];
     };
 
-    const nodes = specs.data.map((spec): TreeNode => {
+    const nodes = specs.data.flatMap((spec): TreeNode[] => {
         const id = specNodeId(spec.id);
-        const open = expanded.has(id);
+        const open = shownExpanded.has(id);
         const detail = detailById.get(spec.id);
+        const endpoints = detail?.data ? matchingOf(detail.data) : [];
+        if (searching && (detail?.isError || (detail?.data && endpoints.length === 0))) {
+            return [];
+        }
+        const count = searching ? endpoints.length : spec.endpointsCount;
         const active = open || selected?.specId === spec.id;
-        return {
-            id,
-            rowClassName: cn(
-                'flex h-8.5 items-center gap-2 rounded-item px-2 transition-colors',
-                open ? 'bg-surface-input' : 'hover:bg-surface-input',
-            ),
-            busy: detail?.isPending,
-            pending: <PendingRows />,
-            onOpenActions: onSpecAction ? () => setMenuFor(spec.id) : undefined,
-            actions: onSpecAction ? (
-                <SpecActions
-                    name={spec.name}
-                    open={menuFor === spec.id}
-                    onOpenChange={(menuOpen) => setMenuFor(menuOpen ? spec.id : null)}
-                    onAction={(action) => onSpecAction(action, spec)}
-                    deleteBlocked={runningPlace?.spec === spec.id}
-                />
-            ) : undefined,
-            content: (
-                <>
-                    <Chevron open={open} />
-                    <span
-                        aria-hidden
-                        className={cn(
-                            'text-2xs flex size-5.5 shrink-0 items-center justify-center rounded-sm font-mono font-extrabold',
-                            active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg-badge',
-                        )}
-                    >
-                        {specInitials(spec.name)}
-                    </span>
-                    <span className="text-md text-fg min-w-0 flex-1 truncate font-semibold">
-                        {spec.name}
-                    </span>
-                    <span
-                        aria-hidden
-                        className="text-fg-muted font-mono text-xs"
-                    >
-                        {spec.endpointsCount}
-                    </span>
-                    <span className="sr-only">
-                        {t('collections.endpointCount', { count: spec.endpointsCount })}
-                    </span>
-                </>
-            ),
-            children: detail?.data ? specChildren(spec, detail.data) : [],
-        };
+        return [
+            {
+                id,
+                rowClassName: cn(
+                    'flex h-8.5 items-center gap-2 rounded-item px-2 transition-colors',
+                    open ? 'bg-surface-input' : 'hover:bg-surface-input',
+                ),
+                busy: detail?.isPending,
+                pending: <PendingRows />,
+                onOpenActions: onSpecAction ? () => setMenuFor(spec.id) : undefined,
+                actions: onSpecAction ? (
+                    <SpecActions
+                        name={spec.name}
+                        open={menuFor === spec.id}
+                        onOpenChange={(menuOpen) => setMenuFor(menuOpen ? spec.id : null)}
+                        onAction={(action) => onSpecAction(action, spec)}
+                        deleteBlocked={runningPlace?.spec === spec.id}
+                    />
+                ) : undefined,
+                content: (
+                    <>
+                        <Chevron open={open} />
+                        <span
+                            aria-hidden
+                            className={cn(
+                                'text-2xs flex size-5.5 shrink-0 items-center justify-center rounded-sm font-mono font-extrabold',
+                                active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg-badge',
+                            )}
+                        >
+                            {specInitials(spec.name)}
+                        </span>
+                        <span className="text-md text-fg min-w-0 flex-1 truncate font-semibold">
+                            {spec.name}
+                        </span>
+                        <span
+                            aria-hidden
+                            className="text-fg-muted font-mono text-xs"
+                        >
+                            {count}
+                        </span>
+                        <span className="sr-only">
+                            {searching
+                                ? t('collections.search.matchCount', { count })
+                                : t('collections.endpointCount', { count })}
+                        </span>
+                    </>
+                ),
+                children: detail?.data ? specChildren(spec, endpoints) : [],
+            },
+        ];
     });
 
     const failed = openSpecIds.filter((id) => detailById.get(id)?.isError);
+    const noMatches = searching && nodes.length === 0 && failed.length === 0;
 
     return (
         <div className="flex flex-col gap-1 px-2 py-2.5">
-            <TreeView
-                nodes={nodes}
-                aria-label={t('collections.title')}
-                expandedIds={expanded}
-                onExpandedChange={onExpandedChange}
-                selectedId={selected ? endpointNodeId(selected.specId, selected.endpointKey) : null}
-                onSelect={(node) => {
-                    const [, specId = '', ...key] = node.id.split(':');
-                    onSelect({ specId, endpointKey: key.join(':') });
-                }}
-                className="flex flex-col gap-1"
-            />
+            {noMatches ? (
+                <EmptyState
+                    size="compact"
+                    title={t('collections.search.noMatch')}
+                    description={t('collections.search.noMatchBody')}
+                />
+            ) : (
+                <TreeView
+                    nodes={nodes}
+                    aria-label={t('collections.title')}
+                    expandedIds={shownExpanded}
+                    onExpandedChange={changeExpanded}
+                    selectedId={
+                        selected ? endpointNodeId(selected.specId, selected.endpointKey) : null
+                    }
+                    onSelect={(node) => {
+                        const [, specId = '', ...key] = node.id.split(':');
+                        onSelect({ specId, endpointKey: key.join(':') });
+                    }}
+                    className="flex flex-col gap-1"
+                />
+            )}
             {failed.length > 0 ? (
                 <ErrorState
                     size="compact"

@@ -1,6 +1,6 @@
-import { type QueryClient, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveRun } from '@/api/live';
@@ -15,8 +15,15 @@ import { useScratchRequest } from '@/lib/scratch-request';
 import { rememberedServer } from '@/lib/server-memory';
 import { pickStep, seedFromEndpoint, STEP_SEED_MIME, type StepSeed } from '@/lib/step-seed';
 
-import { apiSpecQuery, type ApiSpecSummary, type Endpoint, isUsableServer } from './api';
+import {
+    apiSpecQuery,
+    apiSpecsQuery,
+    type ApiSpecSummary,
+    type Endpoint,
+    isUsableServer,
+} from './api';
 import { CollectionsRail } from './collections-rail';
+import { CollectionsSearch } from './collections-search';
 import { CollectionsTree } from './collections-tree';
 import { DeleteSpecDialog } from './delete-spec-dialog';
 import { ImportDialog } from './import-dialog';
@@ -46,6 +53,11 @@ function changesText(
         removed: removed.length,
     });
 }
+
+const isEditable = (target: EventTarget | null) =>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+        target.closest('input, textarea, select, [role="textbox"]') !== null);
 
 function endpointSeed(queryClient: QueryClient, specId: string, endpoint: Endpoint): StepSeed {
     const spec = queryClient.getQueryData(apiSpecQuery(specId).queryKey);
@@ -85,6 +97,43 @@ export function CollectionsSidebar() {
     const scratch = useScratchRequest();
     const scratchSelected = pathname.startsWith('/tests') && search.scratch === 1 && !search.spec;
     const scratchRunning = isScratchPlace(useActiveRun().active?.place);
+    const hasSpecs = (useQuery(apiSpecsQuery).data?.length ?? 0) > 0;
+    const [query, setQuery] = useState('');
+    const searchRef = useRef<HTMLInputElement>(null);
+    const focusPending = useRef(false);
+    const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+        if (
+            event.key !== '/' ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.altKey ||
+            event.defaultPrevented ||
+            isEditable(event.target) ||
+            onHistory ||
+            !hasSpecs
+        ) {
+            return;
+        }
+        event.preventDefault();
+        if (collapsed) {
+            focusPending.current = true;
+            setCollapsed(false);
+        } else {
+            searchRef.current?.focus();
+        }
+    });
+
+    useEffect(() => {
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, []);
+
+    useEffect(() => {
+        if (!collapsed && focusPending.current) {
+            focusPending.current = false;
+            searchRef.current?.focus();
+        }
+    }, [collapsed]);
 
     return (
         <>
@@ -134,6 +183,14 @@ export function CollectionsSidebar() {
                     </>
                 }
             >
+                {hasSpecs ? (
+                    <CollectionsSearch
+                        ref={searchRef}
+                        value={query}
+                        onChange={setQuery}
+                        className="mb-2"
+                    />
+                ) : null}
                 {scratch ? (
                     <div className="border-divider mb-2 border-b pb-2">
                         <ScratchRow
@@ -189,6 +246,7 @@ export function CollectionsSidebar() {
                             },
                         });
                     }}
+                    query={query}
                     onImport={openImportDialog}
                     onSpecAction={(action, spec) => {
                         setSpecAction({ action, spec });

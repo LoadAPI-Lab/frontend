@@ -43,3 +43,56 @@ export function specInitials(name: string): string {
     const consonant = first.slice(1).match(/[^aeiouAEIOU0-9]/)?.[0] ?? first.charAt(1);
     return `${first.charAt(0)}${consonant}`.toUpperCase();
 }
+
+const isParamSegment = (segment: string) => /^\{[^}]+\}$|^:\w+$/.test(segment);
+
+export function splitDisplayPath(path: string): { head: string; tail: string } {
+    const segments = path.split('/');
+    let keep = 1;
+    const last = segments.at(-1) ?? '';
+    if ((isParamSegment(last) || last === '') && segments.length > 3) {
+        keep = 2;
+    }
+    const tailStart = Math.max(1, segments.length - keep);
+    if (tailStart <= 1) {
+        return { head: '', tail: path };
+    }
+    return {
+        head: segments.slice(0, tailStart).join('/'),
+        tail: `/${segments.slice(tailStart).join('/')}`,
+    };
+}
+
+export function searchTerms(query: string): string[] {
+    return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+export function endpointMatches(endpoint: Endpoint, terms: readonly string[]): boolean {
+    const haystack = `${endpoint.method} ${endpoint.path} ${endpoint.summary ?? ''}`.toLowerCase();
+    return terms.every((term) => haystack.includes(term));
+}
+
+export type Range = readonly [start: number, end: number];
+
+export function matchRanges(text: string, terms: readonly string[]): Range[] {
+    const lower = text.toLowerCase();
+    const ranges: [number, number][] = [];
+    for (const term of terms) {
+        let from = lower.indexOf(term);
+        while (from !== -1) {
+            ranges.push([from, from + term.length]);
+            from = lower.indexOf(term, from + term.length);
+        }
+    }
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged: [number, number][] = [];
+    for (const range of ranges) {
+        const previous = merged.at(-1);
+        if (previous && range[0] <= previous[1]) {
+            previous[1] = Math.max(previous[1], range[1]);
+        } else {
+            merged.push([range[0], range[1]]);
+        }
+    }
+    return merged;
+}

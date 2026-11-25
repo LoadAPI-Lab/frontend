@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { rememberRun } from '@/lib/run-memory';
@@ -9,6 +10,7 @@ import { server } from '@/mocks/server';
 import { renderWithProviders } from '@/test/render';
 
 import type { ApiSpecSummary } from './api';
+import { CollectionsSearch } from './collections-search';
 import {
     CollectionsTree,
     type CollectionsTreeProps,
@@ -21,13 +23,21 @@ afterEach(() => window.localStorage.clear());
 
 function Harness(props: Pick<CollectionsTreeProps, 'onSelect' | 'onImport' | 'onSpecAction'>) {
     const [expanded, setExpanded] = useExpanded();
+    const [query, setQuery] = useState('');
     return (
-        <CollectionsTree
-            selected={null}
-            expanded={expanded}
-            onExpandedChange={setExpanded}
-            {...props}
-        />
+        <>
+            <CollectionsSearch
+                value={query}
+                onChange={setQuery}
+            />
+            <CollectionsTree
+                selected={null}
+                expanded={expanded}
+                onExpandedChange={setExpanded}
+                query={query}
+                {...props}
+            />
+        </>
     );
 }
 
@@ -165,5 +175,83 @@ describe('CollectionsTree', () => {
         expect(
             await screen.findByRole('menuitem', { name: "Can't delete while a test runs" }),
         ).toHaveAttribute('aria-disabled', 'true');
+    });
+});
+
+const search = () => screen.getByRole('searchbox', { name: 'Search endpoints' });
+
+describe('CollectionsTree search', () => {
+    it('finds endpoints by path, method and summary across closed docs', async () => {
+        setup();
+        await screen.findByText('Shop API');
+        await userEvent.type(search(), 'product');
+
+        expect(
+            await screen.findByRole('treeitem', { name: 'Shop API, 3 matches' }),
+        ).toHaveAttribute('aria-expanded', 'true');
+        expect(screen.getByRole('treeitem', { name: /^products/ })).toHaveAttribute(
+            'aria-expanded',
+            'true',
+        );
+        expect(screen.getByRole('treeitem', { name: 'GET /products' })).toBeVisible();
+        expect(screen.getAllByRole('treeitem', { name: 'GET /products/{productId}' })).toHaveLength(
+            1,
+        );
+        expect(
+            screen.queryByRole('treeitem', { name: /^LoadAPI test server/ }),
+        ).not.toBeInTheDocument();
+        expect(screen.getAllByText('product', { selector: 'mark' }).length).toBeGreaterThan(0);
+
+        await userEvent.clear(search());
+        await userEvent.type(search(), 'delete task');
+        expect(await screen.findByRole('treeitem', { name: 'DELETE /tasks/{id}' })).toBeVisible();
+        expect(screen.getAllByRole('treeitem')).toHaveLength(3);
+    });
+
+    it('says when nothing matches', async () => {
+        setup();
+        await screen.findByText('Shop API');
+        await userEvent.type(search(), 'nothing-like-this');
+
+        expect(await screen.findByText('No endpoints match')).toBeVisible();
+        expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    });
+
+    it('keeps arrow-key navigation over the filtered tree', async () => {
+        setup();
+        await screen.findByText('Shop API');
+        await userEvent.type(search(), 'orders');
+        const spec = await screen.findByRole('treeitem', { name: 'Shop API, 1 match' });
+        await screen.findByRole('treeitem', { name: 'POST /orders' });
+
+        spec.focus();
+        await userEvent.keyboard('{ArrowDown}');
+        expect(screen.getByRole('treeitem', { name: /^orders/ })).toHaveFocus();
+        await userEvent.keyboard('{ArrowDown}');
+        expect(screen.getByRole('treeitem', { name: 'POST /orders' })).toHaveFocus();
+    });
+
+    it('restores the earlier open folders when the search is cleared', async () => {
+        setup();
+        await userEvent.click(await screen.findByText('LoadAPI test server'));
+        await screen.findByRole('treeitem', { name: /^load/ });
+        await userEvent.type(search(), 'product');
+        const shop = await screen.findByRole('treeitem', { name: 'Shop API, 3 matches' });
+        await userEvent.click(shop);
+        expect(shop).toHaveAttribute('aria-expanded', 'false');
+
+        await userEvent.click(search());
+        await userEvent.keyboard('{Escape}');
+        expect(search()).toHaveValue('');
+        expect(
+            await screen.findByRole('treeitem', { name: 'LoadAPI test server, 11 endpoints' }),
+        ).toHaveAttribute('aria-expanded', 'true');
+        expect(screen.getByRole('treeitem', { name: 'Shop API, 5 endpoints' })).toHaveAttribute(
+            'aria-expanded',
+            'false',
+        );
+        expect(
+            JSON.parse(window.localStorage.getItem('loadapi.collections.expanded') ?? '[]'),
+        ).toEqual([expect.stringMatching(/^spec:/)]);
     });
 });

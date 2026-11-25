@@ -11,7 +11,7 @@ export interface TreeNode {
     busy?: boolean;
     pending?: ReactNode;
     rowClassName?: string;
-    tooltip?: string;
+    tooltip?: ReactNode;
     actions?: ReactNode;
     onOpenActions?: () => void;
     onDragStart?: (event: DragEvent<HTMLLIElement>) => void;
@@ -309,9 +309,7 @@ export function TreeView({
                 return (
                     <Tooltip.Root key={node.id}>
                         <Tooltip.Trigger render={treeItem} />
-                        <Tooltip.Content side="right">
-                            <span className="font-mono">{node.tooltip}</span>
-                        </Tooltip.Content>
+                        <Tooltip.Content side="right">{node.tooltip}</Tooltip.Content>
                     </Tooltip.Root>
                 );
             })}
