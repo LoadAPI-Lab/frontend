@@ -4,6 +4,10 @@ import { NETWORK_ERRORS, type NetworkError } from '@/api/live';
 import { Card, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
+import { isKnownStatusCode } from '@/lib/http-status';
+
+import { TargetUrl } from './target-url';
+import { useStatusLabel } from './use-status-label';
 
 const CLASS_SWATCHES: Record<string, string> = {
     '2': 'bg-accent',
@@ -15,6 +19,8 @@ const CLASS_SWATCHES: Record<string, string> = {
 interface Row {
     key: string;
     label: string;
+    name: string;
+    reason?: string;
     count: number;
     swatch: string;
     mono: boolean;
@@ -23,11 +29,13 @@ interface Row {
 export interface StatusCodesCardProps {
     codes: Record<string, number>;
     networkErrors?: Record<NetworkError, number>;
+    target?: { method: string; url: string } | null;
     className?: string;
 }
 
-export function StatusCodesCard({ codes, networkErrors, className }: StatusCodesCardProps) {
+export function StatusCodesCard({ codes, networkErrors, target, className }: StatusCodesCardProps) {
     const { t, i18n } = useTranslation();
+    const statusLabel = useStatusLabel();
     const format = (value: number, digits = 0) => formatNumber(value, digits, i18n.language);
 
     const rows: Row[] = [
@@ -37,6 +45,8 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
             .map(([code, count]) => ({
                 key: code,
                 label: code,
+                name: statusLabel(code),
+                reason: isKnownStatusCode(code) ? t(`httpStatus.reasons.${code}`) : undefined,
                 count,
                 swatch: CLASS_SWATCHES[code.charAt(0)] ?? 'bg-fg-muted',
                 mono: true,
@@ -44,6 +54,7 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
         ...NETWORK_ERRORS.filter((kind) => (networkErrors?.[kind] ?? 0) > 0).map((kind) => ({
             key: kind,
             label: t(`liveMetrics.statusCodes.network.${kind}`),
+            name: t(`liveMetrics.statusCodes.network.${kind}`),
             count: networkErrors?.[kind] ?? 0,
             swatch: 'bg-warning',
             mono: false,
@@ -56,6 +67,12 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
             <CardTitle className="text-md font-bold">
                 {t('liveMetrics.statusCodes.title')}
             </CardTitle>
+            {target && target.url !== '' ? (
+                <TargetUrl
+                    method={target.method}
+                    url={target.url}
+                />
+            ) : null}
             {rows.length === 0 ? (
                 <p className="text-fg-muted text-sm">{t('liveMetrics.statusCodes.empty')}</p>
             ) : (
@@ -75,7 +92,7 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
                             >
                                 <th
                                     scope="row"
-                                    aria-label={row.label}
+                                    aria-label={row.name}
                                     className="py-1 text-left font-normal"
                                 >
                                     <span className="flex items-center gap-2">
@@ -94,6 +111,11 @@ export function StatusCodesCard({ codes, networkErrors, className }: StatusCodes
                                         >
                                             {row.label}
                                         </span>
+                                        {row.reason ? (
+                                            <span className="text-fg-muted truncate">
+                                                {row.reason}
+                                            </span>
+                                        ) : null}
                                     </span>
                                 </th>
                                 <td className="text-fg-muted py-1 text-right font-mono">

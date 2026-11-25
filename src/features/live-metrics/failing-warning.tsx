@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { FailureCause } from '@/api/live';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
-import { isKnownStatusCode } from '@/lib/http-status';
+
+import { useStatusLabel } from './use-status-label';
 
 export interface FailingWarningProps {
     cause: FailureCause | null;
@@ -16,6 +17,7 @@ export interface FailingWarningProps {
 
 function useCauseMessage(cause: FailureCause | null) {
     const { t } = useTranslation();
+    const statusLabel = useStatusLabel();
     if (!cause) {
         return null;
     }
@@ -25,13 +27,7 @@ function useCauseMessage(cause: FailureCause | null) {
             error: t(`liveMetrics.statusCodes.network.${cause.error}`),
         });
     }
-    const status = isKnownStatusCode(cause.code)
-        ? t('httpStatus.withReason', {
-              code: cause.code,
-              reason: t(`httpStatus.reasons.${cause.code}`),
-          })
-        : cause.code;
-    return t(`failingWarning.status.${share}`, { status });
+    return t(`failingWarning.status.${share}`, { status: statusLabel(cause.code) });
 }
 
 export function FailingWarning({

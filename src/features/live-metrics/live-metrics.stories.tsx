@@ -14,10 +14,34 @@ interface PanelProps {
     seconds: number;
     live?: boolean;
     troubled?: boolean;
+    failing?: boolean;
 }
 
-function Panel({ seconds, live = false, troubled = false }: PanelProps) {
-    const [snapshots, setSnapshots] = useState(() => sampleSnapshots(seconds, troubled));
+const TARGET = {
+    method: 'POST',
+    url: 'https://staging.tasks.dev/api/v2/organisations/acme/tasks?include=assignee&limit=50',
+};
+
+const failingSnapshots = (count: number) =>
+    Array.from({ length: count }, (_, index) =>
+        sampleSnapshot(index + 1, {
+            targets: [
+                {
+                    method: 'POST',
+                    url: TARGET.url,
+                    successCount: 0,
+                    errorCount: 300,
+                    lateCount: 0,
+                    statusCodes: { '404': 296, '429': 4 },
+                },
+            ],
+        }),
+    );
+
+function Panel({ seconds, live = false, troubled = false, failing = false }: PanelProps) {
+    const [snapshots, setSnapshots] = useState(() =>
+        failing ? failingSnapshots(seconds) : sampleSnapshots(seconds, troubled),
+    );
     useEffect(() => {
         const timer = live
             ? setInterval(() => {
@@ -58,6 +82,7 @@ function Panel({ seconds, live = false, troubled = false }: PanelProps) {
                 <StatusCodesCard
                     codes={totals.codes}
                     networkErrors={totals.networkErrors}
+                    target={TARGET}
                 />
             </div>
         </div>
@@ -118,6 +143,19 @@ export const ErrorsWithTrouble: Story = {
         await expect(badge).toBeVisible();
         await expect(badge).toHaveTextContent(/went out later than scheduled/);
         await expect(canvas.getByRole('rowheader', { name: 'Timeout' })).toBeVisible();
+    },
+};
+
+export const NoSuccesses: Story = {
+    args: { seconds: 12, failing: true },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getAllByText('No successful responses yet').length).toBeGreaterThan(2);
+        await expect(canvas.getByRole('rowheader', { name: '404 Not Found' })).toBeVisible();
+        await expect(
+            canvas.getByRole('rowheader', { name: '429 Too Many Requests' }),
+        ).toBeVisible();
+        await expect(canvas.getByRole('button', { name: 'Copy target URL' })).toBeVisible();
     },
 };
 

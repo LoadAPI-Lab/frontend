@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import type { Percentiles, RunningTotals } from '@/api/live';
+import { noSuccesses, type Percentiles, type RunningTotals } from '@/api/live';
 import { StatCard, StatList } from '@/components/shared/stat-card';
 import { cn } from '@/lib/cn';
 import { formatNumber } from '@/lib/format';
@@ -31,6 +31,7 @@ export function LiveStats({
     const format = (value: number, digits = 0) => formatNumber(value, digits, i18n.language);
     const ms = t('liveMetrics.units.ms');
     const whole = scope === 'run';
+    const note = noSuccesses(totals) ? t('liveMetrics.noSuccesses') : undefined;
     const rpsLabel =
         targetRps === null
             ? t(whole ? 'liveMetrics.stats.avgRps' : 'liveMetrics.stats.rps')
@@ -59,11 +60,13 @@ export function LiveStats({
                 label={t(whole ? 'liveMetrics.stats.p50Run' : 'liveMetrics.stats.p50')}
                 value={latency ? format(latency.p50Ms) : EMPTY}
                 unit={latency ? ms : undefined}
+                note={note}
             />
             <StatCard
                 label={t(whole ? 'liveMetrics.stats.p95Run' : 'liveMetrics.stats.p95')}
                 value={latency ? format(latency.p95Ms) : EMPTY}
                 unit={latency ? ms : undefined}
+                note={note}
             />
             <StatCard
                 label={

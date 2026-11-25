@@ -26,6 +26,7 @@ export interface LivePlotProps {
     bars?: boolean;
     windowSeconds: number;
     yFloor?: number;
+    yCeil?: number;
     height?: number;
     fill?: boolean;
     zoom?: ZoomRange | null;
@@ -198,6 +199,7 @@ interface OptionsInput {
     order: readonly number[];
     bars: boolean;
     yFloor: number;
+    yCeil: number;
     color: (token: string) => string;
     onHover: (hover: Hover | null) => void;
 }
@@ -213,6 +215,7 @@ function plotOptions({
     order,
     bars,
     yFloor,
+    yCeil,
     color,
     onHover,
 }: OptionsInput): uPlot.Options {
@@ -258,7 +261,10 @@ function plotOptions({
             y: {
                 range: (_plot, _min, max) => [
                     0,
-                    Math.max(yFloor, Math.ceil((Number.isFinite(max) ? max : 0) * 1.2)),
+                    Math.min(
+                        yCeil,
+                        Math.max(yFloor, Math.ceil((Number.isFinite(max) ? max : 0) * 1.2)),
+                    ),
                 ],
             },
         },
@@ -336,6 +342,7 @@ export function LivePlot({
     bars = false,
     windowSeconds,
     yFloor = 10,
+    yCeil = Number.POSITIVE_INFINITY,
     height = DEFAULT_HEIGHT,
     fill = false,
     zoom = null,
@@ -359,6 +366,7 @@ export function LivePlot({
         series,
         bars,
         yFloor,
+        yCeil,
         height,
         fill,
         zoom,
@@ -490,6 +498,7 @@ export function LivePlot({
                 order: initial.order,
                 bars: initial.bars,
                 yFloor: initial.yFloor,
+                yCeil: initial.yCeil,
                 color: (token) => styles.getPropertyValue(token).trim(),
                 onHover: setHover,
             }),

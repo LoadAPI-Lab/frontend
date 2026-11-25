@@ -700,7 +700,8 @@
         "units": {
             "ms": "ms",
             "msValue": "{{value}} ms",
-            "rpsValue": "{{value}} RPS"
+            "rpsValue": "{{value}} RPS",
+            "percentValue": "{{value}}%"
         },
         "latency": {
             "lines": {
@@ -747,7 +748,7 @@
             "subtitles": {
                 "latency": "milliseconds, per second, live",
                 "throughput": "requests per second, live",
-                "errors": "failed responses per second · % of all responses"
+                "errors": "% of responses that failed, per second · legend: % of all responses"
             },
             "browse": "{{chart}} by second",
             "at": "{{second}}s",
@@ -759,7 +760,7 @@
             "compact": {
                 "latency": "p95 {{value}} ms",
                 "throughput": "{{value}} of {{target}} RPS",
-                "errors": "{{value}} failed/s"
+                "errors": "{{value}}% failed"
             },
             "enlarge": "Enlarge the {{chart}} chart",
             "close": "Close",
@@ -772,13 +773,19 @@
             "summary": "Throughput chart. Latest second: {{actual}} RPS against a target of {{target}}."
         },
         "errorsChart": {
-            "summary": "Errors chart. Latest second: {{clientErrors}} 4xx, {{serverErrors}} 5xx, {{network}} network errors."
+            "summary": "Errors chart. Latest second: {{clientErrors}} 4xx, {{serverErrors}} 5xx, {{network}} network errors, as a share of responses."
         },
         "late": {
             "message_one": "{{late}} request ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
             "message_other": "{{late}} requests ({{share}}%) went out later than scheduled, so latency is understated. Try a lower target RPS.",
             "badge_one": "{{late}} late",
             "badge_other": "{{late}} late"
+        },
+        "noSuccesses": "No successful responses yet",
+        "target": {
+            "copy": "Copy target URL",
+            "copied": "Target URL copied",
+            "copyFailed": "Couldn't copy the URL"
         }
     },
     "runStatus": {

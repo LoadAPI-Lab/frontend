@@ -42,6 +42,17 @@ export const Empty: Story = {
     args: { label: 'p50 · median', value: '—' },
 };
 
+export const Note: Story = {
+    decorators: [inList],
+    args: { label: 'p50 · median', value: '—', note: 'No successful responses yet' },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('definition')).toHaveTextContent(
+            'No successful responses yet',
+        );
+    },
+};
+
 export const Row: Story = {
     render: () => (
         <StatList className="w-[980px] grid-cols-4">

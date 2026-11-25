@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { runningTotals } from '@/api/live';
+import { runningTotals, type Snapshot } from '@/api/live';
 import { FakeUPlot } from '@/test/fake-uplot';
 
 import { sampleSnapshot, sampleSnapshots } from './fixtures';
@@ -15,6 +15,26 @@ import { RunProgress } from './run-progress';
 import { StatusCodesCard } from './status-codes-card';
 
 const idleTotals = runningTotals([]);
+
+const failingSnapshot = (second: number): Snapshot =>
+    sampleSnapshot(second, {
+        targets: [
+            {
+                method: 'GET',
+                url: 'https://api.dev/missing',
+                successCount: 0,
+                errorCount: 50,
+                lateCount: 0,
+                statusCodes: { '404': 50 },
+            },
+        ],
+    });
+
+function yAxisTicks(chart: FakeUPlot | undefined, splits: number[]): unknown {
+    const axes: unknown = Reflect.get(Object(chart?.options), 'axes');
+    const values: unknown = Array.isArray(axes) ? Reflect.get(Object(axes[1]), 'values') : null;
+    return typeof values === 'function' ? Reflect.apply(values, undefined, [null, splits]) : null;
+}
 
 function stat(label: RegExp) {
     const term = screen.getByText(label, { selector: 'dt' });
@@ -51,6 +71,32 @@ describe('LiveStats', () => {
         expect(stat(/^RPS/)).toBe('297.4');
         expect(stat(/^p50/)).toBe(`${latest?.targets[0]?.responseTime?.p50Ms}ms`);
         expect(stat(/^errors · 4 of 1,180$/)).toBe('0.3%');
+    });
+
+    it('explains empty latency when responses arrived but none succeeded', () => {
+        render(
+            <LiveStats
+                rps={50}
+                latency={null}
+                totals={runningTotals([failingSnapshot(1), failingSnapshot(2)])}
+                targetRps={50}
+            />,
+        );
+        expect(stat(/^p50/)).toBe('No successful responses yet');
+        expect(stat(/^p95$/)).toBe('No successful responses yet');
+        expect(stat(/^errors/)).toBe('100.0%');
+    });
+
+    it('keeps the dash when at least one request succeeded', () => {
+        render(
+            <LiveStats
+                rps={50}
+                latency={null}
+                totals={{ requests: 50, errors: 49, errorRate: 0.98 }}
+                targetRps={50}
+            />,
+        );
+        expect(stat(/^p50/)).toBe('—');
     });
 
     it('labels the numbers as whole-run results once the run is over', () => {
@@ -187,16 +233,27 @@ describe('LiveChartCard', () => {
 
     it('stacks error bars but reads out the counts per class', () => {
         const snapshots = [
-            sampleSnapshot(1),
+            sampleSnapshot(1, {
+                targets: [
+                    {
+                        method: 'GET',
+                        url: 'https://api.dev/tasks',
+                        successCount: 100,
+                        errorCount: 0,
+                        lateCount: 0,
+                        statusCodes: { '200': 100 },
+                    },
+                ],
+            }),
             sampleSnapshot(2, {
                 targets: [
                     {
                         method: 'GET',
                         url: 'https://api.dev/tasks',
-                        successCount: 90,
-                        errorCount: 4,
+                        successCount: 93,
+                        errorCount: 7,
                         lateCount: 0,
-                        statusCodes: { '200': 90, '404': 3, '500': 2 },
+                        statusCodes: { '200': 93, '404': 3, '500': 2 },
                         errors: { timeout: 2 },
                     },
                 ],
@@ -213,13 +270,41 @@ describe('LiveChartCard', () => {
         const [chart] = FakeUPlot.instances;
         expect(chart?.data).toEqual([
             [1, 2],
-            [7, 7],
-            [7, 5],
-            [6, 3],
+            [0, 7],
+            [0, 5],
+            [0, 3],
         ]);
         const slider = screen.getByRole('slider', { name: 'Errors by second' });
         fireEvent.focus(slider);
-        expect(slider).toHaveAttribute('aria-valuetext', '2s: 4xx 3, 5xx 2, Network 2');
+        expect(slider).toHaveAttribute('aria-valuetext', '2s: 4xx 3.0%, 5xx 2.0%, Network 2.0%');
+        expect(yAxisTicks(chart, [0, 50, 100])).toEqual(['0%', '50%', '100%']);
+    });
+
+    it('says why the latency chart is empty when nothing succeeded', () => {
+        render(
+            <LiveChartCard
+                kind="latency"
+                snapshots={[failingSnapshot(1), failingSnapshot(2)]}
+                durationSeconds={60}
+                emptyMessage="Nothing yet"
+            />,
+        );
+        expect(screen.getByRole('figure', { name: 'No successful responses yet' })).toBeVisible();
+        expect(
+            screen.getByText('No successful responses yet', { selector: 'p' }),
+        ).toBeInTheDocument();
+    });
+
+    it('keeps the latency chart unchanged when something succeeded', () => {
+        render(
+            <LiveChartCard
+                kind="latency"
+                snapshots={sampleSnapshots(2)}
+                durationSeconds={60}
+                emptyMessage="Nothing yet"
+            />,
+        );
+        expect(screen.queryByText('No successful responses yet')).not.toBeInTheDocument();
     });
 
     it('shows each error class as a share of the whole run in the legend', () => {
@@ -385,7 +470,35 @@ describe('StatusCodesCard', () => {
             .getAllByRole('row')
             .slice(1)
             .map((row) => row.textContent);
-        expect(rows).toEqual(['20097897.8%', '404202.0%', '50320.2%']);
+        expect(rows).toEqual([
+            '200OK97897.8%',
+            '404Not Found202.0%',
+            '503Service Unavailable20.2%',
+        ]);
+        expect(screen.getByRole('rowheader', { name: '404 Not Found' })).toBeInTheDocument();
+    });
+
+    it('shows only the code when it has no known reason phrase', () => {
+        render(<StatusCodesCard codes={{ '599': 4 }} />);
+        expect(screen.getByRole('rowheader', { name: '599' })).toHaveTextContent(/^599$/);
+    });
+
+    it('shows the full target URL and copies it', async () => {
+        const user = userEvent.setup();
+        const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+        const url =
+            'https://staging.tasks.dev/api/v2/organisations/acme/tasks?status=open&limit=50';
+        render(
+            <StatusCodesCard
+                codes={{ '404': 20 }}
+                target={{ method: 'GET', url }}
+            />,
+        );
+        expect(screen.getByText('GET')).toBeInTheDocument();
+        expect(screen.getByText(url.slice(-24))).toBeInTheDocument();
+        expect(screen.getByText(url.slice(0, -24))).toHaveClass('truncate');
+        await user.click(screen.getByRole('button', { name: 'Copy target URL' }));
+        expect(writeText).toHaveBeenCalledWith(url);
     });
 
     it('adds network errors by kind after the codes', () => {

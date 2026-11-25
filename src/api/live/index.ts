@@ -2,6 +2,7 @@ export { ACTIVE_RUN_PARAMS, type ActiveRun, useActiveRun } from './active-run';
 export {
     groupStatusCodes,
     NETWORK_ERRORS,
+    noSuccesses,
     routeTotals,
     runningTotals,
     type RunningTotals,
@@ -17,7 +18,13 @@ export {
 export { type LatencySeries, latencySeries, snapshotLatency } from './latency';
 export type { LiveConnection, LiveState } from './live-store';
 export { type RunSummary, summarizeRunResult } from './result';
-export { errorSeries, serviceTimeSeries, snapshotServiceTime, throughputSeries } from './series';
+export {
+    errorSeries,
+    errorShareSeries,
+    serviceTimeSeries,
+    snapshotServiceTime,
+    throughputSeries,
+} from './series';
 export {
     isFinalStatus,
     type NetworkError,

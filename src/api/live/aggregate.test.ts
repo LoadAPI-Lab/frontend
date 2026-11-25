@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupStatusCodes, runningTotals } from './aggregate';
+import { groupStatusCodes, noSuccesses, runningTotals } from './aggregate';
 import type { Snapshot } from './schemas';
 
 const snapshot = (overrides: Partial<Snapshot['targets'][number]>): Snapshot => ({
@@ -79,5 +79,13 @@ describe('runningTotals', () => {
 
     it('returns a zero error rate when nothing ran', () => {
         expect(runningTotals([]).errorRate).toBe(0);
+    });
+});
+
+describe('noSuccesses', () => {
+    it('is true only when responses arrived and none succeeded', () => {
+        expect(noSuccesses({ requests: 40, errors: 40 })).toBe(true);
+        expect(noSuccesses({ requests: 40, errors: 39 })).toBe(false);
+        expect(noSuccesses({ requests: 0, errors: 0 })).toBe(false);
     });
 });

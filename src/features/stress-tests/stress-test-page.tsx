@@ -407,6 +407,7 @@ function Workspace({
                                         <StatusCodesCard
                                             codes={totals.codes}
                                             networkErrors={totals.networkErrors}
+                                            target={target}
                                         />
                                     </>
                                 )}
