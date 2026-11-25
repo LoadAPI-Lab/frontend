@@ -45,7 +45,7 @@ describe('LoginPage', () => {
         const link = await screen.findByRole('link', { name: 'Continue with GitHub' });
         link.addEventListener('click', (event) => event.preventDefault());
         await userEvent.click(link);
-        expect(sessionStorage.getItem('routelab.auth.redirect')).toBe('/history');
+        expect(sessionStorage.getItem('loadapi.auth.redirect')).toBe('/history');
     });
 
     it('shows why the last sign-in failed', async () => {

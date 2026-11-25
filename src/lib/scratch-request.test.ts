@@ -82,9 +82,9 @@ describe('scratch request storage', () => {
     });
 
     it('ignores stored values of the wrong shape', () => {
-        sessionStorage.setItem('routelab.tests.scratch', '{"method": "FETCH", "url": ""}');
+        sessionStorage.setItem('loadapi.tests.scratch', '{"method": "FETCH", "url": ""}');
         expect(readScratch()).toBeNull();
-        sessionStorage.setItem('routelab.tests.scratch', 'not json');
+        sessionStorage.setItem('loadapi.tests.scratch', 'not json');
         expect(readScratch()).toBeNull();
     });
 });

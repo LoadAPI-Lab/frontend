@@ -49,7 +49,7 @@ const valid = [
     '  "dueAt": {{$timestamp}},',
     '  "tags": ["backend", "load"],',
     '  "meta": {',
-    '    "source": "routelab",',
+    '    "source": "loadapi",',
     '    "attempt": {{$randomInt}}',
     '  }',
     '}',

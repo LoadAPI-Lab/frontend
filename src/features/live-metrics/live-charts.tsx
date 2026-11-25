@@ -533,7 +533,7 @@ function FullscreenToggle({ target }: { target: RefObject<HTMLElement | null> })
     );
 }
 
-const COLLAPSED_KEY = 'routelab.charts.collapsed';
+const COLLAPSED_KEY = 'loadapi.charts.collapsed';
 
 const isChartKind = (value: unknown): value is ChartKind =>
     CHART_KINDS.some((kind) => kind === value);

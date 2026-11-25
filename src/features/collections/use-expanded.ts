@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-const STORAGE_KEY = 'routelab.collections.expanded';
+const STORAGE_KEY = 'loadapi.collections.expanded';
 
 function read(): Set<string> {
     try {

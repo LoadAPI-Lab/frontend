@@ -39,7 +39,7 @@ export const WithRows: Story = {
     args: {
         initial: [
             newRow('Content-Type', 'application/json'),
-            newRow('X-Request-Source', 'routelab'),
+            newRow('X-Request-Source', 'loadapi'),
             newRow('Accept-Language', 'en'),
         ],
     },

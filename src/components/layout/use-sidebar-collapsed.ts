@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-const STORAGE_KEY = 'routelab.sidebar.collapsed';
+const STORAGE_KEY = 'loadapi.sidebar.collapsed';
 
 function read(): boolean {
     try {

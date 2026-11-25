@@ -42,7 +42,7 @@ describe('run memory', () => {
     });
 
     it('survives bad stored values', () => {
-        sessionStorage.setItem('routelab.tests.runs', 'not json');
+        sessionStorage.setItem('loadapi.tests.runs', 'not json');
         expect(lastRunFor(fixed)).toBeUndefined();
     });
 });

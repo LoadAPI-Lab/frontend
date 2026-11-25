@@ -30,7 +30,7 @@ import { type DayGroup, dayGroup, formatRunTime, runPath } from './history-forma
 import { STATUS_TEXT } from './run-status';
 
 const GROUP_ORDER: DayGroup[] = ['today', 'yesterday', 'thisWeek', 'earlier'];
-const COLLAPSED_KEY = 'routelab.history.collapsed';
+const COLLAPSED_KEY = 'loadapi.history.collapsed';
 
 const isDayGroup = (value: unknown): value is DayGroup =>
     GROUP_ORDER.some((group) => group === value);

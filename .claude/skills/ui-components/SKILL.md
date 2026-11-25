@@ -1,6 +1,6 @@
 ---
 name: ui-components
-description: How to build UI in the LoadAPI frontend, covering the three component tiers and how granular to make them, Base UI wrappers, Tailwind tokens for the dark routelab look, Storybook, charts, the JSON body editor and accessibility. Use when creating, splitting or changing any component, page layout or style, or implementing a Figma frame.
+description: How to build UI in the LoadAPI frontend, covering the three component tiers and how granular to make them, Base UI wrappers, Tailwind tokens for the dark LoadAPI look, Storybook, charts, the JSON body editor and accessibility. Use when creating, splitting or changing any component, page layout or style, or implementing a Figma frame.
 ---
 
 # UI components

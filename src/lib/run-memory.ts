@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const KEY = 'routelab.tests.runs';
+const KEY = 'loadapi.tests.runs';
 const MAX_PLACES = 20;
 const SCRATCH_KEY = 'scratch';
 

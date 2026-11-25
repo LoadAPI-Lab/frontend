@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'routelab.servers';
+const STORAGE_KEY = 'loadapi.servers';
 
 function readAll(): Record<string, string> {
     try {

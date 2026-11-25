@@ -184,7 +184,7 @@ describe('HistoryPage', () => {
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         const list = screen.getByRole('navigation', { name: 'Test runs' });
         expect(within(list).queryByRole('link')).not.toBeInTheDocument();
-        expect(window.localStorage.getItem('routelab.history.collapsed')).toBe('["today"]');
+        expect(window.localStorage.getItem('loadapi.history.collapsed')).toBe('["today"]');
     });
 
     it('searches loaded runs by path and shows how many match', async () => {
