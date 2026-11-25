@@ -364,6 +364,14 @@
         "rerun": "Re-run test",
         "rerunning": "Starting…",
         "rerunFailed": "Couldn't re-run the test",
+        "live": {
+            "title": "This run is in progress",
+            "pendingTitle": "Waiting for a worker to start this run",
+            "body": "Results appear here when it finishes. Per-second charts are on the Stress tests page.",
+            "view": "View live",
+            "stop": "Stop test",
+            "stopping": "Stopping…"
+        },
         "ms": "{{value}}ms",
         "pp": "{{value}}pp",
         "seconds": "{{value}}s",

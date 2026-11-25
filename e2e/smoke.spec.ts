@@ -469,6 +469,29 @@ test('a finished run shows up in History with its results', async ({ page }) => 
     await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
 });
 
+test('a running run in History can be watched live and stopped', async ({ page }) => {
+    await page.goto('/tests?spec=4f1c2b7a-9e3d-4a51-8c6f-0d2e7b9a1c35&endpoint=GET%20%2Ffixed');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('60');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect(page.getByRole('button', { name: 'Stop test' })).toBeVisible();
+
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('link', { name: 'History' }).click();
+    await expect(page.getByRole('region', { name: 'This run is in progress' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Re-run test' })).toHaveCount(0);
+
+    await page.getByRole('link', { name: 'View live' }).click();
+    await expect(page).toHaveURL(/\/tests\?.*run=/);
+    await expect(page.getByRole('status').filter({ hasText: 'Running' })).toBeVisible();
+
+    await nav.getByRole('link', { name: 'History' }).click();
+    await page.getByRole('button', { name: 'Stop test' }).click();
+    await expect(page.getByRole('button', { name: 'Re-run test' })).toBeVisible({
+        timeout: 5000,
+    });
+    await expect(page.getByRole('link', { name: 'View live' })).toHaveCount(0);
+});
+
 test('History can be searched and filtered by status, and back keeps the filters', async ({
     page,
 }) => {

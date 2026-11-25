@@ -35,6 +35,7 @@ import {
     shortRunId,
     trendWidth,
 } from './history-format';
+import { RunInProgress, StopRunButton, ViewLiveLink } from './run-in-progress';
 import { STATUS_TEXT } from './run-status';
 import { isScenarioConfig } from './scenario-run';
 import { ScenarioRunDetail } from './scenario-run-detail';
@@ -187,6 +188,7 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
     const latency = summary?.latency ?? null;
     const before = previous?.latency ?? null;
     const route = single?.target;
+    const active = !isFinalStatus(run.status);
 
     const percentRow = (key: 'p50Ms' | 'p95Ms' | 'p99Ms', label: string) => {
         if (!latency) {
@@ -282,7 +284,9 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                         />
                         {t('history.export')}
                     </Button>
-                    {single ? (
+                    {active ? <StopRunButton runId={run.id} /> : null}
+                    {single && active ? <ViewLiveLink runId={run.id} /> : null}
+                    {single && !active ? (
                         <Button
                             variant="primary"
                             disabled={rerun.isPending}
@@ -300,6 +304,14 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
 
             {run.status === 'FAILED' ? (
                 <RunFailure reason={run.reason ?? t('runOutcome.noReason')} />
+            ) : null}
+
+            {active && single ? (
+                <RunInProgress
+                    status={run.status}
+                    startedAt={run.startedAt}
+                    durationSeconds={single.durationSeconds}
+                />
             ) : null}
 
             {summary ? (
@@ -408,9 +420,11 @@ export function RunDetail({ runId, listItems, className }: RunDetailProps) {
                             <Field label={t('history.config.rampUp')}>
                                 {t('history.seconds', { value: single.rampUpSeconds ?? 0 })}
                             </Field>
-                            <Field label={t('history.config.requestsSent')}>
-                                {summary ? format(summary.totals.requests) : '—'}
-                            </Field>
+                            {active ? null : (
+                                <Field label={t('history.config.requestsSent')}>
+                                    {summary ? format(summary.totals.requests) : '—'}
+                                </Field>
+                            )}
                             <Field label={t('history.config.baseUrl')}>
                                 {runOrigin(single.target.url)}
                             </Field>

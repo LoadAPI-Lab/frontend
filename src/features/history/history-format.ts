@@ -84,3 +84,10 @@ export function chartsReplayable(
     }
     return now - new Date(run.finishedAt).getTime() < CHART_REPLAY_MS;
 }
+
+export function elapsedSeconds(startedAt: string | undefined, now = Date.now()): number {
+    if (!startedAt) {
+        return 0;
+    }
+    return Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+}

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     chartsReplayable,
     dayGroup,
+    elapsedSeconds,
     percentChange,
     runHost,
     runPath,
@@ -68,5 +69,19 @@ describe('chartsReplayable', () => {
             ),
         ).toBe(false);
         expect(chartsReplayable({ status: 'STOPPED' }, at)).toBe(false);
+    });
+});
+
+describe('elapsedSeconds', () => {
+    const start = '2026-11-09T10:00:00.000Z';
+    const startMs = new Date(start).getTime();
+
+    it('counts whole seconds since the run started', () => {
+        expect(elapsedSeconds(start, startMs + 12_900)).toBe(12);
+    });
+
+    it('is zero before the run has started or with clock skew', () => {
+        expect(elapsedSeconds(undefined, startMs)).toBe(0);
+        expect(elapsedSeconds(start, startMs - 5000)).toBe(0);
     });
 });
