@@ -1,3 +1,4 @@
+export { FailingWarning, type FailingWarningProps } from './failing-warning';
 export { LateBadge, type LateBadgeProps } from './late-badge';
 export {
     CHART_KINDS,

@@ -516,3 +516,30 @@ test('History can be searched and filtered by status, and back keeps the filters
     await expect(page).toHaveURL(/group=day/);
     await expect(runs.getByRole('region', { name: /^today/i })).toBeVisible();
 });
+
+test('a run where every request fails warns and can be stopped from the warning', async ({
+    page,
+}) => {
+    await page.goto('/tests');
+    await page.evaluate('sessionStorage.clear()');
+    await page
+        .getByRole('complementary', { name: 'Collections' })
+        .getByRole('button', { name: 'New request' })
+        .click();
+    await page
+        .getByRole('region', { name: 'Scratch request' })
+        .getByRole('textbox', { name: 'URL' })
+        .fill('http://testserver:8080/status/404');
+    await page.getByRole('textbox', { name: /Duration/ }).fill('30');
+    await page.getByRole('button', { name: 'Start test' }).click();
+    const warning = page.getByRole('region', { name: 'Requests failing' });
+    await expect(warning).toBeVisible({ timeout: 10_000 });
+    await expect(warning).toContainText('All requests return 404 Not Found.');
+    const results = await new AxeBuilder({ page }).include('main').analyze();
+    expect(
+        results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical'),
+    ).toEqual([]);
+    await warning.getByRole('button', { name: 'Stop test' }).click();
+    await expect(page.getByText('Test stopped')).toBeVisible({ timeout: 5000 });
+    await expect(warning).toBeHidden();
+});
