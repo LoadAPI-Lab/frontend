@@ -43,6 +43,15 @@
         "empty": "No collections yet",
         "importShort": "Import OpenAPI doc",
         "newRequest": "New request",
+        "search": {
+            "label": "Search endpoints",
+            "placeholder": "Search endpoints",
+            "clear": "Clear search",
+            "matchCount_one": ", {{count}} match",
+            "matchCount_other": ", {{count}} matches",
+            "noMatch": "No endpoints match",
+            "noMatchBody": "Try another path, method or summary."
+        },
         "scratchRow": {
             "title": "Scratch request",
             "empty": "No URL yet"

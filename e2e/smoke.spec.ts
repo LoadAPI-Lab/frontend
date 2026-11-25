@@ -29,6 +29,29 @@ test('picking an endpoint in the collections tree opens it on the Tests page', a
     ).toBeVisible();
 });
 
+test('the collections search finds an endpoint from the keyboard and clears with Esc', async ({
+    page,
+}) => {
+    await page.goto('/tests');
+    const tree = page.getByRole('tree', { name: 'Collections' });
+    await expect(tree.getByText('Shop API')).toBeVisible();
+
+    await page.keyboard.press('/');
+    const search = page.getByRole('searchbox', { name: 'Search endpoints' });
+    await expect(search).toBeFocused();
+    await page.keyboard.type('delete task');
+    await expect(tree.getByRole('treeitem')).toHaveCount(3);
+    await tree.getByRole('treeitem', { name: 'DELETE /tasks/{id}' }).click();
+    await expect(page).toHaveURL(/endpoint=DELETE/);
+
+    await search.click();
+    await page.keyboard.type('zzz');
+    await expect(page.getByText('No endpoints match')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(search).toHaveValue('');
+    await expect(tree.getByRole('treeitem', { name: /^Shop API/ })).toBeVisible();
+});
+
 test('an endpoint opens with its example body and a Bearer auth tab', async ({ page }) => {
     await page.goto('/tests?spec=0b7e4a52-3c1d-4f8e-9a6b-5d2c1e0f9a37&endpoint=POST%20%2Forders');
     await expect(page.getByRole('heading', { name: '/orders', level: 2 })).toBeVisible();
