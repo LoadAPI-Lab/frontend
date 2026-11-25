@@ -16,6 +16,7 @@ import { formatNumber } from '@/lib/format';
 
 import type { RunListItem } from './history-api';
 import { formatRunDateTime, runHost, runPath, shortRunId } from './history-format';
+import { StopRunButton } from './run-in-progress';
 import { STATUS_TEXT } from './run-status';
 import {
     firstStepWith,
@@ -166,17 +167,21 @@ export function ScenarioRunDetail({ run, config, listItems, className }: Scenari
                             {t('history.scenario.openInBuilder')}
                         </Link>
                     ) : null}
-                    <Button
-                        variant="primary"
-                        disabled={rerun.isPending || active}
-                        onClick={() => rerun.mutate(run.id)}
-                    >
-                        <RotateCcw
-                            aria-hidden
-                            className="size-3.5"
-                        />
-                        {rerun.isPending ? t('history.rerunning') : t('history.scenario.rerun')}
-                    </Button>
+                    {active ? (
+                        <StopRunButton runId={run.id} />
+                    ) : (
+                        <Button
+                            variant="primary"
+                            disabled={rerun.isPending}
+                            onClick={() => rerun.mutate(run.id)}
+                        >
+                            <RotateCcw
+                                aria-hidden
+                                className="size-3.5"
+                            />
+                            {rerun.isPending ? t('history.rerunning') : t('history.scenario.rerun')}
+                        </Button>
+                    )}
                 </div>
             </header>
 
