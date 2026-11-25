@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const KEY = 'routelab.tests.last';
+const KEY = 'loadapi.tests.last';
 
 export const testsSearchSchema = z.object({
     spec: z.string().optional(),

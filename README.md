@@ -1,4 +1,4 @@
-# LoadAPI frontend (routelab)
+# LoadAPI frontend
 
 Web app for LoadAPI: design, test and load-test web APIs. React SPA (no SSR), talks to the
 [backend](https://github.com/LoadAPI-Lab/backend) `core` service on the same origin (core's `/v1/*` paths are proxied unchanged).

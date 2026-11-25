@@ -72,7 +72,7 @@ describe('CollectionsTree', () => {
         setup();
         await userEvent.click(await screen.findByText('Shop API'));
         expect(
-            JSON.parse(window.localStorage.getItem('routelab.collections.expanded') ?? '[]'),
+            JSON.parse(window.localStorage.getItem('loadapi.collections.expanded') ?? '[]'),
         ).toEqual([`spec:${shopSpec.id}`]);
     });
 

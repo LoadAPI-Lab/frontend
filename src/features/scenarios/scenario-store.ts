@@ -5,7 +5,7 @@ import { HTTP_METHODS } from '@/lib/http-method';
 
 import type { ScenarioDraft } from './scenario-draft';
 
-const KEY = 'routelab.scenarios';
+const KEY = 'loadapi.scenarios';
 
 export const NEW_SCENARIO = 'new';
 

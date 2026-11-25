@@ -1,6 +1,6 @@
 {
     "app": {
-        "name": "routelab",
+        "name": "LoadAPI",
         "loading": "Loading…",
         "errorTitle": "Something went wrong",
         "errorBody": "Try again. If it keeps happening, share the request ID with the team.",
@@ -18,7 +18,7 @@
         "account": "Account"
     },
     "auth": {
-        "title": "Sign in to routelab",
+        "title": "Sign in to LoadAPI",
         "subtitle": "Design, test and load-test your APIs.",
         "continueWith": "Continue with {{provider}}",
         "loadingProviders": "Loading sign-in options",
@@ -36,7 +36,7 @@
     },
     "desktopOnly": {
         "title": "Desktop only",
-        "body": "routelab needs a screen at least 1280px wide. Widen the window or switch to a desktop."
+        "body": "LoadAPI needs a screen at least 1280px wide. Widen the window or switch to a desktop."
     },
     "collections": {
         "title": "Collections",

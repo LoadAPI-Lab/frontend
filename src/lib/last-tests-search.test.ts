@@ -20,9 +20,9 @@ describe('last Tests page search', () => {
     });
 
     it('ignores stored values of the wrong shape', () => {
-        sessionStorage.setItem('routelab.tests.last', '{"spec": 42}');
+        sessionStorage.setItem('loadapi.tests.last', '{"spec": 42}');
         expect(lastTestsSearch()).toEqual({});
-        sessionStorage.setItem('routelab.tests.last', 'not json');
+        sessionStorage.setItem('loadapi.tests.last', 'not json');
         expect(lastTestsSearch()).toEqual({});
     });
 });

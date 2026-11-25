@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { HTTP_METHODS, type HttpMethod } from './http-method';
 import { emptyDraft, type KeyValueRow, newRow, type RequestDraft } from './request-draft';
 
-const KEY = 'routelab.tests.scratch';
+const KEY = 'loadapi.tests.scratch';
 
 export interface ScratchRequest {
     method: HttpMethod;

@@ -32,7 +32,7 @@ describe('body memory', () => {
     });
 
     it('survives bad stored values', () => {
-        sessionStorage.setItem('routelab.tests.bodies', 'not json');
+        sessionStorage.setItem('loadapi.tests.bodies', 'not json');
 
         expect(editedBodyFor(orders)).toBeUndefined();
     });

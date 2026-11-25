@@ -1,6 +1,6 @@
 import { safeRedirect } from '@/lib/safe-redirect';
 
-const KEY = 'routelab.auth.redirect';
+const KEY = 'loadapi.auth.redirect';
 export const DEFAULT_AFTER_LOGIN = '/tests';
 
 export function savePostLoginRedirect(path: string | undefined) {

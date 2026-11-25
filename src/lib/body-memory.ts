@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { EndpointPlace } from './run-memory';
 
-const KEY = 'routelab.tests.bodies';
+const KEY = 'loadapi.tests.bodies';
 const MAX_BODIES = 50;
 
 const memorySchema = z.record(z.string(), z.string());

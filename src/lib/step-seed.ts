@@ -6,7 +6,7 @@ import { draftFromEndpoint } from './endpoint-request';
 import { HTTP_METHODS } from './http-method';
 import { buildRequest } from './request-draft';
 
-export const STEP_SEED_MIME = 'application/x-routelab-step';
+export const STEP_SEED_MIME = 'application/x-loadapi-step';
 
 const stepSeedSchema = z.object({
     method: z.enum(HTTP_METHODS),
