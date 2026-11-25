@@ -796,6 +796,51 @@
         "failed": "Test failed",
         "noReason": "The worker didn't give a reason."
     },
+    "failingWarning": {
+        "label": "Requests failing",
+        "title": "Requests are failing.",
+        "status": {
+            "all": "All requests return {{status}}.",
+            "most": "Almost all requests return {{status}}."
+        },
+        "network": {
+            "all": "All requests fail with a network error: {{error}}.",
+            "most": "Almost all requests fail with a network error: {{error}}."
+        },
+        "hint": "Check the base URL, path and auth.",
+        "stop": "Stop test",
+        "stopping": "Stopping…",
+        "dismiss": "Dismiss"
+    },
+    "httpStatus": {
+        "withReason": "{{code}} {{reason}}",
+        "reasons": {
+            "200": "OK",
+            "201": "Created",
+            "202": "Accepted",
+            "204": "No Content",
+            "301": "Moved Permanently",
+            "302": "Found",
+            "304": "Not Modified",
+            "400": "Bad Request",
+            "401": "Unauthorized",
+            "403": "Forbidden",
+            "404": "Not Found",
+            "405": "Method Not Allowed",
+            "408": "Request Timeout",
+            "409": "Conflict",
+            "410": "Gone",
+            "413": "Content Too Large",
+            "415": "Unsupported Media Type",
+            "422": "Unprocessable Content",
+            "429": "Too Many Requests",
+            "500": "Internal Server Error",
+            "501": "Not Implemented",
+            "502": "Bad Gateway",
+            "503": "Service Unavailable",
+            "504": "Gateway Timeout"
+        }
+    },
     "activeRun": {
         "message": "A test you started is still running. Only one test can run at a time.",
         "view": "View it",

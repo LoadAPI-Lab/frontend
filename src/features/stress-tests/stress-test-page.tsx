@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useTestRunsGet } from '@/api/generated/endpoints/test-runs/test-runs';
-import { snapshotLatency } from '@/api/live';
+import { failingCause, snapshotLatency } from '@/api/live';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { config } from '@/config';
 import { type ApiSpec, type Endpoint, isUsableServer } from '@/features/collections';
 import { RecentRunsCard } from '@/features/history';
 import {
+    FailingWarning,
     LiveCharts,
     LiveStats,
     RunFailure,
@@ -208,6 +209,10 @@ function Workspace({
     const totals = summary?.totals ?? live.totals;
     const limits = useRunLimits(runId) ?? controls.config;
     const locked = controls.phase !== 'idle';
+    const failing =
+        controls.phase === 'running' || controls.phase === 'stopping'
+            ? failingCause(live.snapshots)
+            : null;
     const hasResponse = sender.sending || Boolean(sender.outcome) || Boolean(sender.problem);
     const switchable = Boolean(runId) && !locked && hasResponse;
     const showResponse = !runId || (switchable && panel === 'response');
@@ -331,6 +336,14 @@ function Workspace({
                     <Skeleton className="h-120" />
                 ) : route ? (
                     <>
+                        {runId ? (
+                            <FailingWarning
+                                key={runId}
+                                cause={failing}
+                                stopping={controls.phase === 'stopping'}
+                                onStop={controls.stop}
+                            />
+                        ) : null}
                         <LiveStats
                             rps={summary?.avgRps ?? live.latest?.actualRps ?? null}
                             latency={

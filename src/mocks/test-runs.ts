@@ -152,6 +152,7 @@ export function mockScenarioResult(steps: MockStep[], stopped = false) {
 }
 
 export const MOCK_FAILING_PATH = '/status/599';
+export const MOCK_NOT_FOUND_PATH = '/status/404';
 export const MOCK_FAILURE_REASON = 'The worker lost its connection to the target.';
 const FAIL_AFTER_SECONDS = 2;
 
@@ -246,6 +247,30 @@ export function mockSnapshot(run: MockRun, second: number): Snapshot {
     const clientErrors = Math.round(actualRps * 0.02);
     const ok = actualRps - serverErrors - clientErrors - timeouts;
     const base = 38 + wobble(second + 3) * 8 + ramp * 6;
+    if (run.url.includes(MOCK_NOT_FOUND_PATH)) {
+        return {
+            testId: run.id,
+            timestamp: new Date(run.createdAt + second * 1000).toISOString(),
+            elapsedSeconds: second,
+            targetRps: run.targetRps,
+            actualRps,
+            targets: [
+                {
+                    method: run.method,
+                    url: run.url,
+                    successCount: 0,
+                    errorCount: actualRps,
+                    lateCount: 0,
+                    responseTime: {
+                        p50Ms: Math.round(base),
+                        p95Ms: Math.round(base * 2),
+                        p99Ms: Math.round(base * 3),
+                    },
+                    statusCodes: { '404': actualRps },
+                },
+            ],
+        };
+    }
     return {
         testId: run.id,
         timestamp: new Date(run.createdAt + second * 1000).toISOString(),

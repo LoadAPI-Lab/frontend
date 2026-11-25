@@ -7,6 +7,13 @@ export {
     type RunningTotals,
     type StatusBreakdown,
 } from './aggregate';
+export {
+    FAILING_MIN_REQUESTS,
+    FAILING_THRESHOLD,
+    FAILING_WINDOW_SECONDS,
+    type FailureCause,
+    failingCause,
+} from './failing';
 export { type LatencySeries, latencySeries, snapshotLatency } from './latency';
 export type { LiveConnection, LiveState } from './live-store';
 export { type RunSummary, summarizeRunResult } from './result';
